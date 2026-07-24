@@ -12,10 +12,13 @@
   const round = (n) => Math.round(Number(n) || 0);
 
   const fontFamilies = {
+    pretendard: '"PretendardVariable", "Pretendard", "Malgun Gothic", sans-serif',
     dotum: '"KoPubDotum", "Malgun Gothic", sans-serif',
     batang: '"KoPubBatang", "Batang", serif',
     gulim: '"Gulim", "Malgun Gothic", sans-serif'
   };
+  const PX_PER_MM = 8;
+  const EFFECT_TYPES = ["shadow", "hollow", "extrude", "outline"];
 
   const QUICK_COLORS = [
     "#ffffff", "#111111", "#f4e900", "#ff3b30", "#ff6a00", "#ff4f9a", "#a53cff", "#1356c5",
@@ -86,33 +89,53 @@
     return ranked.find((item) => item.score >= 3.2)?.color || ranked[0]?.color || baseColor;
   }
 
+  function availablePalette(palette = null) {
+    const p = palette || state?.palette || {};
+    const colors = [p.primary || "#ffd400"];
+    if (p.secondaryEnabled !== false && p.secondary) colors.push(p.secondary);
+    if (p.tertiaryEnabled !== false && p.tertiary) colors.push(p.tertiary);
+    const neutrals = [];
+    if (p.useWhite !== false) neutrals.push("#ffffff");
+    if (p.useBlack !== false) neutrals.push("#111111");
+    if (!neutrals.length) neutrals.push(luminance(colors[0]) > .45 ? "#111111" : "#ffffff");
+    return { colors, neutrals };
+  }
+
   function paletteColor(role, palette) {
-    const p = palette || state.palette || { primary: "#ffd400", secondary: "#111111", tertiary: "#e62d20" };
-    if (!role) return "#111111";
-    if (p[role]) return p[role];
-    if (role === "ink") return p.secondary || "#111111";
-    if (role === "paper") return luminance(p.primary) > 0.72 ? mix(p.primary, "#ffffff", 0.58) : mix(p.primary, "#ffffff", 0.86);
-    if (role === "paperHard") return luminance(p.primary) > 0.72 ? mix(p.primary, "#ffffff", 0.42) : mix(p.primary, "#ffffff", 0.76);
-    if (role === "primarySoft") return mix(p.primary, "#ffffff", 0.34);
-    if (role === "primaryDeep") return mix(p.primary, "#000000", 0.18);
-    if (role === "secondarySoft") return mix(p.secondary, "#ffffff", 0.18);
-    if (role === "secondaryPaper") return mix(p.secondary, "#ffffff", 0.74);
-    if (role === "tertiarySoft") return mix(p.tertiary, "#ffffff", 0.22);
-    if (role === "tertiaryPaper") return mix(p.tertiary, "#ffffff", 0.66);
-    if (role === "tertiaryDeep") return mix(p.tertiary, "#000000", 0.16);
-    if (role === "white") return "#ffffff";
-    if (role === "black") return "#111111";
-    if (role === "cream") return "#fff4d2";
+    const p = palette || state?.palette || { primary: "#ffd400", secondary: "#111111", tertiary: "#e62d20" };
+    const { colors, neutrals } = availablePalette(p);
+    const primary = colors[0];
+    const secondary = colors[1] || colors[0];
+    const tertiary = colors[2] || colors[1] || colors[0];
+    const white = p.useWhite !== false ? "#ffffff" : (neutrals.find((c) => luminance(c) > .5) || primary);
+    const black = p.useBlack !== false ? "#111111" : (neutrals.find((c) => luminance(c) <= .5) || primary);
+    const paperMix = clamp((Number(p.paperMix) || 78) / 100, 0, .96);
+    if (!role) return black;
+    if (role === "primary") return primary;
+    if (role === "secondary") return secondary;
+    if (role === "tertiary") return tertiary;
+    if (role === "ink" || role === "black") return black;
+    if (role === "white") return white;
+    if (role === "paper") return mix(primary, white, paperMix);
+    if (role === "paperHard") return mix(primary, white, clamp(paperMix - .18, 0, .88));
+    if (role === "primarySoft") return mix(primary, white, clamp(paperMix * .55, .12, .72));
+    if (role === "primaryDeep") return mix(primary, black, .18);
+    if (role === "secondarySoft") return mix(secondary, white, .18);
+    if (role === "secondaryPaper") return mix(secondary, white, .74);
+    if (role === "tertiarySoft") return mix(tertiary, white, .22);
+    if (role === "tertiaryPaper") return mix(tertiary, white, .66);
+    if (role === "tertiaryDeep") return mix(tertiary, black, .16);
+    if (role === "cream") return mix(primary, "#fff4d2", .82);
     return role;
   }
 
   function R(name, x, y, w, h, options = {}) {
     const region = {
       id: uid(), name, x, y, w, h,
-      shape: "rect", radius: 0, rotation: 0, padding: 26,
+      shape: "rect", radius: 0, rotation: 0, padding: 26, textVAlign: "center",
       fill: "#ffffff", fillRole: null, fillNone: false,
       stroke: "#111111", strokeRole: null, strokeNone: true, strokeWidth: 0,
-      acceptText: true, effect: "none", effectColor: "#111111", effectSize: 18,
+      acceptText: true, effect: "none", effects: [], effectColor: "#111111", effectSize: 18,
       ...options
     };
     if (options.strokeNone === undefined && (options.stroke || options.strokeRole) && Number(options.strokeWidth) > 0) {
@@ -489,14 +512,14 @@
     return {
       id: uid(), text, regionId: null, order: 0, role: "body", roleHint: null, sample: false,
       styleMode: "auto", regionLocked: false,
-      fontFamily: "dotum", fontSize: 54, align: "left",
+      fontFamily: "pretendard", fontWeight: 780, fontSize: 54, align: "left",
       bold: true, italic: false, underline: false, strike: false,
       scaleX: 1, letterSpacing: -1, lineHeight: 1.08,
-      effect: "none", outlineWidth: 3,
+      effect: "none", effects: [], outlineWidth: 3,
       colorMode: "auto", color: "#ffffff", effectColor: "#111111",
       gap: 12, unicodeStyle: "none", customUnicode: "★",
       prefixEnabled: false, prefixSymbol: "•", prefixGap: 12,
-      rangeColors: [], manualX: null, manualY: null,
+      rangeColors: [], rangeBackgrounds: [], manualX: null, manualY: null, manualScale: 1,
       ...overrides
     };
   }
@@ -509,18 +532,28 @@
       radius: type === "band" ? 0 : 0, rotation: 0,
       bandScope: type === "band" ? "canvas" : null, bandRegionId: null, bandPosition: .5,
       flowMargin: 0, affectFlow: true,
-      effect: "none", effectColor: "#111111", effectSize: 20,
+      effect: "none", effects: [], effectColor: "#111111", effectSize: 20,
+      clipRegionId: null, alphaBounds: null, alphaMask: null,
       label: "", labelSize: 72, labelColor: "#111111", imageFit: "cover", imageSrc: null,
       ...options
     };
   }
 
   const initialState = {
+    schemaVersion: 16,
+    theme: "dark",
     orientation: "landscape",
+    artboard: { preset: "flyer", widthMm: 180, heightMm: 100 },
     bleedMm: 0,
+    pageMargin: 28,
+    regionGapX: 16,
+    regionGapY: 12,
     regionGapReduction: 32,
-    templateId: "street-alert",
-    palette: { primary: "#ffd400", secondary: "#111111", tertiary: "#e62d20" },
+    templateId: "dense-left-rail",
+    palette: {
+      primary: "#ffd400", secondary: "#111111", tertiary: "#e62d20",
+      secondaryEnabled: true, tertiaryEnabled: true, useWhite: true, useBlack: true, paperMix: 78
+    },
     background: { mode:"solid", c1:"#ffd400", c2:"#ffd400", pattern:"none", patternColor:"#e62d20", angle:0, scale:48 },
     regions: [],
     elements: [],
@@ -530,7 +563,10 @@
     selectedRegionId: null,
     selectedElementId: null,
     jpgQuality: .92,
-    showRegions: false
+    showRegions: false,
+    activeTool: "templates",
+    previewZoom: 1,
+    previewFit: true
   };
 
   let state = deepClone(initialState);
@@ -553,6 +589,12 @@
   const textNumericDefaults = new Map();
   const globalNumericDefaults = {
     bleedMm: 0,
+    artboardWidthMm: 180,
+    artboardHeightMm: 100,
+    pageMargin: 28,
+    regionGapX: 16,
+    regionGapY: 12,
+    palettePaperMix: 78,
     regionGapReduction: 32,
     gradientAngle: 0,
     patternScale: 48,
@@ -691,10 +733,12 @@
   }
 
   function dimensions() {
-    const trimW = state.orientation === "portrait" ? 900 : 1600;
-    const trimH = state.orientation === "portrait" ? 1600 : 900;
-    const bleed = Math.round((Number(state.bleedMm) || 0) * 12);
-    return { trimW, trimH, bleed, fullW: trimW + bleed * 2, fullH: trimH + bleed * 2 };
+    const widthMm = clamp(Number(state.artboard?.widthMm) || 180, 50, 420);
+    const heightMm = clamp(Number(state.artboard?.heightMm) || 100, 50, 420);
+    const trimW = Math.max(320, Math.round(widthMm * PX_PER_MM));
+    const trimH = Math.max(320, Math.round(heightMm * PX_PER_MM));
+    const bleed = Math.round((Number(state.bleedMm) || 0) * PX_PER_MM);
+    return { trimW, trimH, bleed, fullW: trimW + bleed * 2, fullH: trimH + bleed * 2, widthMm, heightMm };
   }
 
   function resolveColor(item, prop) {
@@ -1670,7 +1714,7 @@
     const reset = document.createElement("button");
     reset.type = "button";
     reset.className = "numeric-reset-button";
-    reset.textContent = "↺ 원상복귀";
+    reset.textContent = "↺";
     reset.title = `${labelText} 원래값으로 복귀`;
     reset.setAttribute("aria-label", `${labelText} 원래값으로 복귀`);
     headRight.append(readout, reset);
@@ -1725,6 +1769,7 @@
       committed = normalizeNumericValue(next, min, max, step, committed);
       if (!preserveDraft) number.value = String(committed);
       range.value = String(committed);
+      updateRangeVisual(range);
       readout.textContent = formatter(committed);
       updateReset();
       return committed;
@@ -1965,7 +2010,7 @@
     const reset = document.createElement("button");
     reset.type = "button";
     reset.className = "numeric-reset-button numeric-reset-compact";
-    reset.textContent = "↺ 원상복귀";
+    reset.textContent = "↺";
     reset.setAttribute("aria-label", "원래값으로 복귀");
     row.append(minus, number, plus, reset);
 
@@ -3948,7 +3993,7 @@
     const mime=type==="jpg"?"image/jpeg":"image/png";
     const quality=type==="jpg"?state.jpgQuality:undefined;
     const link=document.createElement("a");
-    link.download=`otter-jjirasi-v14-${state.orientation}-${Date.now()}.${type}`;
+    link.download=`otter-jjirasi-v16-${state.orientation}-${Date.now()}.${type}`;
     link.href=out.toDataURL(mime,quality);link.click();
     toast(`${type.toUpperCase()} 파일을 저장했습니다.`);
   }
@@ -3970,10 +4015,2186 @@
     createColorField("posterBorderColorField",()=>state.posterBorder.color,(v)=>state.posterBorder.color=v,{allowNone:false});
   }
 
+
+  // ---------------------------------------------------------------------------
+  // v16 · reference-led poster editor overhaul
+  // ---------------------------------------------------------------------------
+
+  const ARTBOARD_PRESETS = {
+    flyer: { widthMm: 180, heightMm: 100, label: "전단 180 × 100 mm" },
+    a6: { widthMm: 148, heightMm: 105, label: "A6 148 × 105 mm" },
+    a5: { widthMm: 210, heightMm: 148, label: "A5 210 × 148 mm" },
+    card: { widthMm: 90, heightMm: 50, label: "카드 90 × 50 mm" },
+    square: { widthMm: 120, heightMm: 120, label: "정사각 120 × 120 mm" }
+  };
+
+  const EFFECT_ORDER = ["extrude", "shadow", "hollow", "outline"];
+
+  function normalizeEffects(item) {
+    if (!item) return [];
+    const fromArray = Array.isArray(item.effects) ? item.effects : [];
+    const legacy = item.effect && item.effect !== "none" ? [item.effect] : [];
+    item.effects = [...new Set([...fromArray, ...legacy].filter((effect) => EFFECT_TYPES.includes(effect)))];
+    item.effect = item.effects[0] || "none";
+    return item.effects;
+  }
+
+  function activeEffects(item) {
+    const effects = normalizeEffects(item);
+    return EFFECT_ORDER.filter((effect) => effects.includes(effect));
+  }
+
+  function hasEffect(item, effect) {
+    return activeEffects(item).includes(effect);
+  }
+
+  function toggleEffect(item, effect) {
+    if (!item || !EFFECT_TYPES.includes(effect)) return;
+    const current = normalizeEffects(item);
+    item.effects = current.includes(effect) ? current.filter((value) => value !== effect) : [...current, effect];
+    item.effect = item.effects[0] || "none";
+  }
+
+  function ensureStateCompatibility() {
+    state.schemaVersion = 16;
+    state.theme ||= "dark";
+    state.artboard ||= { preset: "flyer", widthMm: 180, heightMm: 100 };
+    state.artboard.widthMm = clamp(Number(state.artboard.widthMm) || 180, 50, 420);
+    state.artboard.heightMm = clamp(Number(state.artboard.heightMm) || 100, 50, 420);
+    state.orientation = state.artboard.heightMm > state.artboard.widthMm ? "portrait" : "landscape";
+    state.pageMargin = clamp(Number(state.pageMargin) || 28, 0, 120);
+    state.regionGapX = clamp(Number(state.regionGapX) || 16, 0, 100);
+    state.regionGapY = clamp(Number(state.regionGapY) || 12, 0, 100);
+    state.activeTool ||= "templates";
+    state.previewZoom = clamp(Number(state.previewZoom) || 1, .2, 3);
+    state.previewFit = state.previewFit !== false;
+    state.palette ||= {};
+    state.palette.primary ||= "#ffd400";
+    state.palette.secondary ||= "#111111";
+    state.palette.tertiary ||= "#e62d20";
+    if (typeof state.palette.secondaryEnabled !== "boolean") state.palette.secondaryEnabled = true;
+    if (typeof state.palette.tertiaryEnabled !== "boolean") state.palette.tertiaryEnabled = true;
+    if (typeof state.palette.useWhite !== "boolean") state.palette.useWhite = true;
+    if (typeof state.palette.useBlack !== "boolean") state.palette.useBlack = true;
+    state.palette.paperMix = clamp(Number(state.palette.paperMix) || 78, 0, 96);
+    state.regions ||= [];
+    state.elements ||= [];
+    state.texts ||= [];
+    state.regions.forEach((region) => {
+      normalizeEffects(region);
+      region.textVAlign = "center";
+      if (typeof region.acceptText !== "boolean") region.acceptText = true;
+      if (!Number.isFinite(Number(region.padding))) region.padding = 20;
+      if (!Number.isFinite(Number(region.effectSize))) region.effectSize = 18;
+      if (!region.layoutNorm && region.layoutBase) {
+        const { trimW, trimH } = dimensions();
+        region.layoutNorm = {
+          x: region.layoutBase.x / trimW,
+          y: region.layoutBase.y / trimH,
+          w: region.layoutBase.w / trimW,
+          h: region.layoutBase.h / trimH
+        };
+      }
+    });
+    state.elements.forEach((element) => {
+      normalizeEffects(element);
+      element.clipRegionId ||= null;
+      element.alphaBounds ||= null;
+      if (typeof element.affectFlow !== "boolean") element.affectFlow = true;
+    });
+    state.texts.forEach((text) => {
+      normalizeEffects(text);
+      text.fontFamily ||= "pretendard";
+      text.fontWeight = clamp(Number(text.fontWeight) || (text.bold ? 760 : 520), 100, 900);
+      text.rangeColors ||= [];
+      text.rangeBackgrounds ||= [];
+      text.manualScale = clamp(Number(text.manualScale) || 1, .35, 3);
+      if (!text.styleMode) text.styleMode = "auto";
+      if (!Number.isFinite(Number(text.gap))) text.gap = 4;
+    });
+  }
+
+  function VRegion(name, x, y, w, h, options = {}) {
+    return R(name, x, y, w, h, {
+      radius: 0,
+      padding: 18,
+      textVAlign: "center",
+      ...options
+    });
+  }
+
+  function buildPortraitRegions(style = "stack") {
+    const common = {
+      stack: [
+        VRegion("속보 표식", .035, .025, .250, .105, { fillRole:"tertiary", radius:12, textPreset:"badgeOutline", textRoles:["tag"] }),
+        VRegion("기관 안내", .315, .025, .650, .105, { fillRole:"secondary", radius:0, textPreset:"microCenter", textRoles:["micro"] }),
+        VRegion("큰 제목", .035, .155, .930, .245, { fillNone:true, padding:2, emphasis:1.42, overflowAllowance:.04, textPreset:"hero", textRoles:["headline"] }),
+        VRegion("핵심 목록", .035, .425, .930, .245, { fillRole:"paper", radius:20, textPreset:"bulletDense", textRoles:["bullet","body"] }),
+        VRegion("짧은 강조", .035, .690, .560, .125, { fillRole:"tertiary", radius:14, textPreset:"bodyDisplay", textRoles:["callout"] }),
+        VRegion("수치", .615, .690, .350, .125, { fillRole:"secondary", radius:0, textPreset:"badgeOutline", textRoles:["tag"] }),
+        VRegion("연락처", .035, .835, .930, .095, { fillRole:"primary", radius:0, textPreset:"hotline", textRoles:["footer"] }),
+        VRegion("주의 문구", .035, .945, .930, .035, { fillNone:true, padding:0, textPreset:"microCenter", textRoles:["micro"] })
+      ],
+      rail: [
+        VRegion("속보 표식", .035, .025, .240, .115, { fillRole:"tertiary", radius:10, textPreset:"badgeOutline", textRoles:["tag"] }),
+        VRegion("큰 제목", .305, .022, .660, .230, { fillNone:true, padding:2, emphasis:1.48, overflowAllowance:.04, textPreset:"hero", textRoles:["headline"] }),
+        VRegion("기관 안내", .035, .275, .930, .080, { fillRole:"secondary", radius:0, textPreset:"microCenter", textRoles:["micro"] }),
+        VRegion("핵심 목록", .035, .380, .575, .310, { fillRole:"paper", radius:20, textPreset:"bulletDense", textRoles:["bullet"] }),
+        VRegion("짧은 강조", .635, .380, .330, .170, { fillRole:"tertiary", radius:16, textPreset:"bodyDisplay", textRoles:["callout"] }),
+        VRegion("수치", .635, .550, .330, .140, { fillRole:"secondary", radius:0, touchY:true, textPreset:"badgeOutline", textRoles:["tag"] }),
+        VRegion("연락처", .035, .725, .930, .115, { fillRole:"tertiary", radius:0, textPreset:"hotline", textRoles:["footer"] }),
+        VRegion("주의 문구", .035, .870, .930, .085, { fillNone:true, padding:2, textPreset:"microCenter", textRoles:["micro"] })
+      ],
+      columns: [
+        VRegion("속보 표식", .035, .025, .220, .105, { fillRole:"tertiary", radius:12, textPreset:"badgeOutline", textRoles:["tag"] }),
+        VRegion("큰 제목", .035, .150, .930, .235, { fillNone:true, padding:2, emphasis:1.48, overflowAllowance:.04, textPreset:"hero", textRoles:["headline"] }),
+        VRegion("기관 안내", .285, .025, .680, .105, { fillRole:"secondary", radius:0, textPreset:"microCenter", textRoles:["micro"] }),
+        VRegion("핵심 목록", .035, .415, .440, .330, { fillRole:"paper", radius:18, textPreset:"bulletDense", textRoles:["bullet"] }),
+        VRegion("짧은 강조", .500, .415, .465, .180, { fillRole:"tertiary", radius:16, textPreset:"bodyDisplay", textRoles:["callout"] }),
+        VRegion("수치", .500, .595, .465, .150, { fillRole:"secondary", radius:0, touchY:true, textPreset:"badgeOutline", textRoles:["tag"] }),
+        VRegion("연락처", .035, .780, .930, .105, { fillRole:"primary", radius:0, textPreset:"hotline", textRoles:["footer"] }),
+        VRegion("주의 문구", .035, .915, .930, .050, { fillNone:true, padding:1, textPreset:"microCenter", textRoles:["micro"] })
+      ],
+      type: [
+        VRegion("속보 표식", .035, .030, .200, .100, { fillRole:"tertiary", radius:14, textPreset:"badgeOutline", textRoles:["tag"] }),
+        VRegion("큰 제목", .035, .150, .930, .320, { fillNone:true, padding:0, emphasis:1.62, overflowAllowance:.045, textPreset:"hero", textRoles:["headline"] }),
+        VRegion("기관 안내", .270, .035, .695, .090, { fillNone:true, padding:1, textPreset:"microCenter", textRoles:["micro"] }),
+        VRegion("핵심 목록", .035, .510, .510, .260, { fillNone:true, padding:5, textPreset:"bulletDense", textRoles:["bullet"] }),
+        VRegion("짧은 강조", .575, .500, .390, .145, { fillRole:"paper", radius:22, textPreset:"bodyDisplay", textRoles:["callout"] }),
+        VRegion("수치", .575, .670, .390, .100, { fillNone:true, padding:1, textPreset:"badge", textRoles:["tag"] }),
+        VRegion("연락처", .300, .815, .665, .100, { fillNone:true, padding:1, textPreset:"hotline", textRoles:["footer"] }),
+        VRegion("주의 문구", .035, .825, .230, .085, { fillNone:true, padding:1, textPreset:"micro", textRoles:["micro"] })
+      ],
+      photo: [
+        VRegion("속보 표식", .035, .025, .220, .100, { fillRole:"tertiary", radius:12, textPreset:"badgeOutline", textRoles:["tag"] }),
+        VRegion("큰 제목", .035, .145, .930, .210, { fillNone:true, padding:2, emphasis:1.38, overflowAllowance:.035, textPreset:"hero", textRoles:["headline"] }),
+        VRegion("기관 안내", .285, .025, .680, .100, { fillRole:"secondary", radius:0, textPreset:"microCenter", textRoles:["micro"] }),
+        VRegion("핵심 목록", .035, .390, .540, .310, { fillRole:"paper", radius:20, textPreset:"bulletDense", textRoles:["bullet"] }),
+        VRegion("짧은 강조", .605, .390, .360, .165, { fillRole:"tertiary", radius:18, textPreset:"bodyDisplay", textRoles:["callout"] }),
+        VRegion("수치", .605, .575, .360, .125, { fillRole:"secondary", radius:0, textPreset:"badgeOutline", textRoles:["tag"] }),
+        VRegion("연락처", .035, .750, .930, .115, { fillRole:"primary", radius:0, textPreset:"hotline", textRoles:["footer"] }),
+        VRegion("주의 문구", .035, .900, .930, .060, { fillNone:true, padding:1, textPreset:"microCenter", textRoles:["micro"] })
+      ]
+    };
+    return common[style] || common.stack;
+  }
+
+  function buildV16Templates() {
+    const templates = [
+      {
+        id:"dense-left-rail", name:"왼쪽 속보칸", caption:"검은 세로칸·큰 제목·붙은 강조칸·하단 제보 번호", portraitStyle:"rail",
+        bg:{role:"primary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("왼쪽 검정판", .014,.018,.218,.964,{fillRole:"secondary",acceptText:false,radius:0}),
+          VRegion("속보 표식", .030,.045,.185,.215,{fillRole:"tertiary",radius:8,padding:20,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("주의 문구", .035,.680,.175,.250,{fillNone:true,padding:4,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("큰 제목", .252,.020,.730,.270,{fillNone:true,padding:0,emphasis:1.60,overflowAllowance:.045,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("기관 안내", .252,.312,.730,.085,{fillRole:"tertiary",radius:0,padding:10,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록", .252,.420,.425,.340,{fillRole:"paper",radius:20,padding:20,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조", .695,.420,.287,.190,{fillRole:"tertiary",radius:16,padding:15,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치", .695,.610,.287,.150,{fillRole:"secondary",radius:0,touchY:true,padding:12,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("연락처", .252,.785,.730,.120,{fillRole:"tertiary",radius:0,padding:10,textPreset:"hotline",textRoles:["footer"]}),
+          VRegion("하단 메모", .252,.928,.730,.045,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+        ], textSlots:[1,3,4,5,6,7,8,2]
+      },
+      {
+        id:"news-deck", name:"상단 속보판", caption:"네모 속보·검정 안내판·큰 제목·2단 정보칸", portraitStyle:"stack",
+        bg:{role:"paper"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("속보 표식",.022,.025,.185,.180,{fillRole:"tertiary",radius:0,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("기관 안내",.225,.040,.755,.120,{fillRole:"secondary",radius:0,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("큰 제목",.022,.220,.958,.255,{fillNone:true,padding:2,emphasis:1.55,overflowAllowance:.04,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("핵심 목록",.022,.505,.425,.300,{fillRole:"primary",radius:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.465,.505,.260,.300,{fillRole:"secondary",radius:14,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.745,.505,.235,.135,{fillRole:"tertiary",radius:12,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("연락처",.745,.640,.235,.165,{fillRole:"primary",radius:0,touchY:true,textPreset:"hotline",textRoles:["footer"]}),
+          VRegion("주의 문구",.022,.850,.958,.080,{fillNone:true,padding:1,textPreset:"microCenter",textRoles:["micro"]})
+        ], textSlots:[0,2,1,3,4,5,6,7]
+      },
+      {
+        id:"yellow-alert", name:"노랑 긴급공지", caption:"원형 속보·비대칭 제목·작은 검정 정보칸", portraitStyle:"rail",
+        bg:{role:"primary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("큰 제목",.022,.025,.640,.445,{fillNone:true,padding:0,emphasis:1.72,overflowAllowance:.045,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("속보 표식",.725,.035,.250,.265,{shape:"ellipse",fillRole:"tertiary",padding:28,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("기관 안내",.690,.315,.285,.115,{fillNone:true,padding:3,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.690,.455,.285,.300,{fillRole:"secondary",radius:0,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.025,.535,.600,.205,{fillRole:"paper",radius:22,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.025,.775,.235,.105,{fillRole:"tertiary",radius:12,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("연락처",.285,.760,.690,.135,{fillNone:true,padding:2,textPreset:"hotline",textRoles:["footer"]}),
+          VRegion("주의 문구",.025,.920,.950,.045,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+        ], textSlots:[1,0,2,3,4,5,6,7]
+      },
+      {
+        id:"phone-bottom", name:"하단 전화번호", caption:"검정 바탕·폭발형 표식·전폭 전화번호", portraitStyle:"stack",
+        bg:{role:"secondary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("기관 안내",.000,.020,1,.075,{fillRole:"primary",radius:0,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("큰 제목",.025,.120,.650,.310,{fillNone:true,padding:0,emphasis:1.55,overflowAllowance:.04,textPreset:"heroOutline",textRoles:["headline"]}),
+          VRegion("속보 표식",.725,.115,.250,.305,{shape:"burst",fillRole:"tertiary",strokeRole:"paper",strokeNone:false,strokeWidth:3,padding:34,textPreset:"badge",textRoles:["tag"]}),
+          VRegion("핵심 목록",.025,.465,.545,.250,{fillRole:"paper",radius:20,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.600,.465,.375,.155,{fillRole:"primary",radius:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.600,.650,.375,.065,{fillRole:"tertiary",radius:0,textPreset:"badge",textRoles:["tag"]}),
+          VRegion("연락처",0,.760,1,.170,{fillRole:"primary",radius:0,textPreset:"hotline",textRoles:["footer"]}),
+          VRegion("주의 문구",.025,.945,.950,.030,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+        ], textSlots:[2,1,0,3,4,5,6,7]
+      },
+      {
+        id:"no-band-hero", name:"띠 없는 큰 제목", caption:"가로띠 없이 초대형 문장과 원형 배지로 구성", portraitStyle:"type",
+        bg:{role:"primary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("큰 제목",.020,.020,.660,.475,{fillNone:true,padding:0,emphasis:1.78,overflowAllowance:.048,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("속보 표식",.725,.035,.250,.275,{shape:"ellipse",fillRole:"tertiary",padding:30,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("기관 안내",.700,.335,.275,.105,{fillNone:true,padding:2,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.690,.465,.285,.285,{fillRole:"secondary",radius:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.025,.555,.610,.195,{fillRole:"paper",radius:24,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.025,.790,.240,.100,{fillRole:"tertiary",radius:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("연락처",.300,.775,.675,.125,{fillNone:true,padding:1,textPreset:"hotline",textRoles:["footer"]}),
+          VRegion("주의 문구",.025,.925,.950,.045,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+        ], textSlots:[1,0,2,3,4,5,6,7]
+      },
+      {
+        id:"rounded-notice", name:"둥근 공지칸", caption:"둥근 본문칸과 직선 연락처를 섞은 부드러운 구성", portraitStyle:"stack",
+        bg:{role:"tertiary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("큰 제목",.025,.030,.610,.250,{fillRole:"paper",radius:26,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("속보 표식",.685,.025,.290,.285,{shape:"ellipse",fillRole:"primary",padding:30,textPreset:"badge",textRoles:["tag"]}),
+          VRegion("기관 안내",.025,.315,.610,.075,{fillNone:true,padding:1,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.025,.425,.455,.330,{fillRole:"secondary",radius:22,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.515,.425,.460,.200,{fillRole:"paper",radius:24,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.610,.655,.365,.100,{fillRole:"primary",radius:18,textPreset:"badge",textRoles:["tag"]}),
+          VRegion("연락처",.025,.805,.550,.115,{fillNone:true,padding:1,textPreset:"hotlineOutline",textRoles:["footer"]}),
+          VRegion("주의 문구",.610,.820,.365,.075,{fillNone:true,padding:1,textPreset:"micro",textRoles:["micro"]})
+        ], textSlots:[1,0,2,3,4,5,6,7]
+      },
+      {
+        id:"three-column-ads", name:"3단 광고칸", caption:"세 정보칸을 같은 간격으로 놓고 아래 연락처를 붙인 구성", portraitStyle:"columns",
+        bg:{role:"primary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("속보 표식",.020,.025,.115,.160,{shape:"ellipse",fillRole:"tertiary",padding:12,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("큰 제목",.150,.025,.830,.175,{fillRole:"secondary",radius:14,textPreset:"heroOutline",textRoles:["headline"]}),
+          VRegion("기관 안내",.020,.225,.960,.060,{fillNone:true,padding:1,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.020,.320,.305,.405,{fillRole:"paper",radius:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.3475,.320,.305,.405,{fillRole:"tertiary",radius:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.675,.320,.305,.405,{fillRole:"secondary",radius:18,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("연락처",0,.770,1,.155,{fillRole:"tertiary",radius:0,textPreset:"hotline",textRoles:["footer"]}),
+          VRegion("주의 문구",.020,.945,.960,.035,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+        ], textSlots:[0,1,2,3,4,5,6,7]
+      },
+      {
+        id:"vertical-ticket", name:"세로 표찰", caption:"왼쪽 세로 표찰과 오른쪽 기사형 정보 배치", portraitStyle:"rail",
+        bg:{role:"primary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("세로 표찰",.020,.020,.230,.960,{fillRole:"secondary",radius:0,acceptText:false}),
+          VRegion("속보 표식",.045,.050,.180,.190,{fillRole:"tertiary",radius:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("주의 문구",.050,.690,.170,.240,{fillNone:true,padding:3,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("큰 제목",.280,.025,.700,.300,{fillNone:true,padding:0,emphasis:1.60,overflowAllowance:.04,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("기관 안내",.280,.345,.700,.075,{fillRole:"tertiary",radius:0,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.280,.450,.420,.290,{fillRole:"paper",radius:20,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.720,.450,.260,.170,{fillRole:"tertiary",radius:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.720,.620,.260,.120,{fillRole:"secondary",radius:0,touchY:true,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("연락처",.280,.785,.700,.120,{fillRole:"tertiary",radius:0,textPreset:"hotline",textRoles:["footer"]})
+        ], textSlots:[1,3,4,5,6,7,8,2]
+      },
+      {
+        id:"center-burst", name:"중앙 폭발표식", caption:"가운데 뾰족 표식과 양옆 정보칸의 강한 대칭", portraitStyle:"columns",
+        bg:{role:"tertiary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("큰 제목",.025,.025,.950,.230,{fillNone:true,padding:0,emphasis:1.52,overflowAllowance:.04,textPreset:"heroOutline",textRoles:["headline"]}),
+          VRegion("기관 안내",.025,.275,.950,.065,{fillRole:"secondary",radius:0,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.025,.385,.300,.340,{fillRole:"paper",radius:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("속보 표식",.350,.365,.300,.380,{shape:"burst",fillRole:"primary",padding:42,textPreset:"badge",textRoles:["tag"]}),
+          VRegion("짧은 강조",.675,.385,.300,.205,{fillRole:"secondary",radius:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.675,.620,.300,.105,{fillRole:"primary",radius:14,textPreset:"badge",textRoles:["tag"]}),
+          VRegion("연락처",.025,.775,.950,.120,{fillRole:"secondary",radius:0,textPreset:"hotlineOutline",textRoles:["footer"]}),
+          VRegion("주의 문구",.025,.925,.950,.045,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+        ], textSlots:[3,0,1,2,4,5,6,7]
+      },
+      {
+        id:"photo-column", name:"사진 한 칸", caption:"사진 자리와 기사형 문장을 함께 쓰는 2단 구성", portraitStyle:"photo",
+        bg:{role:"paper"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("사진 자리",.020,.020,.325,.960,{fillRole:"secondary",radius:18,acceptText:false}),
+          VRegion("속보 표식",.375,.030,.160,.155,{fillRole:"tertiary",radius:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("큰 제목",.555,.025,.425,.260,{fillNone:true,padding:0,emphasis:1.42,overflowAllowance:.035,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("기관 안내",.375,.310,.605,.075,{fillRole:"secondary",radius:0,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.375,.420,.365,.330,{fillRole:"primary",radius:20,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.765,.420,.215,.190,{fillRole:"tertiary",radius:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.765,.610,.215,.140,{fillRole:"secondary",radius:0,touchY:true,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("연락처",.375,.790,.605,.115,{fillRole:"tertiary",radius:0,textPreset:"hotline",textRoles:["footer"]}),
+          VRegion("주의 문구",.375,.930,.605,.045,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+        ], textSlots:[1,2,3,4,5,6,7,8]
+      },
+      {
+        id:"coupon-stack", name:"붙은 쿠폰칸", caption:"상하 블록 일부를 붙여 밀도를 높인 쿠폰형", portraitStyle:"stack",
+        bg:{role:"primary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("속보 표식",.022,.025,.180,.160,{fillRole:"tertiary",radius:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("큰 제목",.225,.025,.755,.245,{fillNone:true,padding:0,emphasis:1.50,overflowAllowance:.04,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("기관 안내",.022,.295,.958,.070,{fillRole:"secondary",radius:0,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.022,.400,.545,.320,{fillRole:"paper",radius:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.592,.400,.388,.170,{fillRole:"tertiary",radius:14,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.592,.570,.388,.150,{fillRole:"secondary",radius:0,touchY:true,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("연락처",.022,.765,.958,.125,{fillRole:"tertiary",radius:0,textPreset:"hotline",textRoles:["footer"]}),
+          VRegion("주의 문구",.022,.920,.958,.050,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+        ], textSlots:[0,1,2,3,4,5,6,7]
+      },
+      {
+        id:"split-article", name:"2단 기사형", caption:"왼쪽 본문과 오른쪽 강조·수치를 분리한 기사형", portraitStyle:"columns",
+        bg:{role:"paper"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("속보 표식",.025,.030,.145,.170,{fillRole:"tertiary",radius:10,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("기관 안내",.195,.045,.780,.115,{fillRole:"secondary",radius:0,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("큰 제목",.025,.225,.950,.250,{fillNone:true,padding:0,emphasis:1.52,overflowAllowance:.04,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("핵심 목록",.025,.505,.575,.285,{fillRole:"primary",radius:20,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.625,.505,.350,.160,{fillRole:"secondary",radius:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.625,.665,.350,.125,{fillRole:"tertiary",radius:0,touchY:true,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("연락처",.530,.830,.445,.100,{fillRole:"primary",radius:0,textPreset:"hotline",textRoles:["footer"]}),
+          VRegion("주의 문구",.025,.840,.470,.080,{fillNone:true,padding:1,textPreset:"micro",textRoles:["micro"]})
+        ], textSlots:[0,2,1,3,4,5,6,7]
+      },
+      {
+        id:"bare-type", name:"무테 큰글자", caption:"카드 없이 글자 크기와 원색 표식만으로 채운 구성", portraitStyle:"type",
+        bg:{role:"primary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("장식 원",.815,-.070,.260,.300,{shape:"ellipse",fillRole:"tertiary",acceptText:false}),
+          VRegion("속보 표식",.025,.035,.140,.175,{fillNone:true,padding:0,textPreset:"badge",textRoles:["tag"]}),
+          VRegion("큰 제목",.165,.020,.715,.365,{fillNone:true,padding:0,emphasis:1.80,overflowAllowance:.048,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("기관 안내",.025,.405,.950,.060,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.025,.500,.420,.270,{fillNone:true,padding:2,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.485,.495,.490,.170,{fillNone:true,padding:2,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.570,.695,.320,.085,{fillNone:true,padding:0,textPreset:"badge",textRoles:["tag"]}),
+          VRegion("연락처",.300,.825,.675,.085,{fillNone:true,padding:0,textPreset:"hotline",textRoles:["footer"]}),
+          VRegion("주의 문구",.025,.825,.235,.080,{fillNone:true,padding:0,textPreset:"micro",textRoles:["micro"]})
+        ], textSlots:[1,2,3,4,5,6,7,8]
+      },
+      {
+        id:"corner-stamp", name:"모서리 도장형", caption:"큰 제목과 모서리 원형 도장, 서로 다른 폭의 정보칸", portraitStyle:"rail",
+        bg:{role:"tertiary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("큰 제목",.025,.025,.700,.300,{fillRole:"paper",radius:24,padding:20,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("속보 표식",.755,.020,.225,.250,{shape:"ellipse",fillRole:"primary",padding:24,textPreset:"badge",textRoles:["tag"]}),
+          VRegion("기관 안내",.755,.285,.225,.095,{fillNone:true,padding:1,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.025,.370,.515,.355,{fillRole:"secondary",radius:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.565,.405,.415,.180,{fillRole:"paper",radius:20,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.665,.620,.315,.105,{fillRole:"primary",radius:14,textPreset:"badge",textRoles:["tag"]}),
+          VRegion("연락처",.025,.780,.575,.120,{fillNone:true,padding:0,textPreset:"hotlineOutline",textRoles:["footer"]}),
+          VRegion("주의 문구",.635,.800,.345,.080,{fillNone:true,padding:1,textPreset:"micro",textRoles:["micro"]})
+        ], textSlots:[1,0,2,3,4,5,6,7]
+      },
+      {
+        id:"compact-card", name:"압축 전화카드", caption:"작은 카드 비율에서도 제목·본문·전화번호를 촘촘히 배치", portraitStyle:"stack",
+        bg:{role:"primary"}, border:{enabled:true,color:"#111111",width:7,radius:10},
+        regions:[
+          VRegion("속보 표식",.030,.050,.140,.220,{shape:"ellipse",fillRole:"tertiary",padding:18,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("큰 제목",.195,.035,.775,.245,{fillNone:true,padding:0,emphasis:1.48,overflowAllowance:.04,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("기관 안내",.030,.305,.940,.075,{fillRole:"secondary",radius:0,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.030,.410,.525,.300,{fillRole:"paper",radius:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.585,.410,.385,.165,{fillRole:"tertiary",radius:14,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.585,.575,.385,.135,{fillRole:"secondary",radius:0,touchY:true,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("연락처",.030,.755,.940,.125,{fillRole:"tertiary",radius:0,textPreset:"hotline",textRoles:["footer"]}),
+          VRegion("주의 문구",.030,.910,.940,.055,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+        ], textSlots:[0,1,2,3,4,5,6,7]
+      },
+      {
+        id:"black-red-split", name:"검정·빨강 분할", caption:"검은 배경과 빨강 정보판을 겹치지 않게 나눈 강한 구성", portraitStyle:"stack",
+        bg:{role:"secondary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("윗 제목판",.020,.025,.960,.285,{fillRole:"paper",radius:22,acceptText:false}),
+          VRegion("속보 표식",.035,.045,.140,.220,{shape:"ellipse",fillRole:"tertiary",padding:18,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("큰 제목",.195,.040,.760,.235,{fillNone:true,padding:0,emphasis:1.45,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("기관 안내",.025,.330,.950,.060,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.025,.430,.540,.250,{fillRole:"tertiary",radius:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.590,.430,.385,.250,{fillRole:"paper",radius:18,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.025,.715,.250,.105,{fillRole:"primary",radius:14,textPreset:"badge",textRoles:["tag"]}),
+          VRegion("연락처",.305,.705,.670,.120,{fillRole:"tertiary",radius:0,textPreset:"hotlineOutline",textRoles:["footer"]}),
+          VRegion("주의 문구",.025,.875,.950,.070,{fillNone:true,padding:1,textPreset:"microCenter",textRoles:["micro"]})
+        ], textSlots:[1,2,3,4,5,6,7,8]
+      },
+      {
+        id:"soft-grid", name:"비대칭 둥근칸", caption:"둥근 사각형과 타원형을 비대칭으로 섞은 고밀도 구성", portraitStyle:"columns",
+        bg:{role:"primary"}, border:{enabled:false,width:0,radius:0},
+        regions:[
+          VRegion("속보 표식",.025,.030,.165,.175,{shape:"ellipse",fillRole:"tertiary",padding:18,textPreset:"badgeOutline",textRoles:["tag"]}),
+          VRegion("큰 제목",.215,.025,.760,.230,{fillRole:"paper",radius:24,textPreset:"hero",textRoles:["headline"]}),
+          VRegion("기관 안내",.025,.285,.950,.070,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]}),
+          VRegion("핵심 목록",.025,.390,.400,.350,{fillRole:"secondary",radius:20,textPreset:"bulletDense",textRoles:["bullet"]}),
+          VRegion("짧은 강조",.450,.390,.525,.195,{fillRole:"tertiary",radius:18,textPreset:"bodyDisplay",textRoles:["callout"]}),
+          VRegion("수치",.565,.620,.410,.120,{shape:"ellipse",fillRole:"paper",padding:18,textPreset:"badge",textRoles:["tag"]}),
+          VRegion("연락처",.025,.785,.550,.120,{fillNone:true,padding:0,textPreset:"hotline",textRoles:["footer"]}),
+          VRegion("주의 문구",.610,.805,.365,.080,{fillNone:true,padding:1,textPreset:"micro",textRoles:["micro"]})
+        ], textSlots:[0,1,2,3,4,5,6,7]
+      }
+    ];
+    templates.forEach((spec) => {
+      spec.portraitRegions = buildPortraitRegions(spec.portraitStyle);
+      spec.textSlotsPortrait = spec.portraitStyle === "stack" ? [0,2,1,3,4,5,6,7] : [0,1,2,3,4,5,6,7];
+    });
+    return templates.filter((spec) => !["yellow-alert", "compact-card"].includes(spec.id));
+  }
+
+  const V16_TEMPLATES = buildV16Templates();
+
+  function getTemplateRegionSpecs(spec) {
+    return state.orientation === "portrait" ? (spec.portraitRegions || buildPortraitRegions(spec.portraitStyle)) : spec.regions;
+  }
+
+  function templateTextSlots(spec) {
+    return state.orientation === "portrait" ? (spec.textSlotsPortrait || spec.textSlots) : spec.textSlots;
+  }
+
+  function cloneTemplateRegion(spec, W, H) {
+    const region = deepClone(spec);
+    region.id = uid();
+    region.x = Math.round(spec.x * W);
+    region.y = Math.round(spec.y * H);
+    region.w = Math.round(spec.w * W);
+    region.h = Math.round(spec.h * H);
+    const scale = Math.min(W / 1440, H / 800);
+    region.radius = Math.round((Number(spec.radius) || 0) * clamp(scale, .65, 1.5));
+    region.padding = Math.round((Number(spec.padding) || 0) * clamp(scale, .65, 1.5));
+    region.textVAlign = "center";
+    region.layoutNorm = { x:spec.x, y:spec.y, w:spec.w, h:spec.h };
+    region.layoutBase = { x:region.x, y:region.y, w:region.w, h:region.h };
+    region.layoutDetached = false;
+    region.layoutManualDelta = null;
+    region.baseRadius = Number(spec.radius) || 0;
+    region.basePadding = Number(spec.padding) || 0;
+    normalizeEffects(region);
+    return region;
+  }
+
+  function regionBaseTarget(region) {
+    const { trimW:W, trimH:H } = dimensions();
+    const norm = region.layoutNorm || {
+      x:(region.layoutBase?.x || region.x) / W,
+      y:(region.layoutBase?.y || region.y) / H,
+      w:(region.layoutBase?.w || region.w) / W,
+      h:(region.layoutBase?.h || region.h) / H
+    };
+    const margin = clamp(Number(state.pageMargin) || 0, 0, Math.min(W,H) * .20);
+    const usableW = Math.max(80, W - margin * 2);
+    const usableH = Math.max(80, H - margin * 2);
+    const baseOuter = .014;
+    const nx = (norm.x - baseOuter) / (1 - baseOuter * 2);
+    const ny = (norm.y - baseOuter) / (1 - baseOuter * 2);
+    const nw = norm.w / (1 - baseOuter * 2);
+    const nh = norm.h / (1 - baseOuter * 2);
+    let x = margin + nx * usableW;
+    let y = margin + ny * usableH;
+    let w = nw * usableW;
+    let h = nh * usableH;
+    const edgeSnap = .06;
+    if (norm.x <= edgeSnap) x = margin;
+    if (norm.y <= edgeSnap) y = margin;
+    if (norm.x + norm.w >= 1 - edgeSnap) w = W - margin - x;
+    if (norm.y + norm.h >= 1 - edgeSnap) h = H - margin - y;
+    const baseGapX = 16;
+    const baseGapY = 12;
+    const dx = Number(state.regionGapX) - baseGapX;
+    const dy = Number(state.regionGapY) - baseGapY;
+    if (!region.touchX && region.acceptText !== false) {
+      x += dx * .45;
+      w -= dx * .90;
+    }
+    if (!region.touchY && region.acceptText !== false) {
+      y += dy * .45;
+      h -= dy * .90;
+    }
+    if (region.overflowAllowance) {
+      const allowance = Math.min(W,H) * clamp(Number(region.overflowAllowance), 0, .05);
+      x -= allowance * .35;
+      w += allowance * .70;
+    }
+    return {
+      x:Math.round(x), y:Math.round(y),
+      w:Math.max(20,Math.round(w)), h:Math.max(20,Math.round(h))
+    };
+  }
+
+  function reflowRegions({ preserveManual = true, adaptText = true } = {}) {
+    state.regions.forEach((region) => {
+      const base = regionBaseTarget(region);
+      region.layoutBase = { ...base };
+      const delta = preserveManual && region.layoutDetached && region.layoutManualDelta ? region.layoutManualDelta : {x:0,y:0,w:0,h:0};
+      region.x = base.x + (Number(delta.x) || 0);
+      region.y = base.y + (Number(delta.y) || 0);
+      region.w = Math.max(20, base.w + (Number(delta.w) || 0));
+      region.h = Math.max(20, base.h + (Number(delta.h) || 0));
+      const scale = Math.min(dimensions().trimW / 1440, dimensions().trimH / 800);
+      region.radius = Math.round((Number(region.baseRadius ?? region.radius) || 0) * clamp(scale,.65,1.5));
+      region.padding = Math.round((Number(region.basePadding ?? region.padding) || 0) * clamp(scale,.65,1.5));
+      region.textVAlign = "center";
+    });
+    if (adaptText) adaptRegionsToText();
+    autoStyleAssignedTexts({ force:false, skipAdapt:true });
+  }
+
+  function adaptRegionsToText() {
+    const { trimW:W, trimH:H } = dimensions();
+    state.regions.filter((region) => region.acceptText && region.shape !== "line").forEach((region) => {
+      const texts = state.texts.filter((text) => text.regionId === region.id);
+      if (!texts.length || region.layoutDetached) return;
+      const chars = texts.reduce((sum,text) => sum + textFacts(text).compact + textFacts(text).lines.length * 4, 0);
+      const area = Math.max(1, region.w * region.h);
+      const target = area / 4100;
+      const pressure = clamp((chars - target) / Math.max(12,target), -1, 1);
+      const maxGrowX = W * .018;
+      const maxGrowY = H * .028;
+      const growX = clamp(pressure * maxGrowX, -W*.008, maxGrowX);
+      const growY = clamp(pressure * maxGrowY, -H*.010, maxGrowY);
+      if (region.overflowAllowance) {
+        region.x -= growX * .35;
+        region.w += growX * .70;
+      } else {
+        region.y -= growY * .34;
+        region.h += growY * .68;
+      }
+      const margin = Math.max(0, Number(state.pageMargin) || 0);
+      region.x = clamp(region.x, -W*.05, W - margin - 20);
+      region.y = clamp(region.y, -H*.05, H - margin - 20);
+      region.w = clamp(region.w, 20, W * 1.05 - region.x);
+      region.h = clamp(region.h, 20, H * 1.05 - region.y);
+    });
+  }
+
+  function captureRegionManualDelta(region) {
+    if (!region) return;
+    const base = region.layoutBase || regionBaseTarget(region);
+    region.layoutManualDelta = {
+      x:(Number(region.x)||0)-base.x,
+      y:(Number(region.y)||0)-base.y,
+      w:(Number(region.w)||20)-base.w,
+      h:(Number(region.h)||20)-base.h
+    };
+    region.layoutDetached = true;
+  }
+
+  function restoreRegionLayout(region) {
+    if (!region) return;
+    region.layoutDetached = false;
+    region.layoutManualDelta = null;
+    const target = regionBaseTarget(region);
+    Object.assign(region, target, { layoutBase:{...target} });
+    adaptRegionsToText();
+  }
+
+  function applyRegionGapReduction({ force = false } = {}) {
+    if (force) state.regions.forEach((region) => { region.layoutDetached = false; region.layoutManualDelta = null; });
+    reflowRegions({ preserveManual:!force });
+  }
+
+  function regionGapLabel() {
+    return `${Math.round(Number(state.regionGapX)||0)} / ${Math.round(Number(state.regionGapY)||0)}px`;
+  }
+
+  function assignTextsToTemplate(spec, { restyle = false, preferSlots = true } = {}) {
+    const regions = state.regions.filter((region) => region.acceptText && region.shape !== "line");
+    const occupancy = new Map(regions.map((region) => [region.id, 0]));
+    const slots = templateTextSlots(spec) || [];
+    const overflow = [];
+    state.texts.forEach((text,index) => {
+      text.role = inferTextRole(text,index);
+      text.autoRole = text.role;
+      text.regionLocked = false;
+      text.manualX = null;
+      text.manualY = null;
+      text.manualScale = 1;
+      const slot = preferSlots ? slots[index] : null;
+      const region = Number.isInteger(slot) ? state.regions[slot] : null;
+      if (region?.acceptText && region.shape !== "line") {
+        text.regionId = region.id;
+        text.order = occupancy.get(region.id) || 0;
+        occupancy.set(region.id,text.order+1);
+      } else overflow.push({text,index,role:text.role,facts:textFacts(text)});
+    });
+    overflow.forEach(({text,role,facts}) => {
+      let best = regions[0], score = -Infinity;
+      regions.forEach((region) => {
+        const candidate = regionTextScore(region,role,facts,occupancy.get(region.id)||0);
+        if (candidate > score) { best=region; score=candidate; }
+      });
+      if (!best) return;
+      text.regionId = best.id;
+      text.order = occupancy.get(best.id)||0;
+      occupancy.set(best.id,text.order+1);
+    });
+    normalizeTextOrders();
+    adaptRegionsToText();
+    autoStyleAssignedTexts({ force:restyle, skipAdapt:true });
+  }
+
+  function makeDefaultOtterTexts() {
+    const sample = (copy, role, extra = {}) => makeText(copy, {
+      ...ROLE_STYLE_DEFAULTS[role], role, roleHint:role, sample:true, unicodeStyle:"none", fontFamily:"pretendard", ...extra
+    });
+    return [
+      sample("속보", "tag"),
+      sample(`수달이 돌 하나 주웠다고\n지구가 잠깐 귀여워짐`, "headline"),
+      sample("★국가수달과몰입대책본부 발표｜심장 단속 실패｜조개 비축 권고★", "micro"),
+      sample(`•배 위 조개 개봉 완료\n•물 위 눕방·먹방 동시 진행\n•앞발 두 개로 전국민 심장 관리\n•반박 시 수달 영상 48개 제출`, "bullet"),
+      sample(`무직인데\n귀여움으로 매일 야근`, "callout"),
+      sample(`입덕률\n100.4%`, "tag"),
+      sample("☎ 수달 제보 02)770-수달수달 ☎", "footer"),
+      sample("※주의: 한 번 보면 친구에게 보내고 다시 보게 됨·조약돌 수집 충동 동반", "micro")
+    ];
+  }
+
+  function applyTemplate(templateId, { preserveTexts = true } = {}) {
+    ensureStateCompatibility();
+    const spec = templateSpecs.find((template) => template.id === templateId) || templateSpecs[0];
+    const { trimW:W, trimH:H } = dimensions();
+    state.templateId = spec.id;
+    const bgColor = paletteColor(spec.bg?.role || "primary",state.palette);
+    state.background = { mode:"solid", c1:bgColor, c2:bgColor, pattern:"none", patternColor:paletteColor("tertiary",state.palette), angle:0, scale:48 };
+    state.regions = getTemplateRegionSpecs(spec).map((region) => cloneTemplateRegion(region,W,H));
+    state.posterBorder = spec.border ? {
+      enabled:Boolean(spec.border.enabled), color:spec.border.color || paletteColor("ink",state.palette), width:Number(spec.border.width)||0, radius:Number(spec.border.radius)||0
+    } : { enabled:false,color:paletteColor("ink",state.palette),width:0,radius:0 };
+    state.selectedRegionId = null;
+    state.selectedElementId = null;
+    transformTarget = null;
+    const resetTexts = !preserveTexts || !state.texts.length;
+    if (resetTexts) state.texts = makeDefaultOtterTexts();
+    reflowRegions({ preserveManual:false, adaptText:false });
+    assignTextsToTemplate(spec,{restyle:resetTexts,preferSlots:true});
+    if (!state.texts.some((text) => text.id === state.selectedTextId)) state.selectedTextId = resetTexts ? null : state.texts[0]?.id || null;
+    refreshAllUI();
+    updatePreviewZoom();
+    queueRender();
+  }
+
+  function prepareV16() {
+    templateSpecs.splice(0,templateSpecs.length,...V16_TEMPLATES);
+    Object.values(ROLE_STYLE_DEFAULTS).forEach((style) => {
+      style.fontFamily = "pretendard";
+      style.fontWeight = style.bold ? 760 : 520;
+      style.effects = style.effect && style.effect !== "none" ? [style.effect] : [];
+    });
+    Object.values(REGION_TEXT_PRESETS).forEach((style) => {
+      style.fontFamily = "pretendard";
+      style.fontWeight = style.bold ? 760 : 520;
+    });
+    Object.assign(STATIC_NUMERIC_SPECS, {
+      artboardWidthMm:{min:50,max:420,step:.5,reset:()=>globalNumericDefaults.artboardWidthMm},
+      artboardHeightMm:{min:50,max:420,step:.5,reset:()=>globalNumericDefaults.artboardHeightMm},
+      pageMargin:{min:0,max:120,step:1,reset:()=>globalNumericDefaults.pageMargin},
+      regionGapX:{min:0,max:100,step:1,reset:()=>globalNumericDefaults.regionGapX},
+      regionGapY:{min:0,max:100,step:1,reset:()=>globalNumericDefaults.regionGapY},
+      palettePaperMix:{min:0,max:96,step:1,reset:()=>globalNumericDefaults.palettePaperMix}
+    });
+    ensureStateCompatibility();
+    document.body.dataset.theme = state.theme;
+  }
+
+  function applyRoleStyle(text, role) {
+    const keep = {
+      unicodeStyle:text.unicodeStyle,
+      customUnicode:text.customUnicode,
+      prefixEnabled:text.prefixEnabled,
+      prefixSymbol:text.prefixSymbol,
+      prefixGap:text.prefixGap,
+      rangeColors:text.rangeColors || [],
+      rangeBackgrounds:text.rangeBackgrounds || [],
+      fontWeight:text.fontWeight,
+      manualScale:text.manualScale || 1
+    };
+    Object.assign(text,ROLE_STYLE_DEFAULTS[role] || ROLE_STYLE_DEFAULTS.body,keep);
+    normalizeEffects(text);
+  }
+
+  function applyRegionAutoTextStyle(text, role, region) {
+    const style = regionAutoTextStyle(region,role);
+    text.autoFontCap = null;
+    text.autoFontScale = 1;
+    text.autoGapScale = 1;
+    if (!style) return null;
+    const special = new Set(["fontCap","fontScale","gapScale","colorRole","effectColorRole","accentWords"]);
+    Object.entries(style).forEach(([key,value]) => {
+      if (special.has(key) || value === undefined) return;
+      if (key === "effect") {
+        text.effects = value && value !== "none" ? [value] : [];
+        text.effect = value || "none";
+      } else text[key] = value;
+    });
+    text.autoFontCap = Number(style.fontCap)||null;
+    text.autoFontScale = Number(style.fontScale)||1;
+    text.autoGapScale = Number(style.gapScale)||1;
+    if (style.colorRole) {
+      if (style.colorRole === "auto") text.colorMode = "auto";
+      else { text.colorMode="custom"; text.color=paletteColor(style.colorRole,state.palette); }
+    }
+    if (style.effectColorRole) text.effectColor = paletteColor(style.effectColorRole,state.palette);
+    normalizeEffects(text);
+    return style;
+  }
+
+  function autoDecoration(text, role, region) {
+    const facts = textFacts(text);
+    const seed = hashString(`${text.id}:${facts.raw}`);
+    const regionBg = region.fillNone ? state.background.c1 : resolveColor(region,"fill");
+    const baseColor = contrastText(regionBg);
+    const accent = bestAccentColor(regionBg,baseColor);
+    text.fontFamily = "pretendard";
+    text.fontWeight = role === "micro" ? 580 : role === "bullet" ? 690 : 790;
+    text.bold = role !== "micro";
+    text.italic = false;
+    text.underline = false;
+    text.strike = false;
+    text.colorMode = "auto";
+    text.effectColor = accent;
+    text.effects = [];
+    text.effect = "none";
+    text.prefixEnabled = false;
+    text.prefixGap = 6;
+    text.customUnicode = ["★","※","◆","☎"][seed%4];
+    text.autoFontCap = null;
+    text.autoFontScale = 1;
+    text.autoGapScale = 1;
+    text.manualScale = 1;
+
+    if (role === "headline") {
+      text.align = "left";
+      text.lineHeight = facts.lines.length > 1 ? .86 : .82;
+      text.scaleX = facts.compact < 20 ? 1.06 : .91;
+      text.letterSpacing = facts.compact < 20 ? -2 : -5;
+      text.unicodeStyle = "none";
+      if (facts.compact <= 10 && seed%2===0) text.effects=["shadow"];
+      text.outlineWidth = facts.compact <= 10 ? 4 : 0;
+      text.fontWeight = 840;
+    } else if (role === "callout") {
+      text.align = region.w / Math.max(1,region.h) > 3.6 ? "left" : "center";
+      text.lineHeight = .88;
+      text.scaleX = facts.compact <= 12 ? 1.09 : .95;
+      text.letterSpacing = facts.compact <= 12 ? -1 : -3;
+      text.unicodeStyle = facts.compact <= 10 && seed%3===0 ? "wrapQuote" : "none";
+      text.effects = facts.compact <= 12 ? (seed%2 ? ["outline"] : ["shadow","outline"]) : [];
+      text.outlineWidth = facts.compact <= 12 ? 3 : 0;
+      text.fontWeight = 820;
+    } else if (role === "tag") {
+      text.align = "center";
+      text.lineHeight = .82;
+      text.scaleX = facts.compact <= 6 ? 1.12 : .98;
+      text.letterSpacing = -1;
+      text.unicodeStyle = "none";
+      text.effects = facts.compact <= 8 ? ["outline"] : [];
+      text.outlineWidth = facts.compact <= 8 ? 2 : 0;
+      text.fontWeight = 860;
+    } else if (role === "bullet") {
+      text.align = "left";
+      text.lineHeight = .94;
+      text.scaleX = .95;
+      text.letterSpacing = -2;
+      text.unicodeStyle = "none";
+      text.prefixEnabled = !facts.hasBullet;
+      text.prefixSymbol = ["•","■","★","♥"][seed%4];
+      text.outlineWidth = 0;
+      text.fontWeight = 720;
+    } else if (role === "footer") {
+      text.align = "center";
+      text.lineHeight = .84;
+      text.scaleX = .91;
+      text.letterSpacing = -3;
+      text.unicodeStyle = /☎|☏|✆/.test(facts.raw) ? "none" : "wrapPhone";
+      text.outlineWidth = 0;
+      text.fontWeight = 810;
+    } else if (role === "micro") {
+      text.align = region.w/Math.max(1,region.h)>3.7 ? "center" : "left";
+      text.lineHeight = 1.00;
+      text.scaleX = .90;
+      text.letterSpacing = -1;
+      text.unicodeStyle = "none";
+      text.outlineWidth = 0;
+      text.fontWeight = 570;
+    } else {
+      text.align = "left";
+      text.lineHeight = facts.lines.length >= 3 ? .98 : .94;
+      text.scaleX = .94;
+      text.letterSpacing = -2;
+      text.unicodeStyle = "none";
+      text.outlineWidth = 0;
+      text.fontWeight = 690;
+    }
+
+    const regionStyle = applyRegionAutoTextStyle(text,role,region);
+    text.rangeColors = [];
+    const accentWords = regionStyle ? (regionStyle.accentWords ?? ["hero","heroShadow","heroOutline"].includes(region.textPreset)) : true;
+    if (accentWords) setAutomaticAccentRanges(text,role,region,baseColor);
+    normalizeEffects(text);
+  }
+
+  function fitTextFontSize(c, text, box, targetHeight, role, emphasis = 1) {
+    const caps = { headline:260, callout:190, tag:150, bullet:110, footer:185, body:126, micro:56 };
+    const facts = textFacts(text);
+    const shortBoost = facts.compact <= 8 ? 1.34 : facts.compact <= 18 ? 1.16 : 1;
+    const cap = Number(text.autoFontCap)||caps[role]||116;
+    const styleScale = clamp(Number(text.autoFontScale)||1,.55,1.9);
+    let low=11;
+    let high=Math.max(18,Math.min(cap,box.h*.99,box.w*.62)*clamp(emphasis,.68,1.72)*styleScale*shortBoost);
+    const fits = (size) => {
+      const scaled = size * clamp(Number(text.manualScale)||1,.35,3);
+      const lines = layoutTextLines(c,text,scaled,box.w);
+      const height = Math.max(scaled*text.lineHeight,lines.length*scaled*text.lineHeight);
+      const widest = Math.max(1,...lines.map((line)=>line.width*text.scaleX));
+      return height <= targetHeight+1 && widest <= box.w+1;
+    };
+    for(let i=0;i<14;i++){
+      const mid=(low+high)/2;
+      if(fits(mid))low=mid;else high=mid;
+    }
+    return Math.max(11,Math.floor(low));
+  }
+
+  function autoStyleAssignedTexts({ force = false, skipAdapt = false } = {}) {
+    if (!skipAdapt) adaptRegionsToText();
+    const groups = new Map();
+    state.texts.forEach((text,index) => {
+      text.autoRole = inferTextRole(text,index);
+      text.role = text.autoRole;
+      if (!groups.has(text.regionId)) groups.set(text.regionId,[]);
+      groups.get(text.regionId).push(text);
+    });
+    groups.forEach((texts,regionId) => {
+      const region=state.regions.find((item)=>item.id===regionId);
+      if(!region)return;
+      region.textVAlign="center";
+      const box=regionContentBox(region);
+      const styled=texts.filter((text)=>force||text.styleMode!=="manual");
+      if(!styled.length)return;
+      const weights=styled.map((text)=>{
+        const facts=textFacts(text),role=text.autoRole||"body";
+        const factor={headline:1.62,callout:1.20,tag:.80,bullet:1.04,footer:.95,body:1.08,micro:.55}[role]||1;
+        const shortBoost=facts.compact<=12?1.55:facts.compact<=26?1.22:1;
+        return clamp(Math.sqrt(facts.compact+8)*factor*shortBoost,2.4,18);
+      });
+      const total=weights.reduce((sum,value)=>sum+value,0)||1;
+      const gapBudget=Math.max(0,styled.length-1)*3;
+      styled.forEach((text,index)=>{
+        const role=text.autoRole||"body";
+        autoDecoration(text,role,region);
+        const targetHeight=styled.length===1?box.h:Math.max(32,(box.h-gapBudget)*weights[index]/total);
+        const facts=textFacts(text);
+        const emphasis=(Number(region.emphasis)||1)*(facts.compact<=14?1.22:1);
+        text.fontSize=fitTextFontSize(sceneCtx,text,box,targetHeight,role,emphasis);
+        text.gap=Math.round(clamp(text.fontSize*.038*(Number(text.autoGapScale)||1),0,7));
+      });
+    });
+  }
+
+  function autoArrangeTexts({ reassign = true, forceStyle = false, announce = false } = {}) {
+    const regions=state.regions.filter((region)=>region.acceptText&&region.shape!=="line");
+    if(!regions.length)return;
+    if(reassign){
+      const validIds=new Set(regions.map((region)=>region.id));
+      const occupancy=new Map(regions.map((region)=>[region.id,0]));
+      const locked=state.texts.filter((text)=>text.regionLocked&&validIds.has(text.regionId));
+      locked.forEach((text)=>{text.order=occupancy.get(text.regionId)||0;occupancy.set(text.regionId,text.order+1);});
+      const ranked=state.texts.filter((text)=>!locked.includes(text)).map((text,index)=>{
+        const role=inferTextRole(text,state.texts.indexOf(text));
+        const facts=textFacts(text);
+        const priority=({headline:210,footer:180,bullet:150,callout:140,tag:130,body:120,micro:85}[role]||100)+Math.min(facts.compact,60);
+        return {text,index,role,facts,priority};
+      }).sort((a,b)=>b.priority-a.priority);
+      ranked.forEach(({text,role,facts})=>{
+        let best=regions[0],bestScore=-Infinity;
+        regions.forEach((region)=>{
+          const score=regionTextScore(region,role,facts,occupancy.get(region.id)||0);
+          if(score>bestScore){best=region;bestScore=score;}
+        });
+        text.regionId=best.id;
+        text.order=occupancy.get(best.id)||0;
+        text.manualX=null;text.manualY=null;text.manualScale=1;text.autoRole=role;
+        occupancy.set(best.id,text.order+1);
+      });
+      normalizeTextOrders();
+    }
+    adaptRegionsToText();
+    autoStyleAssignedTexts({force:forceStyle,skipAdapt:true});
+    if(announce)toast("문장 길이·줄바꿈·영역 밀도를 다시 계산했습니다.");
+  }
+
+  function effectLabel(value) {
+    const values = Array.isArray(value) ? value : (value && value !== "none" ? [value] : []);
+    if (!values.length) return "효과 없음";
+    const labels={outline:"외곽선",shadow:"평면 그림자",hollow:"빈 그림자",extrude:"단색 입체"};
+    return values.map((item)=>labels[item]||item).join(" + ");
+  }
+
+  function bestTextColorForEffects(background,text) {
+    const candidates=[];
+    if(state.palette.useBlack!==false)candidates.push("#111111");
+    if(state.palette.useWhite!==false)candidates.push("#ffffff");
+    if(!candidates.length)candidates.push(contrastText(background));
+    const surfaces=[background];
+    if(activeEffects(text).length&&text.effectColor)surfaces.push(text.effectColor);
+    return candidates.map((color)=>({
+      color,
+      score:Math.min(...surfaces.map((surface)=>contrastRatio(color,surface)))
+    })).sort((a,b)=>b.score-a.score)[0]?.color||contrastText(background);
+  }
+
+  function heartPath(c,x,y,w,h){
+    const top=y+h*.18;
+    c.beginPath();
+    c.moveTo(x+w*.50,y+h*.92);
+    c.bezierCurveTo(x+w*.43,y+h*.82,x+w*.08,y+h*.62,x+w*.08,y+h*.34);
+    c.bezierCurveTo(x+w*.08,y+h*.14,x+w*.31,y+h*.07,x+w*.50,y+h*.27);
+    c.bezierCurveTo(x+w*.69,y+h*.07,x+w*.92,y+h*.14,x+w*.92,y+h*.34);
+    c.bezierCurveTo(x+w*.92,y+h*.62,x+w*.57,y+h*.82,x+w*.50,y+h*.92);
+    c.closePath();
+  }
+
+  function trianglePath(c,x,y,w,h){
+    c.beginPath();
+    c.moveTo(x+w*.5,y+h*.06);
+    c.lineTo(x+w*.95,y+h*.92);
+    c.lineTo(x+w*.05,y+h*.92);
+    c.closePath();
+  }
+
+  function cloudPath(c,x,y,w,h){
+    const cx=x+w*.5, base=y+h*.78;
+    c.beginPath();
+    c.moveTo(x+w*.15,base);
+    c.bezierCurveTo(x+w*.02,base,x+w*.02,y+h*.53,x+w*.18,y+h*.49);
+    c.bezierCurveTo(x+w*.17,y+h*.28,x+w*.39,y+h*.18,x+w*.53,y+h*.32);
+    c.bezierCurveTo(x+w*.68,y+h*.12,x+w*.91,y+h*.25,x+w*.86,y+h*.49);
+    c.bezierCurveTo(x+w*.99,y+h*.55,x+w*.96,base,x+w*.82,base);
+    c.closePath();
+  }
+
+  function shapePath(c,item){
+    if(item.shape==="ellipse"||item.type==="circle"){
+      c.beginPath();c.ellipse(item.x+item.w/2,item.y+item.h/2,item.w/2,item.h/2,0,0,Math.PI*2);
+    }else if(item.shape==="burst"||item.type==="burst")burstPath(c,item.x,item.y,item.w,item.h);
+    else if(item.type==="heart")heartPath(c,item.x,item.y,item.w,item.h);
+    else if(item.type==="triangle")trianglePath(c,item.x,item.y,item.w,item.h);
+    else if(item.type==="cloud")cloudPath(c,item.x,item.y,item.w,item.h);
+    else roundedRectPath(c,item.x,item.y,item.w,item.h,item.radius||0);
+  }
+
+  function drawShapeEffectLayers(c,item){
+    const effects=activeEffects(item);
+    const size=clamp(Number(item.effectSize)||0,0,100);
+    const color=resolveColor(item,"effectColor")||item.effectColor||"#111111";
+    c.shadowColor="transparent";c.shadowBlur=0;c.shadowOffsetX=0;c.shadowOffsetY=0;
+    if(effects.includes("extrude")){
+      const depth=clamp(size||14,2,70),step=depth>34?2:1;
+      for(let offset=depth;offset>=1;offset-=step){
+        c.save();c.translate(offset*.58,offset*.58);shapePath(c,item);c.fillStyle=color;c.fill();c.restore();
+      }
+    }
+    if(effects.includes("shadow")){
+      const offset=Math.max(2,size*.55);
+      c.save();c.translate(offset,offset);shapePath(c,item);
+      if(item.fillNone){c.strokeStyle=color;c.lineWidth=Math.max(3,size*.28||3);c.stroke();}
+      else{c.fillStyle=color;c.fill();}
+      c.restore();
+    }
+    if(effects.includes("hollow")){
+      const offset=Math.max(2,size*.45);
+      c.save();c.translate(offset,offset);shapePath(c,item);c.strokeStyle=color;c.lineWidth=Math.max(3,size*.28||3);c.stroke();c.restore();
+    }
+  }
+
+  function drawRegion(c,region){
+    normalizeEffects(region);
+    withItemTransform(c,region,()=>{
+      c.save();
+      drawShapeEffectLayers(c,region);
+      if(region.shape==="line"){
+        if(!region.fillNone){c.fillStyle=resolveColor(region,"fill");roundedRectPath(c,region.x,region.y,region.w,Math.max(2,region.h),region.radius);c.fill();}
+      }else{
+        shapePath(c,region);
+        if(!region.fillNone){c.fillStyle=resolveColor(region,"fill");c.fill();}
+        if(!region.strokeNone&&region.strokeWidth>0){shapePath(c,region);c.strokeStyle=resolveColor(region,"stroke");c.lineWidth=region.strokeWidth;c.stroke();}
+      }
+      c.restore();
+    });
+  }
+
+  const imageLayerCache = new Map();
+
+  function elementGeometry(element){
+    if(!element)return null;
+    let item=element;
+    if(element.type==="band"){
+      const {trimW}=dimensions();
+      if((element.bandScope||"canvas")==="region"){
+        const region=state.regions.find((candidate)=>candidate.id===element.bandRegionId&&candidate.acceptText)||state.regions.find((candidate)=>candidate.acceptText&&candidate.shape!=="line");
+        if(region){
+          const position=clamp(Number(element.bandPosition)||.5,0,1);
+          item={...element,x:region.x,y:region.y+region.h*position-element.h/2,w:region.w,h:element.h,bandClipRegion:region};
+        }else item={...element,x:0,w:trimW};
+      }else item={...element,x:0,w:trimW,y:element.y,h:element.h};
+    }else item={...element};
+    const explicitClip=state.regions.find((region)=>region.id===element.clipRegionId);
+    item.clipRegion=explicitClip||item.bandClipRegion||null;
+    return item;
+  }
+
+  function imageDrawRect(img,item){
+    const ir=img.naturalWidth/img.naturalHeight,er=item.w/item.h;
+    let dw,dh,dx,dy;
+    if((item.imageFit||"cover")==="contain"){
+      if(ir>er){dw=item.w;dh=dw/ir;dx=0;dy=(item.h-dh)/2;}
+      else{dh=item.h;dw=dh*ir;dy=0;dx=(item.w-dw)/2;}
+    }else{
+      if(ir>er){dh=item.h;dw=dh*ir;dy=0;dx=(item.w-dw)/2;}
+      else{dw=item.w;dh=dw/ir;dx=0;dy=(item.h-dh)/2;}
+    }
+    return {dx,dy,dw,dh};
+  }
+
+  function getImageLayer(item){
+    const img=getImage(item.imageSrc);
+    if(!img?.complete||!img.naturalWidth)return null;
+    const w=Math.max(1,Math.round(item.w)),h=Math.max(1,Math.round(item.h));
+    const key=`${item.imageSrc}|${w}|${h}|${item.imageFit||"cover"}`;
+    if(imageLayerCache.has(key))return imageLayerCache.get(key);
+    const layer=document.createElement("canvas");layer.width=w;layer.height=h;
+    const lc=layer.getContext("2d");
+    const rect=imageDrawRect(img,{...item,w,h});
+    lc.drawImage(img,rect.dx,rect.dy,rect.dw,rect.dh);
+    imageLayerCache.set(key,layer);
+    if(imageLayerCache.size>24)imageLayerCache.delete(imageLayerCache.keys().next().value);
+    return layer;
+  }
+
+  function tintedAlphaLayer(source,color){
+    const layer=document.createElement("canvas");layer.width=source.width;layer.height=source.height;
+    const lc=layer.getContext("2d");
+    lc.drawImage(source,0,0);
+    lc.globalCompositeOperation="source-in";
+    lc.fillStyle=color;lc.fillRect(0,0,layer.width,layer.height);
+    return layer;
+  }
+
+  async function trimTransparentDataUrl(src){
+    const img=await new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=reject;image.src=src;});
+    const canvas=document.createElement("canvas");canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+    const c=canvas.getContext("2d",{willReadFrequently:true});c.drawImage(img,0,0);
+    const data=c.getImageData(0,0,canvas.width,canvas.height).data;
+    let minX=canvas.width,minY=canvas.height,maxX=-1,maxY=-1;
+    for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++){
+      if(data[(y*canvas.width+x)*4+3]>2){if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;}
+    }
+    if(maxX<minX||maxY<minY)return {src,width:img.naturalWidth,height:img.naturalHeight,trimmed:false};
+    const w=maxX-minX+1,h=maxY-minY+1;
+    if(w===canvas.width&&h===canvas.height)return {src,width:w,height:h,trimmed:false};
+    const out=document.createElement("canvas");out.width=w;out.height=h;
+    out.getContext("2d").drawImage(canvas,minX,minY,w,h,0,0,w,h);
+    return {src:out.toDataURL("image/png"),width:w,height:h,trimmed:true};
+  }
+
+  function drawImageEffects(c,item,layer){
+    const effects=activeEffects(item),size=clamp(Number(item.effectSize)||0,0,100);
+    if(!effects.length)return;
+    const color=item.effectColor||"#111111";
+    const tint=tintedAlphaLayer(layer,color);
+    if(effects.includes("extrude")){
+      const depth=clamp(size||14,2,70),step=depth>34?2:1;
+      for(let offset=depth;offset>=1;offset-=step)c.drawImage(tint,item.x+offset*.58,item.y+offset*.58,item.w,item.h);
+    }
+    if(effects.includes("shadow")){
+      const offset=Math.max(2,size*.55);c.drawImage(tint,item.x+offset,item.y+offset,item.w,item.h);
+    }
+    if(effects.includes("hollow")){
+      const off=document.createElement("canvas");off.width=layer.width;off.height=layer.height;
+      const oc=off.getContext("2d");
+      oc.drawImage(tint,0,0);
+      oc.globalCompositeOperation="destination-out";oc.drawImage(layer,0,0);
+      const offset=Math.max(2,size*.45);c.drawImage(off,item.x+offset,item.y+offset,item.w,item.h);
+    }
+  }
+
+  function drawElement(c,element){
+    normalizeEffects(element);
+    const item=elementGeometry(element);
+    if(!item)return;
+    c.save();
+    if(item.clipRegion)clipItemPath(c,item.clipRegion);
+    withItemTransform(c,item,()=>{
+      c.save();c.shadowColor="transparent";c.shadowBlur=0;
+      if(item.type==="image"){
+        const layer=getImageLayer(item);
+        if(layer){
+          drawImageEffects(c,item,layer);
+          c.save();shapePath(c,item);c.clip();
+          if(!item.fillNone){c.fillStyle=item.fill;c.fillRect(item.x,item.y,item.w,item.h);}
+          c.drawImage(layer,item.x,item.y,item.w,item.h);c.restore();
+        }else if(!item.fillNone){shapePath(c,item);c.fillStyle=item.fill;c.fill();}
+        if(!item.strokeNone&&item.strokeWidth>0){shapePath(c,item);c.strokeStyle=item.stroke;c.lineWidth=item.strokeWidth;c.stroke();}
+      }else{
+        drawShapeEffectLayers(c,item);
+        shapePath(c,item);
+        if(!item.fillNone){c.fillStyle=item.fill;c.fill();}
+        if(!item.strokeNone&&item.strokeWidth>0){shapePath(c,item);c.strokeStyle=item.stroke;c.lineWidth=item.strokeWidth;c.stroke();}
+      }
+      if(item.label){
+        c.fillStyle=item.labelColor||"#111111";
+        c.font=`${Math.max(600,item.labelWeight||760)} ${item.labelSize||64}px ${fontFamilies.pretendard}`;
+        c.textAlign="center";c.textBaseline="middle";
+        const maxW=item.w*.82,measured=c.measureText(item.label).width,sx=Math.min(1,maxW/Math.max(1,measured));
+        c.save();c.translate(item.x+item.w/2,item.y+item.h/2);c.scale(sx,1);c.fillText(item.label,0,0);c.restore();
+      }
+      c.restore();
+    });
+    c.restore();
+  }
+
+  function setTextFont(c,text,fontSize){
+    const weight=text.fontFamily==="pretendard" ? clamp(Number(text.fontWeight)||(text.bold?760:520),100,900) : (text.bold?700:500);
+    c.font=`${text.italic?"italic ":""}${weight} ${fontSize}px ${fontFamilies[text.fontFamily]||fontFamilies.pretendard}`;
+  }
+
+  function regionContentBox(region){
+    let pad=Math.max(0,Number(region.padding)||0);
+    if(region.shape==="ellipse")pad+=Math.min(region.w,region.h)*.095;
+    if(region.shape==="burst")pad+=Math.min(region.w,region.h)*.135;
+    return {x:region.x+pad,y:region.y+pad,w:Math.max(10,region.w-pad*2),h:Math.max(10,region.h-pad*2)};
+  }
+
+  function obstacleRects(){
+    return state.elements.filter((element)=>element.affectFlow).map((element)=>{
+      const item=elementGeometry(element),margin=Number(element.flowMargin)||0;
+      return {x:item.x-margin,y:item.y-margin,w:item.w+margin*2,h:item.h+margin*2,id:element.id};
+    }).filter((rect)=>rect.w>0&&rect.h>0);
+  }
+
+  function buildLayout(c){
+    const fragments=[],obstacles=obstacleRects();let overflow=false;
+    state.regions.filter((region)=>region.acceptText&&region.shape!=="line").forEach((region)=>{
+      region.textVAlign="center";
+      const box=regionContentBox(region);
+      const texts=state.texts.filter((text)=>text.regionId===region.id).sort((a,b)=>a.order-b.order);
+      if(!texts.length)return;
+      let commonScale=1,estimated=[];
+      for(let pass=0;pass<5;pass++){
+        estimated=texts.map((text)=>{
+          const fontSize=Math.max(10,text.fontSize*commonScale*(Number(text.manualScale)||1));
+          const lines=layoutTextLines(c,text,fontSize,box.w);
+          const lineH=fontSize*text.lineHeight;
+          return {text,fontSize,lines,lineH,h:Math.max(lineH,lines.length*lineH)};
+        });
+        const total=estimated.reduce((sum,item)=>sum+item.h+item.text.gap*commonScale,0)-texts.at(-1).gap*commonScale;
+        if(total<=box.h+1)break;
+        commonScale*=clamp(box.h/Math.max(1,total),.55,.985);
+      }
+      commonScale=Math.max(.25,commonScale);
+      estimated=texts.map((text)=>{
+        const fontSize=Math.max(10,text.fontSize*commonScale*(Number(text.manualScale)||1));
+        const lines=layoutTextLines(c,text,fontSize,box.w);
+        const lineH=fontSize*text.lineHeight;
+        return {text,fontSize,lines,lineH,h:Math.max(lineH,lines.length*lineH)};
+      });
+      const groupHeight=estimated.reduce((sum,item)=>sum+item.h+item.text.gap*commonScale,0)-texts.at(-1).gap*commonScale;
+      let cursorY=box.y+Math.max(0,(box.h-groupHeight)/2);
+      estimated.forEach((estimate)=>{
+        const {text,fontSize,lineH}=estimate;
+        let lines=estimate.lines,blockH=estimate.h,desiredW=Math.max(1,...lines.map((line)=>line.width*text.scaleX)),place;
+        if(text.manualX!=null&&text.manualY!=null){
+          const y=clamp(text.manualY,box.y,Math.max(box.y,box.y+box.h-blockH));
+          const intervals=availableIntervals(box,y,blockH,obstacles);
+          const preferred=clamp(text.manualX,box.x,box.x+box.w-20);
+          const interval=intervals.find(([a,b])=>preferred>=a&&preferred<=b)||intervals[0]||[box.x,box.x+box.w];
+          const placedX=clamp(preferred,interval[0],Math.max(interval[0],interval[1]-20));
+          const availableW=Math.max(20,interval[1]-placedX);
+          lines=layoutTextLines(c,text,fontSize,availableW);blockH=Math.max(lineH,lines.length*lineH);desiredW=Math.max(1,...lines.map((line)=>line.width*text.scaleX));
+          place={x:placedX,y:clamp(y,box.y,Math.max(box.y,box.y+box.h-blockH)),w:availableW,fit:Math.min(1,availableW/desiredW)};
+        }else{
+          place=findPlacement(box,cursorY,blockH,desiredW,obstacles);
+          lines=layoutTextLines(c,text,fontSize,place.w);blockH=Math.max(lineH,lines.length*lineH);desiredW=Math.max(1,...lines.map((line)=>line.width*text.scaleX));
+          place=findPlacement(box,place.y,blockH,desiredW,obstacles);cursorY=place.y+blockH+text.gap*commonScale;
+        }
+        if(place.y+blockH>box.y+box.h+1)overflow=true;
+        fragments.push({text,region,lines,fontSize,lineH,x:place.x,y:place.y,w:place.w,h:blockH,fit:Math.max(.50,place.fit),box});
+      });
+    });
+    return {fragments,overflow};
+  }
+
+  function lineStartX(fragment,line){
+    const sx=Math.max(.2,fragment.text.scaleX*fragment.fit),scaledW=line.width*sx;
+    if(fragment.text.align==="center")return fragment.x+(fragment.w-scaledW)/2;
+    if(fragment.text.align==="right")return fragment.x+fragment.w-scaledW;
+    return fragment.x;
+  }
+
+  function textLineRuns(c,fragment,line){
+    setTextFont(c,fragment.text,fragment.fontSize);
+    const runs=[];let pen=0;
+    for(const token of line.tokens){
+      for(const ch of token.ch){
+        const width=c.measureText(ch).width;
+        runs.push({index:token.index,ch,x:pen,w:width});
+        pen+=width+fragment.text.letterSpacing;
+      }
+    }
+    return runs;
+  }
+
+  function drawRangeBackgroundShape(c,range,box){
+    const cx=box.x+box.w/2,cy=box.y+box.h/2;
+    c.save();c.translate(cx,cy);c.rotate((Number(range.rotation)||0)*Math.PI/180);c.scale(Number(range.scaleX)||1,Number(range.scaleY)||1);c.translate(-cx,-cy);
+    const item={x:box.x,y:box.y,w:box.w,h:box.h,radius:Number(range.radius)||0,type:range.shape,shape:range.shape};
+    if(range.shape==="circle"){
+      c.beginPath();c.ellipse(cx,cy,box.w/2,box.h/2,0,0,Math.PI*2);
+    }else if(range.shape==="ellipse"){
+      c.beginPath();c.ellipse(cx,cy,box.w/2,box.h/2,0,0,Math.PI*2);
+    }else if(range.shape==="heart")heartPath(c,box.x,box.y,box.w,box.h);
+    else if(range.shape==="burst")burstPath(c,box.x,box.y,box.w,box.h,18);
+    else roundedRectPath(c,box.x,box.y,box.w,box.h,Number(range.radius)||0);
+    if(range.fill&&range.fill!=="none"){c.fillStyle=range.fill;c.fill();}
+    if(range.strokeEnabled&&range.strokeWidth>0){
+      if(range.shape==="circle"||range.shape==="ellipse"){c.beginPath();c.ellipse(cx,cy,box.w/2,box.h/2,0,0,Math.PI*2);}
+      else if(range.shape==="heart")heartPath(c,box.x,box.y,box.w,box.h);
+      else if(range.shape==="burst")burstPath(c,box.x,box.y,box.w,box.h,18);
+      else roundedRectPath(c,box.x,box.y,box.w,box.h,Number(range.radius)||0);
+      c.strokeStyle=range.stroke||"#111111";c.lineWidth=Number(range.strokeWidth)||2;c.stroke();
+    }
+    c.restore();
+  }
+
+  function drawTextRangeBackgrounds(c,fragment){
+    const text=fragment.text,ranges=text.rangeBackgrounds||[];
+    if(!ranges.length)return;
+    const sx=Math.max(.2,text.scaleX*fragment.fit);
+    fragment.lines.forEach((line,lineIndex)=>{
+      const runs=textLineRuns(c,fragment,line);
+      const baseline=fragment.y+lineIndex*fragment.lineH+fragment.fontSize*.82;
+      const startX=lineStartX(fragment,line);
+      ranges.forEach((range)=>{
+        const selected=runs.filter((run)=>run.index!=null&&run.index>=range.start&&run.index<range.end);
+        if(!selected.length)return;
+        const padX=Number(range.paddingX)||0,padY=Number(range.paddingY)||0;
+        if(range.shape==="circle"){
+          selected.forEach((run)=>{
+            const width=(run.w+padX*2)*sx,height=fragment.fontSize+padY*2;
+            const size=Math.max(width,height);
+            drawRangeBackgroundShape(c,range,{x:startX+(run.x+run.w/2)*sx-size/2,y:baseline-fragment.fontSize*.82-padY-(size-height)/2,w:size,h:size});
+          });
+        }else{
+          const first=selected[0],last=selected.at(-1);
+          const x=startX+first.x*sx-padX;
+          const width=(last.x+last.w-first.x)*sx+padX*2;
+          const height=fragment.fontSize+padY*2;
+          drawRangeBackgroundShape(c,range,{x,y:baseline-fragment.fontSize*.82-padY,w:width,h:height});
+        }
+      });
+    });
+  }
+
+  function drawTokenLine(c,fragment,line,lineIndex,baseColor){
+    const {text,fontSize,lineH}=fragment;
+    setTextFont(c,text,fontSize);
+    const sx=Math.max(.2,text.scaleX*fragment.fit),startX=lineStartX(fragment,line),y=fragment.y+lineIndex*lineH+fontSize*.82;
+    c.save();c.translate(startX,y);c.scale(sx,1);c.textAlign="left";c.textBaseline="alphabetic";
+    c.shadowColor="transparent";c.shadowBlur=0;c.shadowOffsetX=0;c.shadowOffsetY=0;
+    const drawGlyphs=(offsetX=0,offsetY=0,colorOverride=null,stroke=false,strokeWidth=0)=>{
+      let pen=0;
+      for(const token of line.tokens)for(const ch of token.ch){
+        const color=colorOverride||colorAtIndex(text,token.index,baseColor);
+        if(stroke){c.strokeStyle=color;c.lineWidth=strokeWidth;c.lineJoin="round";c.strokeText(ch,pen+offsetX,offsetY);}
+        else{c.fillStyle=color;c.fillText(ch,pen+offsetX,offsetY);}
+        pen+=c.measureText(ch).width+text.letterSpacing;
+      }
+      return Math.max(0,pen-text.letterSpacing);
+    };
+    const effects=activeEffects(text),thickness=clamp(Number(text.outlineWidth)||0,0,48),effectColor=text.effectColor||"#111111";
+    if(effects.includes("extrude")){
+      const depth=clamp(thickness||8,3,38),step=depth>24?2:1;
+      for(let offset=depth;offset>=1;offset-=step)drawGlyphs(offset*.58,offset*.58,effectColor);
+    }
+    if(effects.includes("shadow")){const offset=Math.max(2,thickness*1.35);drawGlyphs(offset,offset,effectColor);}
+    if(effects.includes("hollow")){const offset=Math.max(2,thickness*1.30);drawGlyphs(offset,offset,effectColor,true,Math.max(2,thickness));}
+    if(effects.includes("outline"))drawGlyphs(0,0,effectColor,true,Math.max(1,thickness*2));
+    const drawW=drawGlyphs();
+    c.strokeStyle=baseColor;c.lineWidth=Math.max(1,fontSize*.045);
+    if(text.underline){c.beginPath();c.moveTo(0,fontSize*.12);c.lineTo(drawW,fontSize*.12);c.stroke();}
+    if(text.strike){c.beginPath();c.moveTo(0,-fontSize*.31);c.lineTo(drawW,-fontSize*.31);c.stroke();}
+    c.restore();
+  }
+
+  function clipTextToRegion(c,region){
+    const allowance=Math.min(dimensions().trimW,dimensions().trimH)*clamp(Number(region.overflowAllowance)||0,0,.05);
+    if(allowance>0&&region.shape==="rect"){
+      roundedRectPath(c,region.x-allowance,region.y-allowance,region.w+allowance*2,region.h+allowance*2,(region.radius||0)+allowance*.25);c.clip();
+    }else clipItemPath(c,region);
+  }
+
+  function drawTexts(c,fragments){
+    fragments.forEach((fragment)=>drawTextRangeBackgrounds(c,fragment));
+    fragments.forEach((fragment)=>{
+      const bg=sampleSceneColor(fragment.x+fragment.w/2,fragment.y+fragment.h/2);
+      const base=fragment.text.colorMode==="auto"?bestTextColorForEffects(bg,fragment.text):fragment.text.color;
+      c.save();clipTextToRegion(c,fragment.region);fragment.lines.forEach((line,index)=>drawTokenLine(c,fragment,line,index,base));c.restore();
+    });
+  }
+
+  function drawGuides(c,fragments){
+    const {bleed}=dimensions();
+    c.save();c.translate(bleed,bleed);
+    state.regions.forEach((region,index)=>{
+      const selected=region.id===state.selectedRegionId,active=transformTarget?.kind==="region"&&transformTarget.id===region.id;
+      if(!state.showRegions&&!selected&&!active)return;
+      c.save();
+      if(!active){
+        c.setLineDash(selected?[12,6]:[7,6]);c.lineWidth=selected?4:2.5;c.strokeStyle=selected?"#00ff9d":"#00d8ff";
+        c.fillStyle=selected?"rgba(0,255,157,.10)":"rgba(0,216,255,.07)";
+        withItemTransform(c,region,()=>{shapePath(c,region);c.fill();shapePath(c,region);c.stroke();});
+        c.setLineDash([]);c.fillStyle="#081018";c.font=`700 20px ${fontFamilies.pretendard}`;c.textAlign="left";c.textBaseline="top";
+        const label=`${index+1} ${region.name}`;const width=c.measureText(label).width+16;
+        c.fillStyle=selected?"#00ff9d":"#00d8ff";c.fillRect(region.x+6,region.y+6,width,28);c.fillStyle="#071014";c.fillText(label,region.x+14,region.y+10);
+      }
+      if(selected&&region.acceptText){const box=regionContentBox(region);c.setLineDash([5,5]);c.strokeStyle="#ff4fd8";c.lineWidth=2;c.strokeRect(box.x,box.y,box.w,box.h);}
+      if(active)drawTransformHandles(c,region);
+      c.restore();
+    });
+    state.elements.forEach((element)=>{
+      const selected=element.id===state.selectedElementId,active=transformTarget?.kind==="element"&&transformTarget.id===element.id;
+      if(!selected&&!active)return;const item=elementGeometry(element);c.save();
+      if(!active){c.strokeStyle="#ffe600";c.lineWidth=3;c.setLineDash([12,7]);withItemTransform(c,item,()=>{shapePath(c,item);c.stroke();});}else drawTransformHandles(c,item);c.restore();
+    });
+    fragments.forEach((fragment)=>{
+      const selected=fragment.text.id===state.selectedTextId,active=transformTarget?.kind==="text"&&transformTarget.id===fragment.text.id;
+      if(!selected&&!active)return;c.save();
+      if(active)drawTextTransformHandles(c,fragment);
+      else{c.strokeStyle="#67e8a5";c.fillStyle="rgba(103,232,165,.07)";c.lineWidth=3;c.setLineDash([8,6]);c.fillRect(fragment.x,fragment.y,fragment.w,fragment.h);c.strokeRect(fragment.x,fragment.y,fragment.w,fragment.h);}
+      c.restore();
+    });
+    c.restore();
+  }
+
+  function drawTextTransformHandles(c,fragment){
+    const item={x:fragment.x,y:fragment.y,w:fragment.w,h:fragment.h,rotation:0};
+    const handles=itemHandlePoints(item);c.save();c.strokeStyle="#67e8a5";c.fillStyle="#67e8a5";c.lineWidth=4;c.setLineDash([]);c.strokeRect(item.x,item.y,item.w,item.h);
+    for(const key of ["nw","ne","se","sw"]){const p=handles[key];c.fillRect(p.x-12,p.y-12,24,24);c.strokeStyle="#071014";c.lineWidth=2;c.strokeRect(p.x-12,p.y-12,24,24);c.strokeStyle="#67e8a5";c.lineWidth=4;}
+    c.restore();
+  }
+
+  function textSettingsSection(title,description=""){
+    const alwaysOpen=title==="배치 · 글꼴";
+    const section=document.createElement(alwaysOpen?"section":"details");
+    section.className=`text-settings-section${alwaysOpen?"":" collapsible-settings"}`;
+    const head=document.createElement(alwaysOpen?"div":"summary");head.className="text-settings-section-head";
+    const strong=document.createElement("strong");strong.textContent=title;head.append(strong);
+    if(description){const small=document.createElement("small");small.textContent=description;head.append(small);}
+    section.append(head);return section;
+  }
+
+  function makeEffectToggleGroup(text,onChange){
+    const root=document.createElement("div");root.className="multi-toggle text-effect-stack";root.setAttribute("role","group");
+    [["shadow","그림자"],["hollow","빈 그림자"],["extrude","입체"],["outline","외곽선"]].forEach(([effect,label])=>{
+      const button=document.createElement("button");button.type="button";button.dataset.effect=effect;button.textContent=label;button.classList.toggle("active",hasEffect(text,effect));
+      button.addEventListener("click",()=>{toggleEffect(text,effect);button.classList.toggle("active",hasEffect(text,effect));onChange();});root.append(button);
+    });
+    return root;
+  }
+
+  function renderTextList(){
+    ensureStateCompatibility();
+    const list=$("textList");list.replaceChildren();
+    const accepting=state.regions.filter((region)=>region.acceptText&&region.shape!=="line");
+    state.texts.forEach((text,index)=>{
+      normalizeEffects(text);
+      const selected=state.selectedTextId===text.id;
+      const card=document.createElement("article");card.className=`text-card${selected?" active":""}`;card.dataset.textId=text.id;card.dataset.auto=String(text.styleMode!=="manual");
+      const head=document.createElement("div");head.className="text-card-head";
+      const grip=document.createElement("div");grip.className="drag-grip";grip.innerHTML=`<b>${String(index+1).padStart(2,"0")}</b><small>${text.styleMode==="manual"?"EDIT":"AUTO"}</small>`;
+      const textarea=document.createElement("textarea");textarea.className="text-input";textarea.value=text.text;textarea.rows=Math.max(2,Math.min(7,text.text.split("\n").length+1));
+      const selectCard=()=>{state.selectedTextId=text.id;activeTextarea=textarea;list.querySelectorAll(".text-card").forEach((node)=>node.classList.toggle("active",node.dataset.textId===text.id));queueRender();};
+      textarea.addEventListener("focus",selectCard);textarea.addEventListener("click",selectCard);textarea.addEventListener("select",()=>{activeTextarea=textarea;});
+      textarea.addEventListener("input",()=>{text.text=textarea.value;text.roleHint=null;text.sample=false;textarea.rows=Math.max(2,Math.min(7,textarea.value.split("\n").length+1));scheduleAutoArrange({reassign:!text.regionLocked,refreshControls:false});queueRender();});
+      textarea.addEventListener("blur",()=>{if(text.styleMode!=="manual"){autoArrangeTexts({reassign:!text.regionLocked,forceStyle:false});renderTextList();queueRender();}});
+      const actions=document.createElement("div");actions.className="text-card-actions";
+      [["↑","위로",()=>moveTextInList(text.id,-1)],["↓","아래로",()=>moveTextInList(text.id,1)],["×","삭제",()=>{if(state.texts.length===1)return toast("문장은 하나 이상 필요합니다.");state.texts=state.texts.filter((item)=>item.id!==text.id);state.selectedTextId=state.texts[Math.max(0,index-1)]?.id||null;autoArrangeTexts({reassign:true,forceStyle:false});renderTextList();queueRender();}]].forEach(([label,title,handler])=>{const button=document.createElement("button");button.className="small-button";button.type="button";button.textContent=label;button.title=title;button.addEventListener("click",handler);actions.append(button);});
+      head.append(grip,textarea,actions);head.addEventListener("pointerdown",(event)=>{if(event.target.closest("textarea,button,input,select"))return;selectCard();});card.append(head);
+
+      const controls=document.createElement("div");controls.className="inline-text-controls";
+      const top=document.createElement("div");top.className="text-style-heading";
+      const title=document.createElement("div");title.innerHTML='<p class="control-title">선택 문장 꾸미기</p><small>자동 배치를 유지하거나, 이 문장만 직접 조절합니다.</small>';
+      const mode=makeSegmentedControl([["auto","자동 맞춤"],["manual","직접 꾸미기"]],text.styleMode,(value)=>{
+        text.styleMode=value;
+        if(value==="auto"){textNumericDefaults.delete(text.id);text.manualScale=1;autoStyleAssignedTexts({force:false});toast("문장을 영역에 다시 맞췄습니다.");}
+        renderTextList();queueRender();
+      },"compact");top.append(title,mode);controls.append(top);
+
+      const manual=(action,{refresh=false}={})=>{
+        if(text.styleMode!=="manual")captureTextNumericDefaults(text,true);
+        markTextManual(text);action();normalizeEffects(text);card.dataset.auto="false";mode.querySelectorAll("button[data-value]").forEach((button)=>button.classList.toggle("active",button.dataset.value==="manual"));
+        if(refresh)renderTextList();queueRender();
+      };
+
+      const layoutSection=textSettingsSection("배치 · 글꼴","문장 영역과 글꼴 크기를 먼저 정합니다.");
+      const layoutGrid=document.createElement("div");layoutGrid.className="field-grid three text-control-grid";
+      const regionSelect=document.createElement("select");accepting.forEach((region)=>{const option=document.createElement("option");option.value=region.id;option.textContent=region.name;option.selected=text.regionId===region.id;regionSelect.append(option);});regionSelect.disabled=!accepting.length;
+      regionSelect.addEventListener("change",()=>{text.regionId=regionSelect.value;text.regionLocked=true;text.manualX=null;text.manualY=null;normalizeTextOrders();autoStyleAssignedTexts({force:false});queueRender();});
+      const fontSelect=makeSelect([["pretendard","프리텐다드 Variable"],["dotum","KoPub 돋움"],["batang","KoPub 바탕"],["gulim","굴림체"]],text.fontFamily);
+      fontSelect.addEventListener("change",()=>manual(()=>{text.fontFamily=fontSelect.value;if(text.fontFamily==="pretendard"&&!text.fontWeight)text.fontWeight=760;},{refresh:true}));
+      const align=makeSelect([["left","왼쪽"],["center","가운데"],["right","오른쪽"]],text.align);align.addEventListener("change",()=>manual(()=>{text.align=align.value;}));
+      layoutGrid.append(labeledControl("글자 영역",regionSelect),labeledControl("폰트",fontSelect),labeledControl("좌우 정렬",align));layoutSection.append(layoutGrid);
+      const sizeGrid=document.createElement("div");sizeGrid.className=`field-grid ${text.fontFamily==="pretendard"?"two":"one"} text-control-grid`;
+      sizeGrid.append(numericStepperControl("글자 크기",text.fontSize,12,320,1,(value)=>`${Math.round(value)}px`,(value)=>manual(()=>{text.fontSize=value;}),{defaultValue:()=>textNumericDefault(text,"fontSize",ROLE_STYLE_DEFAULTS[text.role]?.fontSize??54)}));
+      if(text.fontFamily==="pretendard")sizeGrid.append(numericStepperControl("글자 두께",text.fontWeight,100,900,10,(value)=>String(Math.round(value)),(value)=>manual(()=>{text.fontWeight=value;}),{defaultValue:()=>ROLE_STYLE_DEFAULTS[text.role]?.fontWeight??760}));
+      layoutSection.append(sizeGrid);controls.append(layoutSection);
+
+      const spacingSection=textSettingsSection("간격 · 비율","줄바꿈은 입력한 위치를 우선하고 영역 안에서 자동 줄바꿈합니다.");
+      const spacingGrid=document.createElement("div");spacingGrid.className="field-grid two text-control-grid";
+      spacingGrid.append(
+        rangeControl("줄 간격",text.lineHeight,.72,1.8,.02,(value)=>`${value.toFixed(2)}배`,(value)=>manual(()=>{text.lineHeight=value;}),{defaultValue:()=>textNumericDefault(text,"lineHeight",ROLE_STYLE_DEFAULTS[text.role]?.lineHeight??1.08)}),
+        rangeControl("글자 폭",text.scaleX*100,50,180,1,(value)=>`${Math.round(value)}%`,(value)=>manual(()=>{text.scaleX=value/100;}),{defaultValue:()=>textNumericDefault(text,"scaleX",ROLE_STYLE_DEFAULTS[text.role]?.scaleX??1)*100}),
+        rangeControl("자간",text.letterSpacing,-16,40,1,(value)=>String(Math.round(value)),(value)=>manual(()=>{text.letterSpacing=value;}),{defaultValue:()=>textNumericDefault(text,"letterSpacing",ROLE_STYLE_DEFAULTS[text.role]?.letterSpacing??0)}),
+        rangeControl("문장 아래 여백",text.gap,0,100,1,(value)=>`${Math.round(value)}px`,(value)=>manual(()=>{text.gap=value;}),{defaultValue:()=>textNumericDefault(text,"gap",ROLE_STYLE_DEFAULTS[text.role]?.gap??4)})
+      );spacingSection.append(spacingGrid);controls.append(spacingSection);
+
+      const symbolSection=textSettingsSection("기호 · 문자 장식","필요한 옵션만 켜서 사용합니다.");
+      const symbolGrid=document.createElement("div");symbolGrid.className="field-grid two text-control-grid";
+      const unicode=makeSelect(UNICODE_PRESETS,text.unicodeStyle);unicode.addEventListener("change",()=>manual(()=>{text.unicodeStyle=unicode.value;},{refresh:true}));symbolGrid.append(labeledControl("유니코드 연출",unicode));
+      const toggles=document.createElement("div");toggles.className="toggle-row compact-toggle-row";
+      [["bold","볼드"],["italic","이탤릭"],["underline","밑줄"],["strike","취소선"],["prefixEnabled","줄 앞 기호"]].forEach(([key,labelText])=>{const label=document.createElement("label");const input=document.createElement("input");input.type="checkbox";input.checked=Boolean(text[key]);input.addEventListener("change",()=>manual(()=>{text[key]=input.checked;},{refresh:key==="prefixEnabled"}));label.append(input,labelText);toggles.append(label);});symbolGrid.append(toggles);symbolSection.append(symbolGrid);
+      if(text.unicodeStyle==="custom"){
+        const row=document.createElement("div");row.className="unicode-row conditional-row";const input=document.createElement("input");input.value=text.customUnicode||"★";input.addEventListener("input",()=>manual(()=>{text.customUnicode=input.value;}));const browse=document.createElement("button");browse.type="button";browse.className="button";browse.textContent="유니코드 찾기";browse.addEventListener("click",()=>openUnicodeBrowser((char)=>{markTextManual(text);text.customUnicode=char;renderTextList();queueRender();},"선택한 문장의 단어 사이에 넣습니다."));row.append(input,browse);symbolSection.append(row);
+      }
+      if(text.prefixEnabled){
+        const row=document.createElement("div");row.className="field-grid two conditional-row";
+        const symbolWrap=document.createElement("div");symbolWrap.innerHTML='<span class="field-label">줄 앞 기호</span>';const inner=document.createElement("div");inner.className="unicode-row";const input=document.createElement("input");input.value=text.prefixSymbol||"•";input.addEventListener("input",()=>manual(()=>{text.prefixSymbol=input.value;}));const browse=document.createElement("button");browse.type="button";browse.className="button";browse.textContent="찾기";browse.addEventListener("click",()=>openUnicodeBrowser((char)=>{markTextManual(text);text.prefixSymbol=char;renderTextList();queueRender();},"각 줄 앞에 넣을 기호입니다."));inner.append(input,browse);symbolWrap.append(inner);row.append(symbolWrap,rangeControl("기호 간격",text.prefixGap,0,60,1,(value)=>`${Math.round(value)}px`,(value)=>manual(()=>{text.prefixGap=value;}),{defaultValue:()=>textNumericDefault(text,"prefixGap",8)}));symbolSection.append(row);
+      }
+      controls.append(symbolSection);
+
+      const effectSection=textSettingsSection("효과 중첩","그림자·빈 그림자·입체·외곽선을 함께 사용할 수 있습니다.");
+      if(activeEffects(text).length)effectSection.open=true;
+      const effectStack=makeEffectToggleGroup(text,()=>manual(()=>{}, {refresh:true}));effectSection.append(effectStack);
+      if(activeEffects(text).length){
+        const effectGrid=document.createElement("div");effectGrid.className="field-grid two conditional-row text-control-grid";
+        effectGrid.append(numericFieldControl("효과 두께",text.outlineWidth,0,48,1,(value)=>`${Math.round(value)}px`,(value)=>manual(()=>{text.outlineWidth=value;}),{defaultValue:()=>textNumericDefault(text,"outlineWidth",ROLE_STYLE_DEFAULTS[text.role]?.outlineWidth??3)}));
+        const effectColorHost=document.createElement("div");effectColorHost.innerHTML='<span class="field-label">효과 색</span>';makeInlineColorControl(effectColorHost,()=>text.effectColor,(value)=>manual(()=>{text.effectColor=value;}));effectGrid.append(effectColorHost);effectSection.append(effectGrid);
+        const rule=document.createElement("p");rule.className="effect-rule-note compact";rule.innerHTML="그림자는 번짐 없는 단색 복사, 입체는 그림자 없는 단색 옆면입니다. 자동 글자색은 배경과 효과색을 함께 보고 결정합니다.";effectSection.append(rule);
+      }
+      controls.append(effectSection);
+
+      const colorSection=textSettingsSection("글자 색","배경 따라를 쓰면 흰색·검은색 사용 설정과 효과색까지 함께 계산합니다.");
+      const colorGrid=document.createElement("div");colorGrid.className="field-grid three text-control-grid";
+      const colorModeWrap=document.createElement("div");colorModeWrap.className="segmented-field";colorModeWrap.innerHTML='<span class="field-label">본문 색</span>';
+      colorModeWrap.append(makeSegmentedControl([["auto","배경 따라"],["custom","직접 선택"]],text.colorMode,(value)=>manual(()=>{text.colorMode=value;},{refresh:true})));
+      colorGrid.append(colorModeWrap);
+      if(text.colorMode==="custom"){const host=document.createElement("div");host.innerHTML='<span class="field-label">직접 글자색</span>';makeInlineColorControl(host,()=>text.color,(value)=>manual(()=>{text.color=value;text.colorMode="custom";}));colorGrid.append(host);}
+      colorSection.append(colorGrid);controls.append(colorSection);
+
+      const rangeColorSection=textSettingsSection("선택 글자 색","위 문장 입력창에서 일부 글자를 드래그해 선택합니다.");
+      if((text.rangeColors||[]).length)rangeColorSection.open=true;
+      const rangeColorBox=document.createElement("div");rangeColorBox.className="range-color-controls";let selectedRangeColor="#f4e900";
+      const rangeColorHost=document.createElement("div");rangeColorHost.innerHTML='<span class="field-label">선택 부분 색</span>';makeInlineColorControl(rangeColorHost,()=>selectedRangeColor,(value)=>{selectedRangeColor=value;});
+      const applyColor=document.createElement("button");applyColor.type="button";applyColor.className="button button-accent";applyColor.textContent="선택 글자 색 적용";applyColor.addEventListener("click",()=>{const start=textarea.selectionStart,end=textarea.selectionEnd;if(start===end)return toast("먼저 문장 입력창에서 일부 글자를 선택하세요.");markTextManual(text);text.rangeColors.push({start,end,color:selectedRangeColor});renderTextList();queueRender();});rangeColorBox.append(rangeColorHost,applyColor);rangeColorSection.append(rangeColorBox);
+      const colorChips=document.createElement("div");colorChips.className="chips";(text.rangeColors||[]).forEach((range,rangeIndex)=>{const chip=document.createElement("span");chip.className="chip";chip.style.borderColor=range.color;chip.innerHTML=`${range.start+1}–${range.end} <button type="button">×</button>`;chip.querySelector("button").addEventListener("click",()=>{markTextManual(text);text.rangeColors.splice(rangeIndex,1);renderTextList();queueRender();});colorChips.append(chip);});rangeColorSection.append(colorChips);controls.append(rangeColorSection);
+
+      const bgSection=textSettingsSection("선택 글자 배경","배경 장식은 모든 영역 위, 모든 글자 아래에 그려집니다. 여러 줄은 줄마다 나뉩니다.");
+      if((text.rangeBackgrounds||[]).length)bgSection.open=true;
+      const bgDraft={shape:"rect",fill:paletteColor("primary",state.palette),strokeEnabled:false,stroke:paletteColor("ink",state.palette),strokeWidth:3,paddingX:10,paddingY:5,radius:12,scaleX:1,scaleY:1,rotation:0};
+      const bgTop=document.createElement("div");bgTop.className="field-grid three text-control-grid";
+      const shape=makeSelect([["rect","사각형"],["circle","한 글자씩 원"],["ellipse","긴 타원"],["heart","하트"],["burst","뾰족 말풍선"]],bgDraft.shape);shape.addEventListener("change",()=>{bgDraft.shape=shape.value;bgDetails.classList.toggle("shape-circle",shape.value==="circle");});
+      const fillHost=document.createElement("div");fillHost.innerHTML='<span class="field-label">채우기</span>';makeInlineColorControl(fillHost,()=>bgDraft.fill,(value)=>{bgDraft.fill=value;});
+      const strokeToggle=makeSegmentedControl([["off","선 없음"],["on","선 사용"]],"off",(value)=>{bgDraft.strokeEnabled=value==="on";strokeOptions.classList.toggle("is-hidden",!bgDraft.strokeEnabled);});
+      const strokeWrap=document.createElement("div");strokeWrap.className="segmented-field";strokeWrap.innerHTML='<span class="field-label">외곽선</span>';strokeWrap.append(strokeToggle);
+      bgTop.append(labeledControl("모양",shape),fillHost,strokeWrap);bgSection.append(bgTop);
+      const bgDetails=document.createElement("div");bgDetails.className="field-grid two conditional-row text-control-grid";
+      bgDetails.append(
+        numericFieldControl("좌우 여백",bgDraft.paddingX,0,80,1,(value)=>`${Math.round(value)}px`,(value)=>{bgDraft.paddingX=value;}),
+        numericFieldControl("상하 여백",bgDraft.paddingY,0,80,1,(value)=>`${Math.round(value)}px`,(value)=>{bgDraft.paddingY=value;}),
+        numericFieldControl("모서리 둥글기",bgDraft.radius,0,100,1,(value)=>`${Math.round(value)}px`,(value)=>{bgDraft.radius=value;}),
+        numericFieldControl("가로 크기",bgDraft.scaleX*100,40,240,1,(value)=>`${Math.round(value)}%`,(value)=>{bgDraft.scaleX=value/100;}),
+        numericFieldControl("세로 크기",bgDraft.scaleY*100,40,240,1,(value)=>`${Math.round(value)}%`,(value)=>{bgDraft.scaleY=value/100;}),
+        numericFieldControl("기울기",bgDraft.rotation,-45,45,1,(value)=>`${Math.round(value)}°`,(value)=>{bgDraft.rotation=value;})
+      );bgSection.append(bgDetails);
+      const strokeOptions=document.createElement("div");strokeOptions.className="field-grid two conditional-row text-control-grid is-hidden";
+      const strokeHost=document.createElement("div");strokeHost.innerHTML='<span class="field-label">선 색</span>';makeInlineColorControl(strokeHost,()=>bgDraft.stroke,(value)=>{bgDraft.stroke=value;});strokeOptions.append(strokeHost,numericFieldControl("선 두께",bgDraft.strokeWidth,1,24,1,(value)=>`${Math.round(value)}px`,(value)=>{bgDraft.strokeWidth=value;}));bgSection.append(strokeOptions);
+      const applyBg=document.createElement("button");applyBg.type="button";applyBg.className="button button-accent button-wide";applyBg.textContent="선택 글자에 배경 적용";applyBg.addEventListener("click",()=>{const start=textarea.selectionStart,end=textarea.selectionEnd;if(start===end)return toast("먼저 문장 입력창에서 일부 글자를 선택하세요.");markTextManual(text);text.rangeBackgrounds.push({start,end,...deepClone(bgDraft)});renderTextList();queueRender();});bgSection.append(applyBg);
+      const bgChips=document.createElement("div");bgChips.className="chips";(text.rangeBackgrounds||[]).forEach((range,rangeIndex)=>{const chip=document.createElement("span");chip.className="chip";chip.style.borderColor=range.fill;chip.innerHTML=`${range.shape} ${range.start+1}–${range.end} <button type="button">×</button>`;chip.querySelector("button").addEventListener("click",()=>{markTextManual(text);text.rangeBackgrounds.splice(rangeIndex,1);renderTextList();queueRender();});bgChips.append(chip);});bgSection.append(bgChips);controls.append(bgSection);
+
+      card.append(controls);list.append(card);
+    });
+  }
+
+  function syncEffectToggle(id,item){
+    const root=$(id);if(!root)return;
+    const effects=activeEffects(item);
+    root.querySelectorAll("button[data-effect]").forEach((button)=>button.classList.toggle("active",effects.includes(button.dataset.effect)));
+  }
+
+  function setConditionalVisible(id,visible){
+    const element=$(id);if(element)element.classList.toggle("is-hidden",!visible);
+  }
+
+  function updateRegionControls(){
+    const region=selectedRegion();
+    const controls=$("regionControls");
+    if(!controls)return;
+    controls.classList.toggle("is-disabled",!region);
+    controls.classList.toggle("transform-active",Boolean(region&&transformTarget?.kind==="region"&&transformTarget.id===region.id));
+    if(!region){
+      if($("selectedRegionName"))$("selectedRegionName").textContent="선택된 영역 없음";
+      if($("selectedRegionBadge"))$("selectedRegionBadge").textContent="미리보기에서 선택";
+      if($("toggleRegionTransformBtn"))$("toggleRegionTransformBtn").textContent="위치 편집";
+      if($("restoreRegionLayoutBtn"))$("restoreRegionLayoutBtn").disabled=true;
+      syncEffectToggle("regionEffectStack",null);
+      setConditionalVisible("regionEffectOptions",false);
+      syncStaticNumericFields(["regionX","regionY","regionW","regionH","regionRadius","regionPadding","regionStrokeWidth","regionRotation","regionEffectSize"]);
+      colorFields.forEach((field)=>field.update());
+      return;
+    }
+    ensureItemNumericDefaults("region",region);
+    normalizeEffects(region);
+    const active=transformTarget?.kind==="region"&&transformTarget.id===region.id;
+    $("selectedRegionName").textContent=region.name;
+    $("selectedRegionBadge").textContent=active?"캔버스 조작 중":(region.layoutDetached?"수동 위치":(region.acceptText?"문장 영역":"장식 영역"));
+    $("toggleRegionTransformBtn").textContent=active?"편집 닫기":"위치 편집";
+    if($("restoreRegionLayoutBtn"))$("restoreRegionLayoutBtn").disabled=!region.layoutBase;
+    const values={regionX:region.x,regionY:region.y,regionW:region.w,regionH:region.h,regionRadius:region.radius,regionPadding:region.padding,regionStrokeWidth:region.strokeWidth,regionRotation:region.rotation,regionEffectSize:region.effectSize};
+    Object.entries(values).forEach(([id,value])=>{const field=$(id);if(field)field.value=String(round(value));});
+    if($("regionShape"))$("regionShape").value=region.shape;
+    if($("regionRadiusValue"))$("regionRadiusValue").textContent=round(region.radius);
+    if($("regionPaddingValue"))$("regionPaddingValue").textContent=round(region.padding);
+    if($("regionRotationValue"))$("regionRotationValue").textContent=`${round(region.rotation)}°`;
+    syncSegmented("regionAcceptText",region.acceptText?"yes":"no");
+    syncEffectToggle("regionEffectStack",region);
+    setConditionalVisible("regionEffectOptions",activeEffects(region).length>0);
+    syncStaticNumericFields(Object.keys(values));
+    colorFields.forEach((field)=>field.update());
+  }
+
+  function updateElementControls(){
+    const element=selectedElement();
+    const controls=$("elementControls");
+    if(!controls)return;
+    controls.classList.toggle("is-disabled",!element);
+    controls.classList.toggle("transform-active",Boolean(element&&transformTarget?.kind==="element"&&transformTarget.id===element.id));
+    if(!element){
+      $("selectedElementName").textContent="선택된 요소 없음";
+      $("selectedElementBadge").textContent="미리보기에서 선택";
+      $("toggleElementTransformBtn").textContent="위치 편집";
+      $("bandControls")?.classList.add("hidden");
+      syncEffectToggle("elementEffectStack",null);
+      setConditionalVisible("elementEffectOptions",false);
+      setConditionalVisible("elementClipRegionWrap",false);
+      syncStaticNumericFields(["elementX","elementY","elementW","elementH","bandPosition","elementStrokeWidth","elementRadius","elementRotation","flowMargin","elementEffectSize","elementLabelSize"]);
+      colorFields.forEach((field)=>field.update());
+      return;
+    }
+    normalizeEffects(element);
+    ensureItemNumericDefaults("element",element);
+    const labels={rect:"사각형",band:"띠",circle:"원형",heart:"하트",burst:"뾰족 말풍선",triangle:"삼각형",cloud:"구름",image:"사진"};
+    const active=transformTarget?.kind==="element"&&transformTarget.id===element.id;
+    const geometry=elementGeometry(element);
+    $("selectedElementName").textContent=labels[element.type]||"요소";
+    $("selectedElementBadge").textContent=active?"캔버스 조작 중":(element.type==="image"?"투명 여백 제거 사진":"도형");
+    $("toggleElementTransformBtn").textContent=active?"편집 닫기":"위치 편집";
+    const values={elementX:geometry.x,elementY:geometry.y,elementW:geometry.w,elementH:geometry.h,elementStrokeWidth:element.strokeWidth,elementRadius:element.radius,elementRotation:element.rotation,flowMargin:element.flowMargin,elementEffectSize:element.effectSize,elementLabelSize:element.labelSize};
+    Object.entries(values).forEach(([id,value])=>{const field=$(id);if(field)field.value=String(round(value));});
+    const isBand=element.type==="band";
+    if($("elementX"))$("elementX").disabled=isBand;
+    if($("elementW"))$("elementW").disabled=isBand;
+    if($("elementY"))$("elementY").disabled=isBand&&element.bandScope==="region";
+    if($("elementRadiusValue"))$("elementRadiusValue").textContent=round(element.radius);
+    if($("rotationValue"))$("rotationValue").textContent=`${round(element.rotation)}°`;
+    if($("flowMarginValue"))$("flowMarginValue").textContent=round(element.flowMargin);
+    syncSegmented("affectFlow",element.affectFlow?"avoid":"overlap");
+    syncSegmented("imageFit",element.imageFit||"cover");
+    syncEffectToggle("elementEffectStack",element);
+    setConditionalVisible("elementEffectOptions",activeEffects(element).length>0);
+    if($("elementLabel"))$("elementLabel").value=element.label||"";
+    $("bandControls")?.classList.toggle("hidden",!isBand);
+    if(isBand){
+      syncSegmented("bandScope",element.bandScope||"canvas");
+      const select=$("bandRegion");
+      if(select){
+        const current=element.bandRegionId;
+        select.replaceChildren();
+        state.regions.filter((region)=>region.acceptText&&region.shape!=="line").forEach((region)=>{const option=document.createElement("option");option.value=region.id;option.textContent=region.name;option.selected=current===region.id;select.append(option);});
+        if(!element.bandRegionId||!state.regions.some((region)=>region.id===element.bandRegionId&&region.acceptText))element.bandRegionId=select.value||null;
+        select.value=element.bandRegionId||"";select.disabled=element.bandScope!=="region";
+      }
+      if($("bandPosition"))$("bandPosition").value=String(Math.round(clamp(Number(element.bandPosition)||.5,0,1)*100));
+      if($("bandPositionValue"))$("bandPositionValue").textContent=`${$("bandPosition")?.value||50}%`;
+    }
+    syncSegmented("elementClipEnabled",element.clipRegionId?"on":"off");
+    const clipSelect=$("elementClipRegion");
+    if(clipSelect){
+      clipSelect.replaceChildren();
+      state.regions.filter((region)=>region.shape!=="line").forEach((region)=>{const option=document.createElement("option");option.value=region.id;option.textContent=region.name;option.selected=region.id===element.clipRegionId;clipSelect.append(option);});
+      if(element.clipRegionId&&!state.regions.some((region)=>region.id===element.clipRegionId))element.clipRegionId=null;
+      if(element.clipRegionId)clipSelect.value=element.clipRegionId;
+    }
+    setConditionalVisible("elementClipRegionWrap",Boolean(element.clipRegionId));
+    syncStaticNumericFields(Object.keys(values).concat("bandPosition"));
+    colorFields.forEach((field)=>field.update());
+  }
+
+  function syncPaletteControls(){
+    syncSegmented("paletteSecondaryEnabled",state.palette.secondaryEnabled?"on":"off");
+    syncSegmented("paletteTertiaryEnabled",state.palette.tertiaryEnabled?"on":"off");
+    $("secondaryPaletteCard")?.classList.toggle("is-disabled",!state.palette.secondaryEnabled);
+    $("tertiaryPaletteCard")?.classList.toggle("is-disabled",!state.palette.tertiaryEnabled);
+    if($("paletteUseWhite"))$("paletteUseWhite").checked=state.palette.useWhite!==false;
+    if($("paletteUseBlack"))$("paletteUseBlack").checked=state.palette.useBlack!==false;
+    if($("palettePaperMix"))$("palettePaperMix").value=String(state.palette.paperMix);
+    if($("palettePaperMixValue"))$("palettePaperMixValue").textContent=`${round(state.palette.paperMix)}%`;
+    syncStaticNumericFields(["palettePaperMix"]);
+  }
+
+  function syncBackgroundControls(){
+    ensureStateCompatibility();
+    syncSegmented("orientation",state.orientation);
+    if($("artboardPreset"))$("artboardPreset").value=state.artboard.preset||"custom";
+    if($("artboardWidthMm"))$("artboardWidthMm").value=String(state.artboard.widthMm);
+    if($("artboardHeightMm"))$("artboardHeightMm").value=String(state.artboard.heightMm);
+    if($("bleedMm"))$("bleedMm").value=String(state.bleedMm);
+    if($("backgroundMode"))$("backgroundMode").value=state.background.mode;
+    if($("gradientAngle"))$("gradientAngle").value=String(state.background.angle);
+    if($("gradientAngleValue"))$("gradientAngleValue").textContent=`${round(state.background.angle)}°`;
+    if($("patternType"))$("patternType").value=state.background.pattern;
+    if($("patternScale"))$("patternScale").value=String(state.background.scale);
+    if($("patternScaleValue"))$("patternScaleValue").textContent=round(state.background.scale);
+    syncSegmented("posterBorderEnabled",state.posterBorder.enabled?"on":"off");
+    if($("posterBorderWidth"))$("posterBorderWidth").value=String(state.posterBorder.width);
+    if($("posterBorderWidthValue"))$("posterBorderWidthValue").textContent=round(state.posterBorder.width);
+    if($("posterBorderRadius"))$("posterBorderRadius").value=String(state.posterBorder.radius);
+    if($("posterBorderRadiusValue"))$("posterBorderRadiusValue").textContent=round(state.posterBorder.radius);
+    if($("jpgQuality"))$("jpgQuality").value=String(Math.round(state.jpgQuality*100));
+    if($("jpgQualityValue"))$("jpgQualityValue").textContent=`${Math.round(state.jpgQuality*100)}%`;
+    const gradient=state.background.mode==="gradient"||state.background.mode==="gradientPattern";
+    const pattern=state.background.mode==="pattern"||state.background.mode==="gradientPattern";
+    setConditionalVisible("gradientOptions",gradient);
+    setConditionalVisible("patternOptions",pattern);
+    syncStaticNumericFields(["artboardWidthMm","artboardHeightMm","bleedMm","gradientAngle","patternScale","posterBorderWidth","posterBorderRadius","jpgQuality"]);
+  }
+
+  function updatePreviewZoom(){
+    const stage=$("canvasStage");if(!stage||!canvas)return;
+    const padding=20;
+    let scale=clamp(Number(state.previewZoom)||1,.2,3);
+    if(state.previewFit){
+      const availableW=Math.max(120,stage.clientWidth-padding);
+      const maxH=Math.max(200,Math.min(window.innerHeight*.68,stage.clientHeight||window.innerHeight*.62)-padding);
+      scale=Math.min(1,availableW/canvas.width,maxH/canvas.height);
+      if(!Number.isFinite(scale)||scale<=0)scale=.5;
+      state.previewZoom=scale;
+    }
+    canvas.style.width=`${canvas.width*scale}px`;
+    canvas.style.height=`${canvas.height*scale}px`;
+    canvas.style.transform="none";
+    if($("zoomValue"))$("zoomValue").textContent=state.previewFit?"맞춤":`${Math.round(scale*100)}%`;
+    stage.classList.toggle("is-fit",state.previewFit);
+  }
+
+  function updateCanvasMeta(){
+    const {trimW,trimH,bleed,fullW,fullH,widthMm,heightMm}=dimensions();
+    if(canvas.width!==fullW)canvas.width=fullW;
+    if(canvas.height!==fullH)canvas.height=fullH;
+    if(sceneCanvas.width!==fullW)sceneCanvas.width=fullW;
+    if(sceneCanvas.height!==fullH)sceneCanvas.height=fullH;
+    if($("canvasSizeLabel"))$("canvasSizeLabel").textContent=`${widthMm} × ${heightMm}mm · ${trimW} × ${trimH}px${bleed?` · 재단 ${state.bleedMm}mm`:""}`;
+    if($("currentTemplateName"))$("currentTemplateName").textContent=templateSpecs.find((template)=>template.id===state.templateId)?.name||"사용자 템플릿";
+    requestAnimationFrame(updatePreviewZoom);
+  }
+
+  function drawTemplateThumbnail(target,spec){
+    const c=target.getContext("2d");
+    const portrait=state.orientation==="portrait";
+    const W=target.width=portrait?200:320;
+    const H=target.height=portrait?300:180;
+    c.clearRect(0,0,W,H);
+    const bgColor=paletteColor(spec.bg?.role||"primary",state.palette);
+    c.fillStyle=bgColor;c.fillRect(0,0,W,H);
+    const regions=getTemplateRegionSpecs(spec);
+    regions.forEach((region)=>{
+      const x=region.x*W,y=region.y*H,w=region.w*W,h=region.h*H;
+      c.beginPath();
+      if(region.shape==="ellipse")c.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);
+      else if(region.shape==="burst")burstPath(c,x,y,w,h,18);
+      else roundedRectPath(c,x,y,w,h,(region.radius||0)*Math.min(W/1440,H/800));
+      const fill=region.fillNone?bgColor:(region.fillRole?paletteColor(region.fillRole,state.palette):region.fill);
+      if(!region.fillNone){c.fillStyle=fill;c.fill();}
+      if(!region.strokeNone&&region.strokeWidth>0){c.strokeStyle=region.strokeRole?paletteColor(region.strokeRole,state.palette):region.stroke;c.lineWidth=Math.max(1,region.strokeWidth*.25);c.stroke();}
+      if(region.acceptText&&region.shape!=="line"){
+        c.save();c.beginPath();roundedRectPath(c,x,y,w,h,Math.min(5,h*.1));c.clip();
+        c.globalAlpha=.72;c.fillStyle=bestTextColorForEffects(fill,{effectColor:paletteColor("tertiary",state.palette),effects:[]});
+        const p=Math.max(3,Math.min(w,h)*.10),lineH=Math.max(2,Math.min(5,h*.055));
+        c.fillRect(x+p,y+h*.46,w*.68,lineH);
+        if(h>32)c.fillRect(x+p,y+h*.46+lineH*2,w*.45,lineH);
+        c.restore();
+      }
+    });
+  }
+
+  function renderTemplateGrid(){
+    const grid=$("templateGrid");if(!grid)return;
+    grid.replaceChildren();
+    templateSpecs.forEach((template)=>{
+      const button=document.createElement("button");button.type="button";button.className=`template-card${state.templateId===template.id?" active":""}`;
+      const thumb=document.createElement("canvas");thumb.className="template-thumb";
+      const meta=document.createElement("span");meta.className="template-meta";
+      const name=document.createElement("strong");name.textContent=template.name;
+      const {widthMm,heightMm}=dimensions();
+      const caption=document.createElement("small");caption.textContent=`${template.caption||"레이아웃"} · ${state.orientation==="portrait"?"세로":"가로"} ${widthMm}×${heightMm}mm`;
+      meta.append(name,caption);button.append(thumb,meta);drawTemplateThumbnail(thumb,template);
+      button.addEventListener("click",()=>applyTemplate(template.id,{preserveTexts:true}));grid.append(button);
+    });
+  }
+
+  function refreshAllUI(){
+    ensureStateCompatibility();
+    updateCanvasMeta();
+    if($("pageMargin"))$("pageMargin").value=String(state.pageMargin);
+    if($("pageMarginValue"))$("pageMarginValue").textContent=`${round(state.pageMargin)}px`;
+    if($("regionGapX"))$("regionGapX").value=String(state.regionGapX);
+    if($("regionGapXValue"))$("regionGapXValue").textContent=`${round(state.regionGapX)}px`;
+    if($("regionGapY"))$("regionGapY").value=String(state.regionGapY);
+    if($("regionGapYValue"))$("regionGapYValue").textContent=`${round(state.regionGapY)}px`;
+    renderTemplateGrid();renderTextList();renderRegionList();updateRegionControls();updateElementControls();syncPaletteControls();syncBackgroundControls();
+    colorFields.forEach((field)=>field.update());
+    document.body.dataset.theme=state.theme;
+    const themeButton=$("themeToggleBtn");if(themeButton){const icon=themeButton.querySelector("span:first-child"),label=themeButton.querySelector("span:last-child");if(icon)icon.textContent=state.theme==="light"?"☀":"☾";if(label)label.textContent=state.theme==="light"?"라이트":"다크";}
+    if($("showRegions"))$("showRegions").checked=Boolean(state.showRegions);
+    syncStaticNumericFields(["pageMargin","regionGapX","regionGapY","palettePaperMix"]);
+  }
+
+  function bindValue(id,getter,setter,event="input",after=null){
+    const element=$(id);if(!element)return;
+    element.addEventListener(event,()=>{
+      const raw=element.type==="number"||element.type==="range"?Number(element.value):element.value;
+      setter(raw);if(after)after();queueRender();
+    });
+  }
+
+  function setTheme(next){
+    state.theme=next==="light"?"light":"dark";document.body.dataset.theme=state.theme;refreshAllUI();markHistoryDirty(true);
+  }
+
+  function setArtboardSize(widthMm,heightMm,{reapplyTemplate=true,preset="custom"}={}){
+    state.artboard.widthMm=clamp(Number(widthMm)||180,50,420);
+    state.artboard.heightMm=clamp(Number(heightMm)||100,50,420);
+    state.artboard.preset=preset;
+    state.orientation=state.artboard.heightMm>state.artboard.widthMm?"portrait":"landscape";
+    if(reapplyTemplate)applyTemplate(state.templateId,{preserveTexts:true});
+    else {reflowRegions({preserveManual:true});refreshAllUI();queueRender();}
+  }
+
+  function changeOrientation(next){
+    if(next!=="portrait"&&next!=="landscape")return;
+    const width=state.artboard.widthMm,height=state.artboard.heightMm;
+    if((next==="portrait"&&height<width)||(next==="landscape"&&height>width)){
+      state.artboard.widthMm=height;state.artboard.heightMm=width;
+    }
+    state.orientation=next;state.artboard.preset="custom";
+    applyTemplate(state.templateId,{preserveTexts:true});
+  }
+
+  function bindMultiEffect(rootId,getItem,after){
+    const root=$(rootId);if(!root)return;
+    root.addEventListener("click",(event)=>{
+      const button=event.target.closest("button[data-effect]");if(!button||!root.contains(button))return;
+      const item=getItem();if(!item)return;
+      toggleEffect(item,button.dataset.effect);button.classList.toggle("active",hasEffect(item,button.dataset.effect));
+      if(after)after(item);queueRender();markHistoryDirty(true);
+    });
+  }
+
+  function applyPaletteRefresh(){
+    state.background.c1=state.background.mode==="solid"?paletteColor("primary",state.palette):state.background.c1;
+    if(state.background.mode==="solid")state.background.c2=state.background.c1;
+    autoStyleAssignedTexts({force:false});renderTemplateGrid();renderRegionList();renderTextList();colorFields.forEach((field)=>field.update());queueRender();
+  }
+
+  function bindV16Controls(){
+    $("themeToggleBtn")?.addEventListener("click",()=>setTheme(state.theme==="dark"?"light":"dark"));
+    $("zoomOutBtn")?.addEventListener("click",()=>{state.previewFit=false;state.previewZoom=clamp((Number(state.previewZoom)||1)-.1,.2,3);updatePreviewZoom();});
+    $("zoomInBtn")?.addEventListener("click",()=>{state.previewFit=false;state.previewZoom=clamp((Number(state.previewZoom)||1)+.1,.2,3);updatePreviewZoom();});
+    $("zoomFitBtn")?.addEventListener("click",()=>{state.previewFit=true;updatePreviewZoom();});
+    window.addEventListener("resize",()=>{if(state.previewFit)updatePreviewZoom();});
+
+    bindSegmented("paletteSecondaryEnabled",(value)=>{state.palette.secondaryEnabled=value==="on";syncPaletteControls();applyPaletteRefresh();});
+    bindSegmented("paletteTertiaryEnabled",(value)=>{state.palette.tertiaryEnabled=value==="on";syncPaletteControls();applyPaletteRefresh();});
+    $("paletteUseWhite")?.addEventListener("change",()=>{state.palette.useWhite=$("paletteUseWhite").checked;if(!state.palette.useWhite&&!state.palette.useBlack){state.palette.useBlack=true;$("paletteUseBlack").checked=true;}applyPaletteRefresh();});
+    $("paletteUseBlack")?.addEventListener("change",()=>{state.palette.useBlack=$("paletteUseBlack").checked;if(!state.palette.useWhite&&!state.palette.useBlack){state.palette.useWhite=true;$("paletteUseWhite").checked=true;}applyPaletteRefresh();});
+    bindValue("palettePaperMix",()=>globalNumericDefaults.palettePaperMix,(value)=>{state.palette.paperMix=clamp(value,0,96);$("palettePaperMixValue").textContent=`${round(value)}%`;applyPaletteRefresh();});
+
+    const spacingChanged=()=>{reflowRegions({preserveManual:true,adaptText:true});renderRegionList();renderTextList();updateRegionControls();queueRender();};
+    bindValue("pageMargin",()=>globalNumericDefaults.pageMargin,(value)=>{state.pageMargin=clamp(value,0,120);$("pageMarginValue").textContent=`${round(value)}px`;spacingChanged();});
+    bindValue("regionGapX",()=>globalNumericDefaults.regionGapX,(value)=>{state.regionGapX=clamp(value,0,100);$("regionGapXValue").textContent=`${round(value)}px`;spacingChanged();});
+    bindValue("regionGapY",()=>globalNumericDefaults.regionGapY,(value)=>{state.regionGapY=clamp(value,0,100);$("regionGapYValue").textContent=`${round(value)}px`;spacingChanged();});
+    $("reflowRegionsBtn")?.addEventListener("click",()=>{reflowRegions({preserveManual:true,adaptText:true});refreshAllUI();queueRender();toast("현재 여백으로 다시 맞췄습니다.");});
+    $("restoreAllRegionsBtn")?.addEventListener("click",()=>{state.regions.forEach((region)=>{region.layoutDetached=false;region.layoutManualDelta=null;});reflowRegions({preserveManual:false,adaptText:true});refreshAllUI();queueRender();toast("모든 영역을 템플릿 위치로 돌렸습니다.");});
+    $("restoreRegionLayoutBtn")?.addEventListener("click",()=>{const region=selectedRegion();if(!region)return;restoreRegionLayout(region);refreshAllUI();queueRender();toast("선택 영역을 원래 위치로 돌렸습니다.");});
+
+    bindMultiEffect("regionEffectStack",selectedRegion,()=>updateRegionControls());
+    bindMultiEffect("elementEffectStack",selectedElement,()=>updateElementControls());
+
+    bindSegmented("elementClipEnabled",(value)=>{const element=selectedElement();if(!element)return;if(value==="on"){element.clipRegionId=element.clipRegionId||state.selectedRegionId||state.regions.find((region)=>region.shape!=="line")?.id||null;state.clipPickMode=true;toast("미리보기에서 자를 영역을 누르세요.");}else{element.clipRegionId=null;state.clipPickMode=false;}updateElementControls();});
+    $("elementClipRegion")?.addEventListener("change",()=>{const element=selectedElement();if(!element)return;element.clipRegionId=$("elementClipRegion").value||null;updateElementControls();queueRender();});
+
+    $("artboardPreset")?.addEventListener("change",()=>{const value=$("artboardPreset").value;if(value==="custom"){state.artboard.preset="custom";return;}const preset=ARTBOARD_PRESETS[value];if(preset)setArtboardSize(preset.widthMm,preset.heightMm,{preset:value});});
+    $("artboardWidthMm")?.addEventListener("change",()=>setArtboardSize($("artboardWidthMm").value,state.artboard.heightMm,{preset:"custom"}));
+    $("artboardHeightMm")?.addEventListener("change",()=>setArtboardSize(state.artboard.widthMm,$("artboardHeightMm").value,{preset:"custom"}));
+    $("backgroundMode")?.addEventListener("change",syncBackgroundControls);
+
+    $("showRegions")?.addEventListener("change",()=>{state.showRegions=$("showRegions").checked;queueRender();});
+
+    const photoInput=$("photoInput");
+    if(photoInput){
+      photoInput.addEventListener("change",async(event)=>{
+        event.stopImmediatePropagation();
+        const file=photoInput.files?.[0];if(!file)return;
+        try{
+          const reader=new FileReader();
+          const source=await new Promise((resolve,reject)=>{reader.onload=()=>resolve(String(reader.result));reader.onerror=reject;reader.readAsDataURL(file);});
+          const trimmed=await trimTransparentDataUrl(source);
+          const {trimW:W,trimH:H}=dimensions();
+          const ratio=trimmed.width/Math.max(1,trimmed.height);
+          const maxW=W*.34,maxH=H*.48;
+          let w=maxW,h=w/ratio;if(h>maxH){h=maxH;w=h*ratio;}
+          const element=makeElement("image",W*.58,H*.28,{w:Math.max(60,w),h:Math.max(60,h),imageSrc:trimmed.src,fillNone:true,strokeNone:true,affectFlow:true,flowMargin:0,alphaBounds:{x:0,y:0,w:trimmed.width,h:trimmed.height},originalName:file.name});
+          state.elements.push(element);state.selectedElementId=element.id;state.selectedRegionId=null;state.selectedTextId=null;openToolTab("elements");updateElementControls();queueRender();toast("투명 여백을 잘라 사진을 넣었습니다.");
+        }catch(error){console.error(error);toast("사진을 불러오지 못했습니다.");}
+        photoInput.value="";
+      },true);
+    }
+  }
+
+  function openToolTab(name){
+    state.activeTool=name;
+    const tab=document.querySelector(`.tool-tab[data-tool-tab="${name}"]`);if(!tab)return;
+    document.querySelectorAll(".tool-tab").forEach((item)=>item.classList.toggle("active",item===tab));
+    document.querySelectorAll(".tool-pane").forEach((pane)=>pane.classList.toggle("active",pane.dataset.toolPane===name));
+  }
+
+  function layerAlphaBounds(layer){
+    if(!layer)return null;
+    if(layer.__alphaBounds)return layer.__alphaBounds;
+    const c=layer.getContext("2d",{willReadFrequently:true});
+    const {width,height}=layer;const data=c.getImageData(0,0,width,height).data;
+    let minX=width,minY=height,maxX=-1,maxY=-1;
+    const stride=Math.max(1,Math.floor(Math.max(width,height)/600));
+    for(let y=0;y<height;y+=stride)for(let x=0;x<width;x+=stride){if(data[(y*width+x)*4+3]>4){minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);}}
+    layer.__alphaBounds=maxX<minX?{x:0,y:0,w:width,h:height}:{x:minX,y:minY,w:maxX-minX+stride,h:maxY-minY+stride};
+    return layer.__alphaBounds;
+  }
+
+  function obstacleRects(){
+    return state.elements.filter((element)=>element.affectFlow).map((element)=>{
+      const item=elementGeometry(element);if(!item)return null;
+      let x=item.x,y=item.y,w=item.w,h=item.h;
+      if(item.type==="image"){
+        const layer=getImageLayer(item),bounds=layerAlphaBounds(layer);
+        if(bounds&&layer){x=item.x+bounds.x/layer.width*item.w;y=item.y+bounds.y/layer.height*item.h;w=bounds.w/layer.width*item.w;h=bounds.h/layer.height*item.h;}
+      }
+      const margin=Number(element.flowMargin)||0;
+      return {x:x-margin,y:y-margin,w:w+margin*2,h:h+margin*2,id:element.id};
+    }).filter((rect)=>rect&&rect.w>0&&rect.h>0);
+  }
+
+  function hitElement(point){
+    for(const element of [...state.elements].reverse()){
+      const item=elementGeometry(element);if(!item||!pointInItem(point,item,2))continue;
+      if(item.clipRegion&&!pointInItem(point,item.clipRegion,0))continue;
+      if(item.type==="image"){
+        const layer=getImageLayer(item);if(!layer)continue;
+        const local=localPoint(point,item);
+        const px=Math.floor((local.x-item.x)/Math.max(1,item.w)*layer.width);
+        const py=Math.floor((local.y-item.y)/Math.max(1,item.h)*layer.height);
+        if(px<0||py<0||px>=layer.width||py>=layer.height)continue;
+        try{if(layer.getContext("2d",{willReadFrequently:true}).getImageData(px,py,1,1).data[3]<5)continue;}catch{}
+      }
+      return {id:element.id,...item};
+    }
+    return null;
+  }
+
+  function transformSource(kind,id){
+    if(kind==="region")return state.regions.find((item)=>item.id===id);
+    if(kind==="element")return state.elements.find((item)=>item.id===id);
+    if(kind==="text")return state.texts.find((item)=>item.id===id);
+    return null;
+  }
+
+  function transformGeometry(kind,id){
+    if(kind==="text"){
+      const fragment=layoutFragments.find((item)=>item.id===id);
+      return fragment?{x:fragment.x,y:fragment.y,w:fragment.w,h:fragment.h,rotation:0,regionId:fragment.regionId}:null;
+    }
+    const source=transformSource(kind,id);return kind==="element"?elementGeometry(source):source;
+  }
+
+  function activateTransform(kind,id,{announce=false}={}){
+    const source=transformSource(kind,id);if(!source)return;
+    transformTarget={kind,id};
+    if(kind==="region"){
+      state.selectedRegionId=id;state.selectedElementId=null;openToolTab("regions");renderRegionList();
+    }else if(kind==="element"){
+      state.selectedElementId=id;state.selectedRegionId=null;state.selectedTextId=null;openToolTab("elements");
+    }else{
+      state.selectedTextId=id;state.selectedElementId=null;state.selectedRegionId=null;renderTextList();
+    }
+    updateRegionControls();updateElementControls();queueRender();
+    if(announce)toast(kind==="text"?"문장을 영역 안에서 이동·확대할 수 있습니다.":"이동·크기·회전 핸들을 열었습니다.");
+  }
+
+  function textTransformHandleAt(point,item){
+    const handles=itemHandlePoints(item),radius=32;
+    for(const key of ["nw","ne","se","sw"]){if(Math.hypot(point.x-handles[key].x,point.y-handles[key].y)<=radius)return key;}
+    return pointInItem(point,item,8)?"move":null;
+  }
+
+  let v16PointerState=null;
+  let v16LongPressTimer=null;
+  function clearV16LongPress(){clearTimeout(v16LongPressTimer);v16LongPressTimer=null;}
+  function armV16LongPress(kind,id,event,point){
+    if(event.pointerType==="mouse")return;
+    clearV16LongPress();
+    const pointerId=event.pointerId;
+    v16LongPressTimer=setTimeout(()=>{
+      if(!v16PointerState||v16PointerState.pointerId!==pointerId||v16PointerState.moved)return;
+      v16PointerState.longPressFired=true;activateTransform(kind,id,{announce:false});
+      if(navigator.vibrate)navigator.vibrate(20);toast("편집 핸들을 열었습니다.");
+    },560);
+  }
+
+  function beginV16Transform(event,point,handle){
+    if(!transformTarget)return false;
+    const {kind,id}=transformTarget,source=transformSource(kind,id),geometry=transformGeometry(kind,id);
+    if(!source||!geometry)return false;
+    beginHistoryInteraction();
+    v16PointerState={type:"transform",kind,id,handle,pointerId:event.pointerId,start:point,orig:deepClone(source),geometry:{...geometry},center:{x:geometry.x+geometry.w/2,y:geometry.y+geometry.h/2},startAngle:Math.atan2(point.y-(geometry.y+geometry.h/2),point.x-(geometry.x+geometry.w/2)),moved:false,textPositions:kind==="region"?state.texts.filter((text)=>text.regionId===id&&text.manualX!=null&&text.manualY!=null).map((text)=>({id:text.id,x:text.manualX,y:text.manualY})):[]};
+    try{canvas.setPointerCapture(event.pointerId);}catch{}
+    return true;
+  }
+
+  function resizeV16Transform(drag,point){
+    const source=transformSource(drag.kind,drag.id);if(!source)return;
+    const {trimW:W,trimH:H}=dimensions();
+    if(drag.kind==="text"){
+      const opposite={nw:{x:drag.geometry.x+drag.geometry.w,y:drag.geometry.y+drag.geometry.h},ne:{x:drag.geometry.x,y:drag.geometry.y+drag.geometry.h},se:{x:drag.geometry.x,y:drag.geometry.y},sw:{x:drag.geometry.x+drag.geometry.w,y:drag.geometry.y}}[drag.handle];
+      if(!opposite)return;
+      const newW=Math.max(20,Math.abs(point.x-opposite.x)),newH=Math.max(12,Math.abs(point.y-opposite.y));
+      const ratio=clamp(Math.min(newW/Math.max(1,drag.geometry.w),newH/Math.max(1,drag.geometry.h)),.35,3);
+      source.manualScale=clamp((Number(drag.orig.manualScale)||1)*ratio,.35,3);
+      source.styleMode="manual";source.regionLocked=true;return;
+    }
+    const dx=point.x-drag.start.x,dy=point.y-drag.start.y;
+    if(drag.kind==="element"&&source.type==="band"){
+      const north=drag.handle==="nw"||drag.handle==="ne";
+      if(source.bandScope==="region")source.h=clamp(drag.orig.h+(north?-dy*2:dy*2),18,H);
+      else if(north){source.y=drag.orig.y+dy;source.h=clamp(drag.orig.h-dy,18,H);}else source.h=clamp(drag.orig.h+dy,18,H);
+      return;
+    }
+    const original=drag.geometry,center={x:original.x+original.w/2,y:original.y+original.h/2};
+    const local=rotatePoint(point,center,-(original.rotation||0));
+    const opposite={nw:{x:original.x+original.w,y:original.y+original.h},ne:{x:original.x,y:original.y+original.h},se:{x:original.x,y:original.y},sw:{x:original.x+original.w,y:original.y}}[drag.handle];
+    if(!opposite)return;
+    let x=Math.min(local.x,opposite.x),y=Math.min(local.y,opposite.y),w=Math.abs(local.x-opposite.x),h=Math.abs(local.y-opposite.y);
+    const minW=source.shape==="line"?40:32,minH=source.shape==="line"?2:26;
+    if(w<minW){if(local.x<opposite.x)x=opposite.x-minW;w=minW;}if(h<minH){if(local.y<opposite.y)y=opposite.y-minH;h=minH;}
+    source.x=clamp(x,-w*.05,W-w*.05);source.y=clamp(y,-h*.05,H-h*.05);source.w=w;source.h=h;
+  }
+
+  function swapRegionTextBundles(sourceRegionId,targetRegionId){
+    if(!sourceRegionId||!targetRegionId||sourceRegionId===targetRegionId)return false;
+    const sourceTexts=state.texts.filter((text)=>text.regionId===sourceRegionId).sort((a,b)=>a.order-b.order);
+    const targetTexts=state.texts.filter((text)=>text.regionId===targetRegionId).sort((a,b)=>a.order-b.order);
+    sourceTexts.forEach((text,index)=>{text.regionId=targetRegionId;text.order=index;text.manualX=null;text.manualY=null;text.manualScale=1;text.regionLocked=false;});
+    targetTexts.forEach((text,index)=>{text.regionId=sourceRegionId;text.order=index;text.manualX=null;text.manualY=null;text.manualScale=1;text.regionLocked=false;});
+    autoStyleAssignedTexts({force:false});normalizeTextOrders();return true;
+  }
+
+  function v16PointerDown(event){
+    const point=canvasPoint(event);
+    if(transformTarget){
+      const geometry=transformGeometry(transformTarget.kind,transformTarget.id);
+      const handle=geometry?(transformTarget.kind==="text"?textTransformHandleAt(point,geometry):transformHandleAt(point,geometry)):null;
+      if(handle&&beginV16Transform(event,point,handle)){event.preventDefault();event.stopImmediatePropagation();return;}
+    }
+    if(state.activeTool==="elements"){
+      const elementHit=hitElement(point);
+      if(elementHit){
+        const element=state.elements.find((item)=>item.id===elementHit.id);if(!element)return;
+        transformTarget=null;state.selectedElementId=element.id;state.selectedRegionId=null;state.selectedTextId=null;
+        updateElementControls();updateRegionControls();renderRegionList();queueRender();
+        v16PointerState={type:"select",kind:"element",id:element.id,pointerId:event.pointerId,start:point,moved:false};armV16LongPress("element",element.id,event,point);
+        try{canvas.setPointerCapture(event.pointerId);}catch{}event.preventDefault();event.stopImmediatePropagation();return;
+      }
+      if(state.clipPickMode&&selectedElement()){
+        const regionHit=hitRegion(point);
+        if(regionHit){selectedElement().clipRegionId=regionHit.id;state.clipPickMode=false;updateElementControls();queueRender();toast("선택한 영역으로 잘랐습니다.");event.preventDefault();event.stopImmediatePropagation();return;}
+      }
+      transformTarget=null;state.selectedElementId=null;updateElementControls();queueRender();event.stopImmediatePropagation();return;
+    }
+    const textHit=hitText(point);
+    if(textHit){
+      const text=state.texts.find((item)=>item.id===textHit.id);if(!text)return;
+      const already=state.selectedTextId===text.id;
+      transformTarget=null;state.selectedTextId=text.id;state.selectedElementId=null;state.selectedRegionId=null;renderTextList();updateElementControls();updateRegionControls();queueRender();
+      v16PointerState={type:"textBundle",id:text.id,sourceRegionId:text.regionId,pointerId:event.pointerId,start:point,moved:false,longPressFired:false};
+      if(already)armV16LongPress("text",text.id,event,point);
+      beginHistoryInteraction();try{canvas.setPointerCapture(event.pointerId);}catch{}event.preventDefault();event.stopImmediatePropagation();return;
+    }
+    const elementHit=hitElement(point);
+    if(elementHit){
+      const element=state.elements.find((item)=>item.id===elementHit.id);if(!element)return;
+      transformTarget=null;state.selectedElementId=element.id;state.selectedRegionId=null;state.selectedTextId=null;openToolTab("elements");updateElementControls();updateRegionControls();renderRegionList();queueRender();
+      v16PointerState={type:"select",kind:"element",id:element.id,pointerId:event.pointerId,start:point,moved:false};armV16LongPress("element",element.id,event,point);try{canvas.setPointerCapture(event.pointerId);}catch{}event.preventDefault();event.stopImmediatePropagation();return;
+    }
+    const regionHit=hitRegion(point);
+    if(regionHit){
+      const region=state.regions.find((item)=>item.id===regionHit.id);if(!region)return;
+      transformTarget=null;state.selectedRegionId=region.id;state.selectedElementId=null;openToolTab("regions");renderRegionList();updateRegionControls();updateElementControls();queueRender();
+      v16PointerState={type:"select",kind:"region",id:region.id,pointerId:event.pointerId,start:point,moved:false};armV16LongPress("region",region.id,event,point);try{canvas.setPointerCapture(event.pointerId);}catch{}event.preventDefault();event.stopImmediatePropagation();return;
+    }
+    clearV16LongPress();transformTarget=null;state.selectedElementId=null;state.selectedRegionId=null;updateElementControls();updateRegionControls();renderRegionList();queueRender();event.stopImmediatePropagation();
+  }
+
+  function v16PointerMove(event){
+    if(!v16PointerState)return;
+    const point=canvasPoint(event),dx=point.x-v16PointerState.start.x,dy=point.y-v16PointerState.start.y;
+    if(Math.abs(dx)+Math.abs(dy)>4){v16PointerState.moved=true;if(Math.hypot(dx,dy)>14)clearV16LongPress();}
+    if(v16PointerState.type!=="transform"){event.preventDefault();event.stopImmediatePropagation();return;}
+    const drag=v16PointerState,source=transformSource(drag.kind,drag.id);if(!source)return;
+    const {trimW:W,trimH:H}=dimensions();
+    if(drag.handle==="move"){
+      if(drag.kind==="text"){
+        const region=state.regions.find((item)=>item.id===source.regionId),box=region?regionContentBox(region):{x:0,y:0,w:W,h:H};
+        const baseX=drag.orig.manualX??drag.geometry.x,baseY=drag.orig.manualY??drag.geometry.y;
+        source.manualX=clamp(baseX+dx,box.x,Math.max(box.x,box.x+box.w-drag.geometry.w));
+        source.manualY=clamp(baseY+dy,box.y,Math.max(box.y,box.y+box.h-drag.geometry.h));source.regionLocked=true;source.styleMode="manual";
+      }else if(drag.kind==="element"&&source.type==="band"){
+        if(source.bandScope==="region"){
+          const region=state.regions.find((item)=>item.id===source.bandRegionId);if(region)source.bandPosition=clamp((drag.geometry.y+drag.geometry.h/2+dy-region.y)/Math.max(1,region.h),0,1);
+        }else source.y=clamp(drag.orig.y+dy,-source.h*.7,H-source.h*.3);
+      }else{
+        source.x=clamp(drag.orig.x+dx,-drag.orig.w*.05,W-drag.orig.w*.05);source.y=clamp(drag.orig.y+dy,-drag.orig.h*.05,H-drag.orig.h*.05);
+        if(drag.kind==="region")drag.textPositions.forEach((saved)=>{const text=state.texts.find((item)=>item.id===saved.id);if(text){text.manualX=saved.x+dx;text.manualY=saved.y+dy;}});
+      }
+    }else if(drag.handle==="rotate"&&drag.kind!=="text"){
+      const angle=Math.atan2(point.y-drag.center.y,point.x-drag.center.x);source.rotation=Math.round(drag.orig.rotation+(angle-drag.startAngle)*180/Math.PI);
+    }else resizeV16Transform(drag,point);
+    if(drag.kind==="region"){captureRegionManualDelta(source);renderRegionList();}
+    updateRegionControls();updateElementControls();queueRender();event.preventDefault();event.stopImmediatePropagation();
+  }
+
+  function v16PointerFinish(event){
+    if(!v16PointerState)return;
+    const point=canvasPoint(event),drag=v16PointerState;clearV16LongPress();
+    if(drag.type==="textBundle"&&!drag.longPressFired&&drag.moved){
+      const targetText=hitText(point,drag.id);const targetRegion=targetText?.regionId||hitRegion(point,true)?.id;
+      if(targetRegion&&swapRegionTextBundles(drag.sourceRegionId,targetRegion)){renderTextList();toast("두 영역의 문장 묶음을 바꿨습니다.");}
+    }
+    if(drag.type==="transform"&&drag.kind==="region")captureRegionManualDelta(transformSource("region",drag.id));
+    try{canvas.releasePointerCapture(event.pointerId);}catch{}
+    v16PointerState=null;renderRegionList();updateRegionControls();updateElementControls();queueRender();
+    if(drag.type==="textBundle"||drag.type==="transform")endHistoryInteraction({commit:true});
+    event.preventDefault();event.stopImmediatePropagation();
+  }
+
+  function v16DoubleClick(event){
+    const point=canvasPoint(event);
+    if(state.activeTool==="elements"){
+      const elementHit=hitElement(point);if(elementHit){activateTransform("element",elementHit.id,{announce:false});event.preventDefault();event.stopImmediatePropagation();}return;
+    }
+    const textHit=hitText(point);if(textHit&&state.selectedTextId===textHit.id){activateTransform("text",textHit.id,{announce:false});event.preventDefault();event.stopImmediatePropagation();return;}
+    const elementHit=hitElement(point);if(elementHit){activateTransform("element",elementHit.id,{announce:false});event.preventDefault();event.stopImmediatePropagation();return;}
+    const regionHit=hitRegion(point);if(regionHit){activateTransform("region",regionHit.id,{announce:false});event.preventDefault();event.stopImmediatePropagation();}
+  }
+
+  canvas.addEventListener("pointerdown",v16PointerDown,true);
+  canvas.addEventListener("pointermove",v16PointerMove,true);
+  canvas.addEventListener("pointerup",v16PointerFinish,true);
+  canvas.addEventListener("pointercancel",v16PointerFinish,true);
+  canvas.addEventListener("dblclick",v16DoubleClick,true);
+
+
+  function imageAlphaInfo(layer){
+    if(!layer)return null;
+    if(layer.__alphaInfo)return layer.__alphaInfo;
+    try{
+      const data=layer.getContext("2d",{willReadFrequently:true}).getImageData(0,0,layer.width,layer.height).data;
+      layer.__alphaInfo={data,width:layer.width,height:layer.height};
+    }catch{layer.__alphaInfo=null;}
+    return layer.__alphaInfo;
+  }
+
+  function obstacleRects(){
+    return state.elements.filter((element)=>element.affectFlow).map((element)=>{
+      const item=elementGeometry(element);if(!item)return null;
+      const margin=Number(element.flowMargin)||0;
+      let effectPad=0;
+      if(activeEffects(element).length)effectPad=Math.max(0,(Number(element.effectSize)||0)*.65);
+      return {
+        id:element.id,element,item,margin,
+        x:item.x-margin-effectPad,y:item.y-margin-effectPad,
+        w:item.w+(margin+effectPad)*2,h:item.h+(margin+effectPad)*2
+      };
+    }).filter((item)=>item&&item.w>0&&item.h>0);
+  }
+
+  function obstacleIntervalsAt(obstacle,y,h){
+    const item=obstacle.item,element=obstacle.element,margin=obstacle.margin||0;
+    if(!item||y+h<=obstacle.y||y>=obstacle.y+obstacle.h)return [];
+    if(Math.abs(Number(item.rotation)||0)>.1)return [[obstacle.x,obstacle.x+obstacle.w]];
+    const top=Math.max(y,item.y),bottom=Math.min(y+h,item.y+item.h);
+    if(bottom<=top)return [];
+    if(item.type==="image"){
+      const layer=getImageLayer(item),info=imageAlphaInfo(layer);if(!info)return [[obstacle.x,obstacle.x+obstacle.w]];
+      const row0=clamp(Math.floor((top-item.y)/Math.max(1,item.h)*info.height),0,info.height-1);
+      const row1=clamp(Math.ceil((bottom-item.y)/Math.max(1,item.h)*info.height),row0+1,info.height);
+      const occupied=new Uint8Array(info.width);
+      const rowStep=Math.max(1,Math.floor((row1-row0)/24));
+      const colStep=Math.max(1,Math.floor(info.width/480));
+      for(let py=row0;py<row1;py+=rowStep){
+        for(let px=0;px<info.width;px+=colStep){
+          if(info.data[(py*info.width+px)*4+3]>5){
+            for(let k=0;k<colStep&&px+k<info.width;k++)occupied[px+k]=1;
+          }
+        }
+      }
+      const intervals=[];let start=-1;
+      for(let px=0;px<=info.width;px++){
+        const on=px<info.width&&occupied[px];
+        if(on&&start<0)start=px;
+        if(!on&&start>=0){
+          const a=item.x+start/info.width*item.w-margin;
+          const b=item.x+px/info.width*item.w+margin;
+          if(b>a)intervals.push([a,b]);start=-1;
+        }
+      }
+      return intervals;
+    }
+    if(item.type==="circle"||item.shape==="ellipse"){
+      const cx=item.x+item.w/2,cy=item.y+item.h/2,rx=item.w/2,ry=item.h/2;
+      const samples=[top,bottom,(top+bottom)/2,clamp(cy,top,bottom)];
+      let half=0;
+      samples.forEach((sy)=>{const dy=(sy-cy)/Math.max(1,ry);if(Math.abs(dy)<=1)half=Math.max(half,rx*Math.sqrt(Math.max(0,1-dy*dy)));});
+      return half>0?[[cx-half-margin,cx+half+margin]]:[];
+    }
+    if(item.type==="triangle"){
+      const cy0=item.y,cy1=item.y+item.h,cx=item.x+item.w/2;
+      const maxRatio=Math.max(clamp((top-cy0)/Math.max(1,item.h),0,1),clamp((bottom-cy0)/Math.max(1,item.h),0,1));
+      const half=item.w*.5*maxRatio;return [[cx-half-margin,cx+half+margin]];
+    }
+    return [[item.x-margin,item.x+item.w+margin]];
+  }
+
+  function availableIntervals(box,y,h,obstacles){
+    let intervals=[[box.x,box.x+box.w]];
+    obstacles.forEach((obstacle)=>{
+      obstacleIntervalsAt(obstacle,y,h).forEach(([a,b])=>{intervals=subtractIntervals(intervals,a,b);});
+    });
+    return intervals;
+  }
+
+  prepareV16();
   enhanceStaticNumericFields();
   bindControls();
   setupColorFields();
-  applyTemplate("street-alert",{preserveTexts:false});
+  bindV16Controls();
+  applyTemplate("dense-left-rail",{preserveTexts:false});
   initializeHistory();
   $("showRegions").checked=state.showRegions;
   renderUnicodeGrid("전체","");

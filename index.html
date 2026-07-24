@@ -21,6 +21,7 @@
         <button id="undoBtn" class="button button-ghost history-button" type="button" disabled title="실행취소 (Ctrl/Cmd+Z)">↶ <span>실행취소</span></button>
         <button id="redoBtn" class="button button-ghost history-button" type="button" disabled title="재실행 (Ctrl/Cmd+Shift+Z)">↷ <span>재실행</span></button>
       </div>
+      <button id="themeToggleBtn" class="button button-ghost theme-toggle" type="button" title="라이트/다크 모드 전환"><span aria-hidden="true">☾</span><span>다크</span></button>
       <button id="resetBtn" class="button button-ghost">전체 초기화</button>
       <button id="exportPngBtn" class="button">PNG 저장</button>
       <button id="exportJpgBtn" class="button button-accent">JPG 저장</button>
@@ -51,14 +52,19 @@
           <small id="canvasSizeLabel">1600 × 900</small>
         </div>
         <div class="workspace-actions">
-          <label class="switch-label"><input id="showRegions" type="checkbox" /> 영역 보기</label>
+          <div class="preview-zoom" aria-label="미리보기 확대/축소">
+            <button id="zoomOutBtn" class="icon-text-button" type="button" title="축소">−</button>
+            <button id="zoomFitBtn" class="zoom-readout" type="button" title="화면에 맞춤"><span id="zoomValue">맞춤</span></button>
+            <button id="zoomInBtn" class="icon-text-button" type="button" title="확대">+</button>
+          </div>
+          <label class="switch-label region-view-toggle"><input id="showRegions" type="checkbox" /> 영역 보기</label>
           <span id="layoutStatus" class="status">자동 조판 준비</span>
         </div>
       </div>
       <div id="canvasStage" class="canvas-stage">
         <canvas id="posterCanvas" width="1600" height="900" aria-label="찌라시 미리보기"></canvas>
       </div>
-      <p class="canvas-help">문장은 바로 끌어 이동하거나 서로 자리를 바꿀 수 있습니다. 영역·도형은 한 번 눌러 선택하고, 컴퓨터에서는 더블클릭·모바일에서는 길게 눌러 이동/크기/회전 핸들을 여세요.</p>
+      <p class="canvas-help">문장을 끌면 그 문장이 속한 영역의 문장 묶음이 다른 영역과 교환됩니다. 선택된 문장을 다시 길게 누르면 영역 안에서만 위치·크기를 조절할 수 있습니다.</p>
     </section>
 
     <section class="toolbox panel" aria-label="템플릿과 요소">
@@ -69,7 +75,6 @@
         <button class="tool-tab" data-tool-tab="background" role="tab">배경·재단</button>
         <button class="tool-tab" data-tool-tab="export" role="tab">저장</button>
       </div>
-      <p class="numeric-usage-note"><strong>숫자 조절</strong><span>슬라이더</span><span>직접 입력</span><span>− / +</span><span>↺ 원래값 복귀</span></p>
 
       <div class="tool-pane active" data-tool-pane="templates">
         <div class="section-heading">
@@ -79,12 +84,25 @@
           </div>
         </div>
         <div id="templateGrid" class="template-grid"></div>
-        <div class="field-grid three">
-          <div><span class="field-label">주색</span><div id="palettePrimaryField" class="color-field-host"></div></div>
-          <div><span class="field-label">보조색 1</span><div id="paletteSecondaryField" class="color-field-host"></div></div>
-          <div><span class="field-label">보조색 2</span><div id="paletteTertiaryField" class="color-field-host"></div></div>
+        <div class="palette-editor">
+          <div class="palette-primary-card">
+            <div><span class="field-label">주색</span><div id="palettePrimaryField" class="color-field-host"></div></div>
+            <div class="neutral-options" aria-label="중립색 사용">
+              <label><input id="paletteUseWhite" type="checkbox" checked /> 흰색 사용</label>
+              <label><input id="paletteUseBlack" type="checkbox" checked /> 검은색 사용</label>
+            </div>
+            <label>연한 배경의 흰색 혼합률 <b id="palettePaperMixValue">78%</b><input id="palettePaperMix" type="range" min="0" max="96" step="1" value="78" /></label>
+          </div>
+          <div class="optional-palette-card" id="secondaryPaletteCard">
+            <div class="option-card-head"><span class="field-label">보조색 1</span><div id="paletteSecondaryEnabled" class="segmented-control compact" role="group"><button type="button" data-value="on">사용</button><button type="button" data-value="off">안 함</button></div></div>
+            <div id="paletteSecondaryField" class="color-field-host"></div>
+          </div>
+          <div class="optional-palette-card" id="tertiaryPaletteCard">
+            <div class="option-card-head"><span class="field-label">보조색 2</span><div id="paletteTertiaryEnabled" class="segmented-control compact" role="group"><button type="button" data-value="on">사용</button><button type="button" data-value="off">안 함</button></div></div>
+            <div id="paletteTertiaryField" class="color-field-host"></div>
+          </div>
         </div>
-        <p class="panel-note">템플릿은 레이아웃만 바꾸고 색상은 현재 주색·보조색·강조색을 따라갑니다. 색을 누르면 바로 아래에서 채도·밝기와 색조를 고를 수 있습니다.</p>
+        <p class="panel-note">색이 하나뿐이어도 주색·흰색·검은색을 자동 배분합니다. 보조색을 하나만 켜면 두 색이 세 역할에 반복 배치됩니다.</p>
       </div>
 
       <div class="tool-pane" data-tool-pane="regions">
@@ -96,11 +114,16 @@
           <button id="addRegionBtn" class="button button-accent">+ 새 영역</button>
         </div>
         <div class="region-layout-toolbar">
-          <div class="region-layout-control">
-            <label>영역 사이 여백 줄이기 <b id="regionGapReductionValue">32px 더 촘촘</b><input id="regionGapReduction" type="range" min="0" max="72" step="1" value="32" /></label>
-            <p class="microcopy">0은 템플릿 원본 간격입니다. 슬라이더를 움직이는 동안 미리보기에 즉시 반영되며, 수동으로 옮긴 영역도 현재 위치 차이를 유지한 채 함께 촘촘해집니다.</p>
+          <div class="layout-spacing-grid">
+            <label>대지 가장자리 여백 <b id="pageMarginValue">28px</b><input id="pageMargin" type="range" min="0" max="120" step="1" value="28" /></label>
+            <label>가로 칸 간격 <b id="regionGapXValue">16px</b><input id="regionGapX" type="range" min="0" max="100" step="1" value="16" /></label>
+            <label>세로 칸 간격 <b id="regionGapYValue">12px</b><input id="regionGapY" type="range" min="0" max="100" step="1" value="12" /></label>
           </div>
-          <button id="restoreAllRegionsBtn" class="button" type="button">전체 위치 복귀</button>
+          <div class="region-layout-actions">
+            <button id="reflowRegionsBtn" class="button button-accent" type="button">여백 다시 맞춤</button>
+            <button id="restoreAllRegionsBtn" class="button" type="button">↺ 전체 위치</button>
+          </div>
+          <p class="microcopy">바깥 여백은 네 변에 동일하게, 내부 간격은 더 좁게 적용합니다. 맞닿는 칸은 템플릿 규칙에 따라 0px까지 붙을 수 있습니다.</p>
         </div>
         <div id="regionList" class="region-list"></div>
         <div id="regionControls" class="editor-card is-disabled">
@@ -152,18 +175,15 @@
               </div>
             </div>
           </div>
-          <div class="field-grid three">
-            <label>효과
-              <select id="regionEffect">
-                <option value="none">없음</option>
-                <option value="shadow">딱 떨어지는 그림자</option>
-                <option value="hollow">빈 그림자</option>
-                <option value="glow">번짐</option>
-                <option value="extrude">단색 입체</option>
-              </select>
-            </label>
-            <div><span class="field-label">효과 색</span><div id="regionEffectColorField" class="color-field-host"></div></div>
-            <label>효과 크기<input id="regionEffectSize" type="range" min="0" max="100" step="1" /></label>
+          <div class="effect-editor">
+            <span class="field-label">효과 중첩</span>
+            <div id="regionEffectStack" class="multi-toggle" role="group" aria-label="영역 효과">
+              <button type="button" data-effect="shadow">그림자</button><button type="button" data-effect="hollow">빈 그림자</button><button type="button" data-effect="extrude">입체</button>
+            </div>
+            <div id="regionEffectOptions" class="field-grid two conditional-section">
+              <div><span class="field-label">효과 색</span><div id="regionEffectColorField" class="color-field-host"></div></div>
+              <label>효과 크기<input id="regionEffectSize" type="range" min="0" max="100" step="1" /></label>
+            </div>
           </div>
           <p class="effect-rule-note"><b>평면 그림자</b>는 번짐 없는 단색 복사본, <b>단색 입체</b>는 그림자 없는 한 색 옆면입니다.</p>
           <button id="deleteRegionBtn" class="button button-danger button-wide">선택 영역 삭제</button>
@@ -174,7 +194,7 @@
         <div class="section-heading">
           <div>
             <h2>요소·사진</h2>
-            <p>원, 띠, 말풍선과 사진을 추가하고 글자 회피 여백을 음수까지 조절할 수 있습니다.</p>
+            <p>도형·띠·사진을 추가합니다. 투명 여백은 자동 제거되고, 이 탭에서는 글자 대신 요소만 선택됩니다.</p>
           </div>
         </div>
         <div class="element-buttons">
@@ -184,6 +204,8 @@
           <button class="button" data-add-shape="circle">원형</button>
           <button class="button" data-add-shape="heart">하트</button>
           <button class="button" data-add-shape="burst">뾰족 말풍선</button>
+          <button class="button" data-add-shape="triangle">삼각형</button>
+          <button class="button" data-add-shape="cloud">구름</button>
           <button id="addPhotoBtn" class="button button-accent">사진 넣기</button>
           <input id="photoInput" type="file" accept="image/*" hidden />
         </div>
@@ -241,18 +263,22 @@
               <button type="button" data-value="overlap">겹쳐도 됨</button>
             </div>
           </div>
-          <div class="field-grid three">
-            <label>효과
-              <select id="elementEffect">
-                <option value="none">없음</option>
-                <option value="shadow">딱 떨어지는 그림자</option>
-                <option value="hollow">빈 그림자</option>
-                <option value="glow">번짐</option>
-                <option value="extrude">단색 입체</option>
-              </select>
-            </label>
-            <div><span class="field-label">효과 색</span><div id="elementEffectColorField" class="color-field-host"></div></div>
-            <label>효과 크기<input id="elementEffectSize" type="range" min="0" max="100" step="1" /></label>
+          <div class="effect-editor">
+            <span class="field-label">효과 중첩</span>
+            <div id="elementEffectStack" class="multi-toggle" role="group" aria-label="요소 효과">
+              <button type="button" data-effect="shadow">그림자</button><button type="button" data-effect="hollow">빈 그림자</button><button type="button" data-effect="extrude">입체</button>
+            </div>
+            <div id="elementEffectOptions" class="field-grid two conditional-section">
+              <div><span class="field-label">효과 색</span><div id="elementEffectColorField" class="color-field-host"></div></div>
+              <label>효과 크기<input id="elementEffectSize" type="range" min="0" max="100" step="1" /></label>
+            </div>
+          </div>
+          <div class="clip-editor">
+            <div>
+              <span class="field-label">영역에 자르기</span>
+              <div id="elementClipEnabled" class="segmented-control" role="group"><button type="button" data-value="off">안 함</button><button type="button" data-value="on">영역 선택</button></div>
+            </div>
+            <label id="elementClipRegionWrap" class="conditional-section">클리핑 영역<select id="elementClipRegion"></select></label>
           </div>
           <p class="effect-rule-note"><b>평면 그림자</b>는 번짐 없는 단색 복사본, <b>단색 입체</b>는 그림자 없는 한 색 옆면입니다.</p>
           <div class="field-grid two">
@@ -280,32 +306,33 @@
             <p>템플릿은 단색으로 적용되며, 필요할 때만 이곳에서 그라데이션·패턴을 직접 켤 수 있습니다.</p>
           </div>
         </div>
-        <div class="field-grid three">
-          <div>
-            <span class="field-label">찌라시 방향</span>
-            <div id="orientation" class="segmented-control" role="group" aria-label="찌라시 방향">
-              <button type="button" data-value="landscape">가로</button>
-              <button type="button" data-value="portrait">세로</button>
-            </div>
+        <div class="artboard-card">
+          <div class="field-grid three">
+            <label>규격
+              <select id="artboardPreset">
+                <option value="flyer">전단 180 × 100 mm</option>
+                <option value="a6">A6 148 × 105 mm</option>
+                <option value="a5">A5 210 × 148 mm</option>
+                <option value="card">카드 90 × 50 mm</option>
+                <option value="square">정사각 120 × 120 mm</option>
+                <option value="custom">직접 입력</option>
+              </select>
+            </label>
+            <label>가로 (mm)<input id="artboardWidthMm" type="number" min="50" max="420" step="0.5" value="180" /></label>
+            <label>세로 (mm)<input id="artboardHeightMm" type="number" min="50" max="420" step="0.5" value="100" /></label>
           </div>
-          <label>재단여백 (mm)
-            <input id="bleedMm" type="number" min="0" max="30" step="0.5" value="0" />
-          </label>
-          <label>배경 방식
-            <select id="backgroundMode">
-              <option value="solid">단색</option>
-              <option value="gradient">그라데이션</option>
-              <option value="pattern">패턴</option>
-              <option value="gradientPattern">그라데이션 + 패턴</option>
-            </select>
-          </label>
+          <div class="field-grid three">
+            <div><span class="field-label">찌라시 방향</span><div id="orientation" class="segmented-control" role="group" aria-label="찌라시 방향"><button type="button" data-value="landscape">가로</button><button type="button" data-value="portrait">세로</button></div></div>
+            <label>재단여백 (mm)<input id="bleedMm" type="number" min="0" max="30" step="0.5" value="0" /></label>
+            <label>배경 방식<select id="backgroundMode"><option value="solid">단색</option><option value="gradient">그라데이션</option><option value="pattern">패턴</option><option value="gradientPattern">그라데이션 + 패턴</option></select></label>
+          </div>
         </div>
-        <div class="field-grid three">
+        <div id="gradientOptions" class="field-grid three conditional-section">
           <div><span class="field-label">배경 1</span><div id="backgroundColor1Field" class="color-field-host"></div></div>
           <div><span class="field-label">배경 2</span><div id="backgroundColor2Field" class="color-field-host"></div></div>
           <label>그라데이션 각도 <b id="gradientAngleValue">0°</b><input id="gradientAngle" type="range" min="0" max="360" step="1" /></label>
         </div>
-        <div class="field-grid three">
+        <div id="patternOptions" class="field-grid three conditional-section">
           <label>패턴
             <select id="patternType">
               <option value="none">없음</option>
