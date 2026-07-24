@@ -1,26 +1,26 @@
-찌라시 메이커
+찌라시 메이커 v4
 
-실행 방법
-1. 폴더의 index.html을 크롬/엣지에서 엽니다.
-2. 브라우저가 로컬 파일을 제한하면 이 폴더에서 간단한 로컬 서버를 실행하세요.
-   - Windows: python -m http.server 8000
-   - macOS/Linux: python3 -m http.server 8000
-3. 브라우저에서 http://localhost:8000 접속
+구성
+- index.html
+- styles.css
+- app.js
+- assets/fonts/PUT_KOPUB_FONTS_HERE.txt
 
-KoPub 폰트 연결
-- 사용자가 보유한 KoPub 2.0 OTF 파일 4개를 assets/fonts 폴더에 직접 넣으세요.
-- 필요한 정확한 파일명은 assets/fonts/PUT_KOPUB_FONTS_HERE.txt에 적혀 있습니다.
-- 폰트를 넣지 않아도 시스템 기본 돋움/바탕/굴림 계열 폰트로 작동합니다.
+설치
+1. 위 3개 파일을 저장소의 기존 파일과 교체합니다.
+2. KOPUB2.0_OTF_FONTS.zip의 OTF 파일을 assets/fonts/에 넣습니다.
+3. 정적 웹서버 또는 GitHub Pages로 index.html을 엽니다.
 
-포함 기능
-- 10개 배경 템플릿
-- 문장 무제한 추가·정렬·복제·삭제
-- 15개 유니코드 삽입 패턴
-- KoPub 돋움/바탕, 굴림체 선택
-- 글자 폭, 자간, 볼드, 이탤릭, 밑줄, 취소선
-- 외곽선, 그림자, 빈 그림자
-- 선택 글자 구간 색상 지정
-- 사각형, 원형, 하트, 뾰족 말풍선, 사진 업로드
-- 사진/도형 주위로 텍스트 자동 회피 배치
-- 요소 드래그 및 모서리 손잡이 크기 조절
-- PNG/JPG 저장
+기대하는 폰트 파일명
+- KoPub Dotum_Pro Medium.otf
+- KoPub Dotum_Pro Bold.otf
+- KoPub Batang_Pro Medium.otf
+- KoPub Batang_Pro Bold.otf
+
+주요 조작
+- 미리보기 문장을 끌어 같은 영역 안에서 위치 조정
+- 다른 문장 위에 놓아 자리 교환
+- 빈 글자 영역에 놓아 영역 이동
+- 영역/요소를 클릭해 색상과 크기 편집
+- 선택 영역/요소 우하단의 노란 손잡이로 크기 조절
+- 모바일에서는 미리보기가 가장 위에 배치됨

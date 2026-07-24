@@ -2,183 +2,313 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0c10" />
   <title>찌라시 메이커</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <p class="eyebrow">KOREAN TABLOID POSTER TOOL</p>
-      <h1>찌라시 메이커</h1>
+    <div class="brand">
+      <span class="brand-mark">號</span>
+      <div>
+        <p class="eyebrow">TABLOID GOODS STUDIO</p>
+        <h1>찌라시 메이커</h1>
+      </div>
     </div>
     <div class="top-actions">
-      <button id="resetBtn" class="ghost">초기화</button>
-      <button id="exportPngBtn">PNG 저장</button>
-      <button id="exportJpgBtn" class="accent">JPG 저장</button>
+      <button id="resetBtn" class="button button-ghost">초기화</button>
+      <button id="exportPngBtn" class="button">PNG</button>
+      <button id="exportJpgBtn" class="button button-accent">JPG 저장</button>
     </div>
   </header>
 
   <main class="app-shell">
-    <aside class="sidebar" aria-label="편집 도구">
-      <details open>
-        <summary>1. 템플릿</summary>
-        <div id="templateGrid" class="template-grid"></div>
-      </details>
-
-      <details open>
-        <summary>2. 색상</summary>
-        <div class="field-grid two">
-          <label>주색<input id="primaryColor" type="color" value="#0d47a1" /></label>
-          <label>보조색 1<input id="secondaryColor1" type="color" value="#ffeb00" /></label>
+    <section class="sentence-panel panel" aria-label="문장 편집">
+      <div class="panel-heading">
+        <div>
+          <span class="panel-kicker">COPY DESK</span>
+          <h2>문장</h2>
         </div>
-        <label class="check-row"><input id="useSecondary2" type="checkbox" /> 보조색 2 사용</label>
-        <label id="secondary2Wrap" class="hidden">보조색 2<input id="secondaryColor2" type="color" value="#ff3b30" /></label>
-      </details>
+        <button id="addTextBtn" class="button button-accent">+ 문장</button>
+      </div>
+      <p class="panel-note">한 문장 안에서 줄바꿈할 수 있습니다. 선택한 문장의 꾸미기 도구가 바로 아래에 열립니다.</p>
+      <div id="textList" class="text-list"></div>
+    </section>
 
-      <details open>
-        <summary>3. 문장</summary>
-        <div id="textList" class="text-list"></div>
-        <button id="addTextBtn" class="wide">+ 문장 추가</button>
-      </details>
-
-      <details open>
-        <summary>4. 선택 문장 꾸미기</summary>
-        <div id="textControls" class="control-stack">
-          <div class="field-grid two">
-            <label>폰트
-              <select id="fontFamily">
-                <option value="dotum">KoPub 돋움</option>
-                <option value="batang">KoPub 바탕</option>
-                <option value="gulim">굴림체</option>
-              </select>
-            </label>
-            <label>크기<input id="fontSize" type="number" min="18" max="220" value="76" /></label>
-          </div>
-          <div class="field-grid two">
-            <label>유니코드 패턴<select id="unicodeStyle"></select></label>
-            <label>정렬
-              <select id="textAlign">
-                <option value="left">왼쪽</option>
-                <option value="center">가운데</option>
-                <option value="right">오른쪽</option>
-              </select>
-            </label>
-          </div>
-          <div class="toggle-row">
-            <label><input id="boldToggle" type="checkbox" checked /> 굵게</label>
-            <label><input id="italicToggle" type="checkbox" /> 이탤릭</label>
-            <label><input id="underlineToggle" type="checkbox" /> 밑줄</label>
-            <label><input id="strikeToggle" type="checkbox" /> 취소선</label>
-          </div>
-          <div class="field-grid two">
-            <label>글자 폭 <span id="scaleXValue">100%</span><input id="scaleX" type="range" min="55" max="165" value="100" /></label>
-            <label>자간 <span id="letterSpacingValue">0</span><input id="letterSpacing" type="range" min="-8" max="24" value="0" /></label>
-          </div>
-          <div class="field-grid two">
-            <label>효과
-              <select id="textEffect">
-                <option value="outline">외곽선</option>
-                <option value="none">없음</option>
-                <option value="shadow">그림자</option>
-                <option value="hollow">빈 그림자</option>
-              </select>
-            </label>
-            <label>외곽선 두께<input id="outlineWidth" type="number" min="0" max="18" value="5" /></label>
-          </div>
-          <div class="field-grid two">
-            <label>본문 색상
-              <select id="colorMode">
-                <option value="auto">배경 따라 자동</option>
-                <option value="custom">직접 선택</option>
-              </select>
-            </label>
-            <label>직접 색상<input id="textColor" type="color" value="#ffffff" /></label>
-          </div>
-          <div class="field-grid two">
-            <label>외곽선/그림자색<input id="effectColor" type="color" value="#111111" /></label>
-            <label>문장 아래 여백<input id="textGap" type="number" min="0" max="80" value="12" /></label>
-          </div>
-          <div class="range-color-box">
-            <p>텍스트 입력창에서 일부 글자를 드래그한 뒤 색상을 적용하세요.</p>
-            <div class="inline-controls">
-              <input id="rangeColor" type="color" value="#ffea00" />
-              <button id="applyRangeColorBtn">선택 글자 색 적용</button>
-            </div>
-            <div id="rangeColorList" class="chips"></div>
-          </div>
-        </div>
-      </details>
-
-      <details open>
-        <summary>5. 사진·도형</summary>
-        <div class="element-buttons">
-          <button data-add-shape="rect">사각형</button>
-          <button data-add-shape="circle">원형</button>
-          <button data-add-shape="heart">하트</button>
-          <button data-add-shape="burst">뾰족 말풍선</button>
-          <button id="addPhotoBtn" class="accent">사진 넣기</button>
-          <input id="photoInput" type="file" accept="image/*" hidden />
-        </div>
-        <p class="microcopy">캔버스에서 요소를 드래그하고 모서리 손잡이로 크기를 바꿀 수 있습니다. 텍스트는 요소의 여백을 피해 자동 배치됩니다.</p>
-        <div id="elementControls" class="control-stack disabled-panel">
-          <div class="field-grid two">
-            <label>가로<input id="elementW" type="number" min="40" max="1400" /></label>
-            <label>세로<input id="elementH" type="number" min="40" max="800" /></label>
-          </div>
-          <div class="field-grid two">
-            <label>채우기<input id="elementFill" type="color" /></label>
-            <label>테두리<input id="elementStroke" type="color" /></label>
-          </div>
-          <div class="field-grid two">
-            <label>회전 <span id="rotationValue">0°</span><input id="elementRotation" type="range" min="-180" max="180" value="0" /></label>
-            <label>회피 여백 <span id="flowMarginValue">24</span><input id="flowMargin" type="range" min="0" max="120" value="24" /></label>
-          </div>
-          <label class="check-row"><input id="affectFlow" type="checkbox" checked /> 글자가 이 요소를 피해 가기</label>
-          <div class="field-grid two">
-            <label>도형 안 문구<input id="elementLabel" type="text" placeholder="예: 충격" /></label>
-            <label>문구 크기<input id="elementLabelSize" type="number" min="16" max="200" /></label>
-          </div>
-          <div class="field-grid two">
-            <label>문구 색상<input id="elementLabelColor" type="color" /></label>
-            <label>사진 맞춤
-              <select id="imageFit">
-                <option value="cover">채우기</option>
-                <option value="contain">전체 보기</option>
-              </select>
-            </label>
-          </div>
-          <button id="deleteElementBtn" class="danger wide">선택 요소 삭제</button>
-        </div>
-      </details>
-
-      <details>
-        <summary>6. 저장 설정</summary>
-        <label>JPG 품질 <span id="jpgQualityValue">92%</span><input id="jpgQuality" type="range" min="50" max="100" value="92" /></label>
-        <div class="field-grid two">
-          <button id="exportPngBtn2">PNG 저장</button>
-          <button id="exportJpgBtn2" class="accent">JPG 저장</button>
-        </div>
-      </details>
-    </aside>
-
-    <section class="workspace">
+    <section class="workspace panel" aria-label="미리보기">
       <div class="workspace-bar">
         <div>
-          <strong>1600 × 900</strong>
-          <span>16:9 고해상도 캔버스</span>
+          <span class="panel-kicker">LIVE PREVIEW</span>
+          <strong id="currentTemplateName">수달 속보판</strong>
+          <small id="canvasSizeLabel">1600 × 900</small>
         </div>
-        <div class="status-group">
+        <div class="workspace-actions">
+          <label class="switch-label"><input id="showRegions" type="checkbox" checked /> 영역선</label>
           <span id="layoutStatus" class="status">자동 배치 준비</span>
-          <button id="rerenderBtn" class="ghost">다시 배치</button>
         </div>
       </div>
       <div id="canvasStage" class="canvas-stage">
         <canvas id="posterCanvas" width="1600" height="900" aria-label="찌라시 미리보기"></canvas>
       </div>
-      <p class="hint">팁: 문장 크기와 글자 폭을 크게 섞고, 사진·도형의 ‘회피 여백’을 조절하면 참고 이미지처럼 촘촘한 구성이 나옵니다.</p>
+      <p class="canvas-help">문장을 끌어 같은 영역 안에서 이동 · 다른 문장 위에 놓으면 자리 교환 · 빈 영역에 놓으면 영역 이동 · 배경 영역과 요소를 눌러 편집</p>
+    </section>
+
+    <section class="toolbox panel" aria-label="템플릿과 요소">
+      <div class="tool-tabs" role="tablist">
+        <button class="tool-tab active" data-tool-tab="templates" role="tab">템플릿</button>
+        <button class="tool-tab" data-tool-tab="regions" role="tab">영역</button>
+        <button class="tool-tab" data-tool-tab="elements" role="tab">요소·사진</button>
+        <button class="tool-tab" data-tool-tab="background" role="tab">배경·재단</button>
+        <button class="tool-tab" data-tool-tab="export" role="tab">저장</button>
+      </div>
+
+      <div class="tool-pane active" data-tool-pane="templates">
+        <div class="section-heading">
+          <div>
+            <h2>찌라시 템플릿</h2>
+            <p>기초 레이아웃부터 과장된 호외 스타일까지 15종입니다.</p>
+          </div>
+        </div>
+        <div id="templateGrid" class="template-grid"></div>
+        <div class="field-grid three">
+          <div><span class="field-label">주색</span><div id="palettePrimaryField" class="color-field-host"></div></div>
+          <div><span class="field-label">보조색 1</span><div id="paletteSecondaryField" class="color-field-host"></div></div>
+          <div><span class="field-label">보조색 2</span><div id="paletteTertiaryField" class="color-field-host"></div></div>
+        </div>
+        <p class="panel-note">템플릿 색을 따르는 영역은 팔레트와 함께 바뀝니다. 영역 색을 직접 바꾸면 그 영역만 고정됩니다.</p>
+      </div>
+
+      <div class="tool-pane" data-tool-pane="regions">
+        <div class="section-heading split-heading">
+          <div>
+            <h2>글자 영역</h2>
+            <p>배경에 들어간 도형은 모두 영역 요소입니다. 문장은 지정된 영역 밖으로 나가지 않습니다.</p>
+          </div>
+          <button id="addRegionBtn" class="button button-accent">+ 새 영역</button>
+        </div>
+        <div id="regionList" class="region-list"></div>
+        <div id="regionControls" class="editor-card is-disabled">
+          <div class="selected-element-head">
+            <div>
+              <span class="panel-kicker">SELECTED REGION</span>
+              <strong id="selectedRegionName">선택된 영역 없음</strong>
+            </div>
+            <span id="selectedRegionBadge">미리보기에서 선택</span>
+          </div>
+          <div class="field-grid four">
+            <label>X<input id="regionX" type="number" /></label>
+            <label>Y<input id="regionY" type="number" /></label>
+            <label>가로<input id="regionW" type="number" min="20" /></label>
+            <label>세로<input id="regionH" type="number" min="20" /></label>
+          </div>
+          <div class="field-grid three">
+            <label>모양
+              <select id="regionShape">
+                <option value="rect">사각형</option>
+                <option value="ellipse">원형/타원</option>
+                <option value="burst">뾰족 말풍선</option>
+                <option value="line">가로선</option>
+              </select>
+            </label>
+            <label>모서리 둥글기 <b id="regionRadiusValue">0</b><input id="regionRadius" type="range" min="0" max="240" /></label>
+            <label>안쪽 여백 <b id="regionPaddingValue">24</b><input id="regionPadding" type="range" min="0" max="180" /></label>
+          </div>
+          <div class="field-grid two">
+            <div><span class="field-label">채우기</span><div id="regionFillField" class="color-field-host"></div></div>
+            <div><span class="field-label">선 색</span><div id="regionStrokeField" class="color-field-host"></div></div>
+          </div>
+          <div class="field-grid three">
+            <label>선 두께<input id="regionStrokeWidth" type="number" min="0" max="80" /></label>
+            <label>회전 <b id="regionRotationValue">0°</b><input id="regionRotation" type="range" min="-180" max="180" /></label>
+            <label>글자 수용
+              <select id="regionAcceptText">
+                <option value="yes">문장 배치</option>
+                <option value="no">장식 전용</option>
+              </select>
+            </label>
+          </div>
+          <div class="field-grid three">
+            <label>효과
+              <select id="regionEffect">
+                <option value="none">없음</option>
+                <option value="shadow">진한 그림자</option>
+                <option value="hollow">빈 그림자</option>
+                <option value="glow">번짐</option>
+              </select>
+            </label>
+            <div><span class="field-label">효과 색</span><div id="regionEffectColorField" class="color-field-host"></div></div>
+            <label>효과 크기<input id="regionEffectSize" type="range" min="0" max="100" /></label>
+          </div>
+          <button id="deleteRegionBtn" class="button button-danger button-wide">선택 영역 삭제</button>
+        </div>
+      </div>
+
+      <div class="tool-pane" data-tool-pane="elements">
+        <div class="section-heading">
+          <div>
+            <h2>요소·사진</h2>
+            <p>원, 띠, 말풍선과 사진을 추가하고 글자 회피 여백을 음수까지 조절할 수 있습니다.</p>
+          </div>
+        </div>
+        <div class="element-buttons">
+          <button class="button" data-add-shape="rect">사각형</button>
+          <button class="button" data-add-shape="band">띠</button>
+          <button class="button" data-add-shape="circle">원형</button>
+          <button class="button" data-add-shape="heart">하트</button>
+          <button class="button" data-add-shape="burst">뾰족 말풍선</button>
+          <button id="addPhotoBtn" class="button button-accent">사진 넣기</button>
+          <input id="photoInput" type="file" accept="image/*" hidden />
+        </div>
+
+        <div id="elementControls" class="editor-card is-disabled">
+          <div class="selected-element-head">
+            <div>
+              <span class="panel-kicker">SELECTED ELEMENT</span>
+              <strong id="selectedElementName">선택된 요소 없음</strong>
+            </div>
+            <span id="selectedElementBadge">미리보기에서 선택</span>
+          </div>
+          <div class="field-grid four">
+            <label>X<input id="elementX" type="number" /></label>
+            <label>Y<input id="elementY" type="number" /></label>
+            <label>가로<input id="elementW" type="number" min="20" /></label>
+            <label>세로<input id="elementH" type="number" min="20" /></label>
+          </div>
+          <div class="field-grid two">
+            <div><span class="field-label">채우기</span><div id="elementFillField" class="color-field-host"></div></div>
+            <div><span class="field-label">선 색</span><div id="elementStrokeField" class="color-field-host"></div></div>
+          </div>
+          <div class="field-grid three">
+            <label>선 두께<input id="elementStrokeWidth" type="number" min="0" max="80" /></label>
+            <label>모서리 둥글기 <b id="elementRadiusValue">0</b><input id="elementRadius" type="range" min="0" max="240" /></label>
+            <label>회전 <b id="rotationValue">0°</b><input id="elementRotation" type="range" min="-180" max="180" /></label>
+          </div>
+          <label>글자·요소 회피 여백 <b id="flowMarginValue">0</b><input id="flowMargin" type="range" min="-160" max="240" /></label>
+          <p class="microcopy">0은 요소 외곽선에 딱 맞춤, 음수는 글자가 더 가까워지거나 일부 겹침, 양수는 더 넓게 띄웁니다.</p>
+          <label class="check-row"><input id="affectFlow" type="checkbox" checked /> 문장이 이 요소·사진을 피해 배치되게 하기</label>
+          <div class="field-grid three">
+            <label>효과
+              <select id="elementEffect">
+                <option value="none">없음</option>
+                <option value="shadow">진한 그림자</option>
+                <option value="hollow">빈 그림자</option>
+                <option value="glow">번짐</option>
+              </select>
+            </label>
+            <div><span class="field-label">효과 색</span><div id="elementEffectColorField" class="color-field-host"></div></div>
+            <label>효과 크기<input id="elementEffectSize" type="range" min="0" max="100" /></label>
+          </div>
+          <div class="field-grid two">
+            <label>요소 안 문구<input id="elementLabel" type="text" placeholder="예: 긴급입덕" /></label>
+            <label>문구 크기<input id="elementLabelSize" type="number" min="12" max="280" /></label>
+          </div>
+          <div class="field-grid two">
+            <div><span class="field-label">문구 색</span><div id="elementLabelColorField" class="color-field-host"></div></div>
+            <label>사진 맞춤
+              <select id="imageFit">
+                <option value="cover">영역 채우기</option>
+                <option value="contain">사진 전체 보기</option>
+              </select>
+            </label>
+          </div>
+          <button id="deleteElementBtn" class="button button-danger button-wide">선택 요소 삭제</button>
+        </div>
+      </div>
+
+      <div class="tool-pane" data-tool-pane="background">
+        <div class="section-heading">
+          <div>
+            <h2>배경·재단</h2>
+            <p>가로/세로, 배경 그라데이션·패턴, 재단여백과 외곽 테두리를 설정합니다.</p>
+          </div>
+        </div>
+        <div class="field-grid three">
+          <label>찌라시 방향
+            <select id="orientation">
+              <option value="landscape">가로 1600×900</option>
+              <option value="portrait">세로 900×1600</option>
+            </select>
+          </label>
+          <label>재단여백
+            <select id="bleedMm">
+              <option value="0">없음</option>
+              <option value="3">3 mm</option>
+              <option value="5">5 mm</option>
+              <option value="10">10 mm</option>
+            </select>
+          </label>
+          <label>배경 방식
+            <select id="backgroundMode">
+              <option value="solid">단색</option>
+              <option value="gradient">그라데이션</option>
+              <option value="pattern">패턴</option>
+              <option value="gradientPattern">그라데이션 + 패턴</option>
+            </select>
+          </label>
+        </div>
+        <div class="field-grid three">
+          <div><span class="field-label">배경 1</span><div id="backgroundColor1Field" class="color-field-host"></div></div>
+          <div><span class="field-label">배경 2</span><div id="backgroundColor2Field" class="color-field-host"></div></div>
+          <label>그라데이션 각도 <b id="gradientAngleValue">0°</b><input id="gradientAngle" type="range" min="0" max="360" /></label>
+        </div>
+        <div class="field-grid three">
+          <label>패턴
+            <select id="patternType">
+              <option value="stripes">사선</option>
+              <option value="dots">점</option>
+              <option value="checker">체커</option>
+              <option value="grid">격자</option>
+              <option value="stars">별</option>
+            </select>
+          </label>
+          <div><span class="field-label">패턴 색</span><div id="patternColorField" class="color-field-host"></div></div>
+          <label>패턴 크기 <b id="patternScaleValue">48</b><input id="patternScale" type="range" min="12" max="180" /></label>
+        </div>
+        <div class="divider"></div>
+        <label class="check-row"><input id="posterBorderEnabled" type="checkbox" /> 찌라시 테두리 사용</label>
+        <div class="field-grid three">
+          <div><span class="field-label">테두리 색</span><div id="posterBorderColorField" class="color-field-host"></div></div>
+          <label>테두리 두께 <b id="posterBorderWidthValue">12</b><input id="posterBorderWidth" type="range" min="0" max="100" /></label>
+          <label>모서리 둥글기 <b id="posterBorderRadiusValue">0</b><input id="posterBorderRadius" type="range" min="0" max="240" /></label>
+        </div>
+      </div>
+
+      <div class="tool-pane" data-tool-pane="export">
+        <div class="section-heading">
+          <div>
+            <h2>저장 설정</h2>
+            <p>선택 표시와 영역 안내선은 제외되며, 재단여백을 포함한 전체 캔버스로 저장됩니다.</p>
+          </div>
+        </div>
+        <label>JPG 품질 <b id="jpgQualityValue">92%</b><input id="jpgQuality" type="range" min="50" max="100" value="92" /></label>
+        <div class="field-grid two export-buttons">
+          <button id="exportPngBtn2" class="button">PNG 저장</button>
+          <button id="exportJpgBtn2" class="button button-accent">JPG 저장</button>
+        </div>
+      </div>
     </section>
   </main>
+
+  <dialog id="unicodeDialog" class="unicode-dialog">
+    <div class="dialog-head">
+      <div>
+        <span class="panel-kicker">UNICODE BROWSER</span>
+        <h2>유니코드 찾아보기</h2>
+      </div>
+      <button id="unicodeCloseBtn" class="icon-button" aria-label="닫기">×</button>
+    </div>
+    <div class="unicode-tools">
+      <input id="unicodeSearch" type="search" placeholder="기호 또는 분류 검색: 별, 전화, 화살표…" />
+      <div class="codepoint-entry">
+        <input id="unicodeCodepoint" type="text" placeholder="U+2605 또는 ★" />
+        <button id="unicodeCodepointApply" class="button">적용</button>
+      </div>
+    </div>
+    <div id="unicodeCategories" class="unicode-categories"></div>
+    <div id="unicodeGrid" class="unicode-grid"></div>
+    <p id="unicodeTargetHint" class="dialog-hint"></p>
+  </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="app.js"></script>
