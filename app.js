@@ -5,7 +5,7 @@
   const canvas = $("posterCanvas");
   const ctx = canvas.getContext("2d");
   const sceneCanvas = document.createElement("canvas");
-  const sceneCtx = sceneCanvas.getContext("2d");
+  const sceneCtx = sceneCanvas.getContext("2d", { willReadFrequently: true });
   const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
   const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
   const deepClone = (v) => JSON.parse(JSON.stringify(v));
@@ -74,7 +74,7 @@
   const contrastText = (color) => luminance(color) > 0.45 ? "#111111" : "#ffffff";
 
   function R(name, x, y, w, h, options = {}) {
-    return {
+    const region = {
       id: uid(), name, x, y, w, h,
       shape: "rect", radius: 0, rotation: 0, padding: 26,
       fill: "#ffffff", fillRole: null, fillNone: false,
@@ -82,102 +82,253 @@
       acceptText: true, effect: "none", effectColor: "#111111", effectSize: 18,
       ...options
     };
+    if (options.strokeNone === undefined && (options.stroke || options.strokeRole) && Number(options.strokeWidth) > 0) {
+      region.strokeNone = false;
+    }
+    return region;
   }
 
   const templateSpecs = [
     {
-      id: "basic-line", name: "기초 가로선", thumb: "linear-gradient(#f4f0e6 0 45%,#111 45% 51%,#f4f0e6 51%)",
-      palette: ["#f4f0e6", "#111111", "#ff3b30"], bg: { mode: "solid", c1: "#f4f0e6", c2: "#ffffff", pattern: "stripes", patternColor: "#111111", angle: 0, scale: 48 },
+      id: "headline-rule",
+      name: "호외 한 줄",
+      caption: "헤드라인 · 기사 · 콜아웃",
+      palette: ["#f3ecdf", "#111111", "#ff3b30"],
+      bg: { mode: "solid", c1: "#f3ecdf", c2: "#ffffff", pattern: "grid", patternColor: "#111111", angle: 0, scale: 54 },
+      border: { enabled: true, color: "#111111", width: 12, radius: 0 },
       regions: [
-        R("상단 제목", .05,.06,.90,.34,{ fillNone:true, strokeNone:true, padding:22 }),
-        R("검은 가로선", .03,.44,.94,.065,{ shape:"line", fillRole:"secondary", strokeNone:true, acceptText:false, padding:0 }),
-        R("하단 본문", .05,.55,.90,.38,{ fillNone:true, strokeNone:true, padding:22 })
-      ]
+        R("대제목", .045, .045, .91, .22, { fillNone: true, padding: 18 }),
+        R("검은 가로선", .035, .285, .93, .025, { shape: "line", fillRole: "secondary", acceptText: false, padding: 0 }),
+        R("기사 본문", .045, .345, .595, .60, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 34 }),
+        R("원형 특보", .675, .345, .28, .275, { shape: "ellipse", fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, padding: 34 }),
+        R("검은 연락처", .675, .665, .28, .28, { fillRole: "secondary", radius: 18, padding: 28 })
+      ],
+      textSlots: [0, 1, 2, 1, 3]
     },
     {
-      id: "basic-card", name: "기초 흰 카드", thumb: "linear-gradient(135deg,#1557bb,#0b2d68)",
-      palette: ["#1557bb", "#ffffff", "#f4e900"], bg: { mode:"gradient", c1:"#1557bb", c2:"#071f4a", pattern:"dots", patternColor:"#ffffff", angle:135, scale:58 },
-      regions: [R("흰 카드", .08,.10,.84,.80,{ fillRole:"secondary", radius:40, strokeRole:"tertiary", strokeWidth:0, padding:48, effect:"shadow", effectColor:"#00112d", effectSize:24 })]
-    },
-    {
-      id: "otter-breaking", name: "수달 속보판", thumb: "linear-gradient(#b8b8b8 0 28%,#111 28% 37%,#0b43a0 37% 74%,#f4e900 74%)",
-      palette: ["#0d47a1", "#f4e900", "#ff3b30"], bg: { mode:"solid", c1:"#0d47a1", c2:"#ffffff", pattern:"grid", patternColor:"#ffffff", angle:0, scale:58 },
+      id: "label-market",
+      name: "노랑 상점 전단",
+      caption: "상단 띠 · 큰 카드 · 2단 배지",
+      palette: ["#ffd400", "#111111", "#0057ff"],
+      bg: { mode: "solid", c1: "#ffd400", c2: "#ffffff", pattern: "dots", patternColor: "#111111", angle: 0, scale: 48 },
+      border: { enabled: true, color: "#111111", width: 10, radius: 0 },
       regions: [
-        R("은색 헤드라인", .03,.03,.94,.25,{ fill:"#c9c9c9", stroke:"#111111", strokeWidth:4, padding:28 }),
-        R("검은 속보띠", .03,.30,.94,.10,{ fill:"#111111", strokeNone:true, padding:16 }),
-        R("파란 본문", .03,.43,.62,.52,{ fillRole:"primary", stroke:"#111111", strokeWidth:4, padding:34 }),
-        R("노란 특보", .67,.43,.30,.52,{ fillRole:"secondary", stroke:"#111111", strokeWidth:4, padding:30 })
-      ]
+        R("검은 상호", .04, .045, .92, .18, { fillRole: "secondary", radius: 12, padding: 22 }),
+        R("흰 안내판", .04, .265, .60, .69, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 7, radius: 28, padding: 38 }),
+        R("파랑 배지", .675, .265, .285, .285, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 7, radius: 24, padding: 28 }),
+        R("빨강 접수판", .675, .59, .285, .365, { fill: "#ff3158", strokeRole: "secondary", strokeWidth: 7, radius: 24, padding: 28 })
+      ],
+      textSlots: [0, 1, 2, 1, 3]
     },
     {
-      id: "rounded-news", name: "둥근 뉴스룸", thumb: "linear-gradient(120deg,#fa5b4c,#f7d649 55%,#0a70c8 55%)",
-      palette:["#ef4f43","#f6dc4e","#1169b7"], bg:{mode:"gradient",c1:"#ef4f43",c2:"#f6dc4e",pattern:"dots",patternColor:"#ffffff",angle:120,scale:42},
-      regions:[R("메인 카드",.05,.06,.62,.88,{fill:"#fff8e9",radius:52,padding:42,effect:"shadow",effectColor:"#6b1d16",effectSize:22}),R("우측 원",.70,.09,.25,.34,{shape:"ellipse",fillRole:"tertiary",padding:36}),R("우측 하단",.70,.48,.25,.43,{fill:"#111111",radius:34,padding:26})]
+      id: "blue-bulletin",
+      name: "파랑 속보판",
+      caption: "백색 제목 · 본문 · 원형 특보",
+      palette: ["#0757c9", "#ffffff", "#ffe000"],
+      bg: { mode: "solid", c1: "#0757c9", c2: "#ffffff", pattern: "grid", patternColor: "#ffffff", angle: 0, scale: 58 },
+      border: { enabled: true, color: "#111111", width: 10, radius: 0 },
+      regions: [
+        R("백색 제목", .04, .045, .92, .215, { fillRole: "secondary", stroke: "#111111", strokeWidth: 6, radius: 16, padding: 26 }),
+        R("백색 기사", .04, .30, .585, .655, { fillRole: "secondary", stroke: "#111111", strokeWidth: 6, radius: 22, padding: 38 }),
+        R("노랑 특보", .66, .30, .30, .30, { shape: "ellipse", fillRole: "tertiary", stroke: "#111111", strokeWidth: 6, padding: 38 }),
+        R("검은 결론", .66, .655, .30, .30, { fill: "#111111", radius: 22, padding: 30 })
+      ],
+      textSlots: [0, 1, 2, 1, 3]
     },
     {
-      id: "earth-impact", name: "지구충격 진짜평평", thumb: "radial-gradient(circle,#fff 0 24%,#2c7ac4 25% 58%,#063f7d 59%)",
-      palette:["#1d70b7","#ffffff","#f4e900"], bg:{mode:"gradientPattern",c1:"#0a427a",c2:"#2d85cc",pattern:"grid",patternColor:"#ffffff",angle:30,scale:70},
-      regions:[R("지구 중심",.18,.14,.64,.64,{shape:"ellipse",fillRole:"primary",strokeRole:"secondary",strokeWidth:10,padding:78,effect:"glow",effectColor:"#ffffff",effectSize:30}),R("상단 충격",.04,.03,.42,.17,{shape:"burst",fillRole:"tertiary",stroke:"#111111",strokeWidth:5,padding:25}),R("하단 진실",.46,.78,.50,.17,{fill:"#111111",radius:8,padding:20})]
+      id: "red-directory",
+      name: "빨강 전화번호부",
+      caption: "대제목 · 속보 띠 · 3열 기사",
+      palette: ["#ee3027", "#111111", "#ffe23b"],
+      bg: { mode: "solid", c1: "#ee3027", c2: "#ffffff", pattern: "stripes", patternColor: "#111111", angle: 0, scale: 50 },
+      border: { enabled: true, color: "#111111", width: 12, radius: 0 },
+      regions: [
+        R("크림 대제목", .04, .045, .92, .205, { fill: "#fff5dc", strokeRole: "secondary", strokeWidth: 6, padding: 24 }),
+        R("검은 속보", .04, .285, .92, .105, { fillRole: "secondary", padding: 16 }),
+        R("기사 왼쪽", .04, .43, .285, .525, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 14, padding: 26 }),
+        R("기사 가운데", .3575, .43, .285, .525, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, radius: 14, padding: 26 }),
+        R("기사 오른쪽", .675, .43, .285, .525, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 14, padding: 26 })
+      ],
+      textSlots: [0, 2, 3, 4, 1]
     },
     {
-      id: "pink-checker", name: "핑크 체커 호외", thumb: "conic-gradient(#111 0 25%,#ff4f9a 0 50%,#111 0 75%,#4ce6ff 0) 0/24px 24px",
-      palette:["#ff4f9a","#4ce6ff","#f4e900"], bg:{mode:"pattern",c1:"#111111",c2:"#111111",pattern:"checker",patternColor:"#ff4f9a",angle:0,scale:54},
-      regions:[R("흰 메인",.08,.08,.84,.54,{fill:"#ffffff",stroke:"#111111",strokeWidth:8,padding:38,rotation:-2}),R("청록 띠",.05,.68,.58,.22,{fillRole:"secondary",stroke:"#111111",strokeWidth:6,padding:24,rotation:2}),R("노란 원",.70,.65,.23,.27,{shape:"ellipse",fillRole:"tertiary",stroke:"#111111",strokeWidth:5,padding:34})]
+      id: "pink-tickets",
+      name: "분홍 접수표",
+      caption: "상호 띠 · 티켓 3장 · 하단 번호",
+      palette: ["#ff4f9a", "#111111", "#36d8ff"],
+      bg: { mode: "solid", c1: "#ff4f9a", c2: "#ffffff", pattern: "dots", patternColor: "#111111", angle: 0, scale: 42 },
+      border: { enabled: true, color: "#111111", width: 10, radius: 0 },
+      regions: [
+        R("검은 상단", .04, .045, .92, .17, { fillRole: "secondary", radius: 16, padding: 20 }),
+        R("흰 티켓", .04, .255, .92, .16, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 22 }),
+        R("하늘 티켓", .04, .45, .92, .16, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 22 }),
+        R("노랑 티켓", .04, .645, .92, .16, { fill: "#ffe33b", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 22 }),
+        R("검은 번호", .04, .84, .92, .115, { fillRole: "secondary", radius: 16, padding: 16 })
+      ],
+      textSlots: [0, 1, 2, 3, 4]
     },
     {
-      id: "mono-tabloid", name: "흑백 호외", thumb: "linear-gradient(#efeadc 0 30%,#111 30% 40%,#efeadc 40% 78%,#d82823 78%)",
-      palette:["#efeadc","#111111","#d82823"], bg:{mode:"solid",c1:"#efeadc",c2:"#ffffff",pattern:"grid",patternColor:"#111111",angle:0,scale:80},
-      regions:[R("대제목",.04,.04,.92,.25,{fillNone:true,strokeNone:true,padding:16}),R("검은 띠",.03,.31,.94,.09,{fillRole:"secondary",padding:12}),R("기사 1",.04,.43,.44,.48,{fillNone:true,stroke:"#111111",strokeWidth:3,padding:25}),R("기사 2",.52,.43,.44,.48,{fillNone:true,stroke:"#111111",strokeWidth:3,padding:25}),R("적색 꼬리표",.70,.82,.26,.14,{fillRole:"tertiary",padding:18,rotation:-3})]
+      id: "mint-notice",
+      name: "민트 공지판",
+      caption: "검은 제목 · 백색 본문 · 우측 메모",
+      palette: ["#67e5c4", "#111111", "#2357d7"],
+      bg: { mode: "solid", c1: "#67e5c4", c2: "#ffffff", pattern: "grid", patternColor: "#111111", angle: 0, scale: 56 },
+      border: { enabled: true, color: "#111111", width: 10, radius: 0 },
+      regions: [
+        R("검은 공지", .05, .05, .90, .19, { fillRole: "secondary", radius: 10, padding: 22 }),
+        R("흰 본문", .05, .285, .56, .665, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 24, padding: 36 }),
+        R("파랑 메모", .645, .285, .305, .285, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, radius: 24, padding: 30 }),
+        R("크림 메모", .645, .61, .305, .34, { fill: "#fff3ca", strokeRole: "secondary", strokeWidth: 6, radius: 24, padding: 30 })
+      ],
+      textSlots: [0, 1, 2, 1, 3]
     },
     {
-      id: "neon-capsule", name: "네온 캡슐", thumb: "linear-gradient(110deg,#6c27ff,#ff37a0 45%,#00dfb7)",
-      palette:["#7c2aff","#ff46a4","#00dfb7"], bg:{mode:"gradientPattern",c1:"#6a1fd0",c2:"#06163b",pattern:"dots",patternColor:"#ff46a4",angle:110,scale:42},
-      regions:[R("검은 캡슐",.06,.08,.88,.23,{fill:"#111111",radius:120,padding:34,strokeRole:"secondary",strokeWidth:5}),R("흰 본문",.09,.37,.58,.53,{fill:"#ffffff",radius:34,padding:38}),R("청록 캡슐",.70,.38,.23,.22,{fillRole:"tertiary",radius:100,padding:30}),R("핑크 캡슐",.70,.66,.23,.22,{fillRole:"secondary",radius:100,padding:30})]
+      id: "orange-counter",
+      name: "주황 안내창구",
+      caption: "세로 표찰 · 3단 안내 카드",
+      palette: ["#ff7a00", "#111111", "#fff0c7"],
+      bg: { mode: "solid", c1: "#ff7a00", c2: "#ffffff", pattern: "stripes", patternColor: "#111111", angle: 0, scale: 54 },
+      border: { enabled: true, color: "#111111", width: 12, radius: 0 },
+      regions: [
+        R("검은 세로판", .04, .05, .275, .90, { fillRole: "secondary", radius: 16, padding: 28 }),
+        R("크림 제목", .35, .05, .61, .28, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, radius: 22, padding: 28 }),
+        R("흰 안내", .35, .37, .61, .34, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 22, padding: 30 }),
+        R("빨강 마감", .35, .75, .61, .20, { fill: "#f02d3a", strokeRole: "secondary", strokeWidth: 6, radius: 22, padding: 22 })
+      ],
+      textSlots: [1, 0, 2, 2, 3]
     },
     {
-      id: "lime-lab", name: "형광 수달 연구소", thumb: "linear-gradient(#f3ff00 0 30%,#fff 30% 68%,#2dff29 68%)",
-      palette:["#dfff00","#ffffff","#20ef38"], bg:{mode:"solid",c1:"#0a0a0a",c2:"#ffffff",pattern:"stripes",patternColor:"#dfff00",angle:0,scale:52},
-      regions:[R("형광 제목",.03,.04,.94,.26,{fillRole:"primary",stroke:"#111111",strokeWidth:5,padding:28}),R("흰 연구",.03,.34,.94,.38,{fillRole:"secondary",stroke:"#111111",strokeWidth:5,padding:35}),R("녹색 결론",.03,.76,.94,.19,{fillRole:"tertiary",stroke:"#111111",strokeWidth:5,padding:24}),R("검은 원",.08,.42,.23,.23,{shape:"ellipse",fill:"#111111",padding:34})]
+      id: "violet-call",
+      name: "보라 콜센터",
+      caption: "백색 헤드 · 검은 본문 · 컬러 배지",
+      palette: ["#7e35d9", "#111111", "#ff59a6"],
+      bg: { mode: "solid", c1: "#7e35d9", c2: "#ffffff", pattern: "dots", patternColor: "#111111", angle: 0, scale: 44 },
+      border: { enabled: true, color: "#111111", width: 10, radius: 0 },
+      regions: [
+        R("백색 헤드", .05, .05, .90, .205, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 26, padding: 26 }),
+        R("검은 상담", .05, .30, .555, .65, { fillRole: "secondary", radius: 26, padding: 36 }),
+        R("분홍 원", .645, .30, .305, .27, { shape: "ellipse", fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, padding: 34 }),
+        R("하늘 배지", .645, .61, .305, .15, { fill: "#45def2", strokeRole: "secondary", strokeWidth: 6, radius: 60, padding: 18 }),
+        R("노랑 번호", .645, .80, .305, .15, { fill: "#ffe13b", strokeRole: "secondary", strokeWidth: 6, radius: 16, padding: 18 })
+      ],
+      textSlots: [0, 1, 2, 1, 4]
     },
     {
-      id: "orange-alert", name: "오렌지 특보", thumb: "linear-gradient(135deg,#ff6a00 0 42%,#0b2245 42% 72%,#fff0d0 72%)",
-      palette:["#ff6a00","#10284e","#fff0d0"], bg:{mode:"gradient",c1:"#ff6a00",c2:"#7c1d00",pattern:"stripes",patternColor:"#fff0d0",angle:135,scale:60},
-      regions:[R("크림 제목",.05,.08,.54,.35,{fillRole:"tertiary",radius:30,padding:34}),R("남색 속보",.62,.06,.33,.39,{fillRole:"secondary",radius:38,padding:33}),R("하단 기사",.10,.53,.80,.36,{fill:"#ffffff",radius:26,padding:38,effect:"shadow",effectColor:"#4a1600",effectSize:24})]
+      id: "lime-lab-clean",
+      name: "형광 연구소",
+      caption: "검은 헤드 · 백색 연구 · 결론 2칸",
+      palette: ["#b8ff00", "#111111", "#21d8ff"],
+      bg: { mode: "solid", c1: "#b8ff00", c2: "#ffffff", pattern: "grid", patternColor: "#111111", angle: 0, scale: 58 },
+      border: { enabled: true, color: "#111111", width: 12, radius: 0 },
+      regions: [
+        R("검은 연구명", .04, .045, .92, .19, { fillRole: "secondary", padding: 22 }),
+        R("백색 연구", .04, .275, .92, .43, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 7, radius: 20, padding: 34 }),
+        R("하늘 결론", .04, .75, .585, .205, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 7, radius: 20, padding: 24 }),
+        R("검은 확인", .665, .75, .295, .205, { fillRole: "secondary", radius: 20, padding: 24 })
+      ],
+      textSlots: [0, 1, 2, 1, 3]
     },
     {
-      id: "red-cyan", name: "적청 경보", thumb: "linear-gradient(90deg,#c7001d 0 63%,#00d9ef 63%)",
-      palette:["#c7001d","#00d9ef","#f4e900"], bg:{mode:"solid",c1:"#c7001d",c2:"#ffffff",pattern:"grid",patternColor:"#8e0015",angle:0,scale:64},
-      regions:[R("적색 본문",.04,.05,.56,.90,{fillRole:"primary",stroke:"#111111",strokeWidth:5,padding:38}),R("청색 상단",.64,.05,.32,.48,{fillRole:"secondary",stroke:"#111111",strokeWidth:5,padding:32}),R("노랑 하단",.64,.58,.32,.37,{fillRole:"tertiary",stroke:"#111111",strokeWidth:5,padding:28})]
+      id: "cyan-archive",
+      name: "하늘 기록보관소",
+      caption: "대형 기사 · 우측 정보 3칸",
+      palette: ["#3bd2f0", "#123c85", "#ffe235"],
+      bg: { mode: "solid", c1: "#3bd2f0", c2: "#ffffff", pattern: "grid", patternColor: "#123c85", angle: 0, scale: 58 },
+      border: { enabled: true, color: "#123c85", width: 10, radius: 0 },
+      regions: [
+        R("백색 대문", .04, .05, .65, .90, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 7, radius: 24, padding: 40 }),
+        R("남색 요약", .725, .05, .235, .42, { fillRole: "secondary", radius: 22, padding: 28 }),
+        R("노랑 표찰", .725, .515, .235, .19, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 20 }),
+        R("백색 번호", .725, .75, .235, .20, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 20 })
+      ],
+      textSlots: [0, 1, 2, 0, 3]
     },
     {
-      id: "blueprint", name: "청사진 보고서", thumb: "linear-gradient(#003d87,#0d61af)",
-      palette:["#064b95","#ffffff","#f4e900"], bg:{mode:"gradientPattern",c1:"#033b78",c2:"#0b65ad",pattern:"grid",patternColor:"#ffffff",angle:45,scale:72},
-      regions:[R("백색 제목",.05,.06,.90,.20,{fill:"#ffffff",strokeNone:true,padding:26}),R("도면 본문",.05,.31,.58,.61,{fill:"#07396d",stroke:"#ffffff",strokeWidth:3,padding:34}),R("경고 원",.69,.31,.25,.30,{shape:"ellipse",fillRole:"tertiary",stroke:"#ffffff",strokeWidth:5,padding:34}),R("백색 메모",.67,.66,.29,.26,{fill:"#ffffff",radius:18,padding:26})]
+      id: "black-sticker",
+      name: "검정 스티커판",
+      caption: "백색 제목 · 좌우 카드 · 노랑 결론",
+      palette: ["#111111", "#ff55a5", "#26d9ef"],
+      bg: { mode: "solid", c1: "#111111", c2: "#ffffff", pattern: "dots", patternColor: "#ffffff", angle: 0, scale: 46 },
+      border: { enabled: true, color: "#ffffff", width: 8, radius: 0 },
+      regions: [
+        R("백색 제목", .04, .05, .92, .20, { fill: "#ffffff", radius: 18, padding: 26 }),
+        R("분홍 카드", .04, .30, .44, .395, { fillRole: "secondary", stroke: "#ffffff", strokeWidth: 6, radius: 22, padding: 30 }),
+        R("하늘 카드", .52, .30, .44, .395, { fillRole: "tertiary", stroke: "#ffffff", strokeWidth: 6, radius: 22, padding: 30 }),
+        R("노랑 결론", .04, .74, .92, .21, { fill: "#ffe000", radius: 18, padding: 24 })
+      ],
+      textSlots: [0, 1, 2, 1, 3]
     },
     {
-      id: "candy-call", name: "캔디 콜센터", thumb: "linear-gradient(120deg,#ff5ab8,#7f36ff 52%,#00e4c0)",
-      palette:["#ff5ab8","#7f36ff","#00e4c0"], bg:{mode:"gradient",c1:"#ff5ab8",c2:"#7f36ff",pattern:"dots",patternColor:"#00e4c0",angle:120,scale:40},
-      regions:[R("전화 헤드",.05,.05,.90,.24,{fill:"#111111",radius:28,padding:28}),R("왼쪽 카드",.06,.35,.42,.56,{fill:"#ffffff",radius:46,padding:38,rotation:-2}),R("오른쪽 카드",.52,.35,.42,.56,{fillRole:"tertiary",radius:46,padding:38,rotation:2})]
+      id: "cream-classified",
+      name: "크림 생활정보",
+      caption: "적색 헤드 · 2×2 분류광고",
+      palette: ["#f3ead5", "#111111", "#f23b35"],
+      bg: { mode: "solid", c1: "#f3ead5", c2: "#ffffff", pattern: "grid", patternColor: "#111111", angle: 0, scale: 64 },
+      border: { enabled: true, color: "#111111", width: 12, radius: 0 },
+      regions: [
+        R("적색 헤드", .035, .04, .93, .18, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, padding: 20 }),
+        R("분류 1", .04, .26, .44, .30, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, padding: 28 }),
+        R("분류 2", .52, .26, .44, .30, { fillRole: "secondary", padding: 28 }),
+        R("분류 3", .04, .60, .44, .35, { fill: "#ffe03b", strokeRole: "secondary", strokeWidth: 6, padding: 28 }),
+        R("분류 4", .52, .60, .44, .35, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, padding: 28 })
+      ],
+      textSlots: [0, 1, 2, 3, 4]
     },
     {
-      id: "paper-cut", name: "종이 오려붙임", thumb: "linear-gradient(145deg,#eee5d3,#d7cab6)",
-      palette:["#ece2cf","#111111","#e93838"], bg:{mode:"pattern",c1:"#e8ddc9",c2:"#ffffff",pattern:"dots",patternColor:"#c5b79f",angle:0,scale:36},
-      regions:[R("검은 종이",.05,.06,.62,.27,{fill:"#111111",padding:28,rotation:-2,effect:"shadow",effectColor:"#6b6256",effectSize:18}),R("빨간 메모",.68,.08,.27,.25,{fillRole:"tertiary",padding:25,rotation:4}),R("흰 기사",.08,.39,.84,.51,{fill:"#ffffff",padding:42,rotation:1,stroke:"#111111",strokeWidth:3})]
+      id: "white-urgent",
+      name: "백색 긴급공고",
+      caption: "적색 헤드 · 큰 기사 · 특보 2칸",
+      palette: ["#ffffff", "#111111", "#ff2e3f"],
+      bg: { mode: "solid", c1: "#ffffff", c2: "#ffffff", pattern: "grid", patternColor: "#111111", angle: 0, scale: 56 },
+      border: { enabled: true, color: "#111111", width: 14, radius: 0 },
+      regions: [
+        R("적색 긴급", .04, .05, .92, .18, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, padding: 20 }),
+        R("백색 기사", .04, .275, .64, .675, { fillNone: true, strokeRole: "secondary", strokeWidth: 7, padding: 36 }),
+        R("노랑 원형", .72, .275, .24, .28, { shape: "ellipse", fill: "#ffe13b", strokeRole: "secondary", strokeWidth: 6, padding: 30 }),
+        R("검은 속보", .72, .60, .24, .35, { fillRole: "secondary", radius: 18, padding: 28 })
+      ],
+      textSlots: [0, 1, 2, 1, 3]
     },
     {
-      id: "night-radio", name: "심야 수달 방송", thumb: "linear-gradient(#090b25,#29135c 60%,#ff427e)",
-      palette:["#16123f","#ff427e","#5ee8ff"], bg:{mode:"gradientPattern",c1:"#07091f",c2:"#2a115e",pattern:"stars",patternColor:"#5ee8ff",angle:180,scale:62},
-      regions:[R("방송 제목",.05,.07,.90,.21,{fillRole:"secondary",radius:110,padding:32,effect:"glow",effectColor:"#ff8fba",effectSize:24}),R("심야 사연",.08,.34,.52,.57,{fill:"#0d0f2f",strokeRole:"tertiary",strokeWidth:4,radius:30,padding:38}),R("주파수 원",.65,.38,.28,.34,{shape:"ellipse",fillRole:"tertiary",padding:42}),R("전화 띠",.62,.77,.34,.14,{fill:"#ffffff",radius:70,padding:18})]
+      id: "green-phonebook",
+      name: "초록 연락망",
+      caption: "제목 · 안내 2줄 · 하단 배지",
+      palette: ["#22d45f", "#111111", "#ffe13b"],
+      bg: { mode: "solid", c1: "#22d45f", c2: "#ffffff", pattern: "grid", patternColor: "#111111", angle: 0, scale: 54 },
+      border: { enabled: true, color: "#111111", width: 10, radius: 0 },
+      regions: [
+        R("검은 제목", .04, .045, .92, .19, { fillRole: "secondary", radius: 14, padding: 22 }),
+        R("흰 안내 1", .04, .285, .92, .17, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 16, padding: 20 }),
+        R("흰 안내 2", .04, .495, .92, .17, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 16, padding: 20 }),
+        R("노랑 접수", .04, .705, .585, .25, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 26 }),
+        R("빨강 전화", .665, .705, .295, .25, { shape: "ellipse", fill: "#ff3158", strokeRole: "secondary", strokeWidth: 6, padding: 30 })
+      ],
+      textSlots: [0, 1, 2, 3, 4]
+    },
+    {
+      id: "navy-broadcast",
+      name: "남색 방송국",
+      caption: "노랑 헤드 · 백색 본문 · 우측 2단",
+      palette: ["#112f78", "#ffe13b", "#34d7ef"],
+      bg: { mode: "solid", c1: "#112f78", c2: "#ffffff", pattern: "grid", patternColor: "#ffffff", angle: 0, scale: 60 },
+      border: { enabled: true, color: "#ffffff", width: 8, radius: 0 },
+      regions: [
+        R("노랑 방송명", .04, .05, .92, .20, { fillRole: "secondary", stroke: "#111111", strokeWidth: 6, radius: 18, padding: 24 }),
+        R("백색 사연", .04, .295, .60, .655, { fill: "#ffffff", stroke: "#111111", strokeWidth: 6, radius: 22, padding: 36 }),
+        R("하늘 주파수", .68, .295, .28, .28, { fillRole: "tertiary", stroke: "#111111", strokeWidth: 6, radius: 22, padding: 28 }),
+        R("분홍 신청곡", .68, .62, .28, .33, { fill: "#ff4fa0", stroke: "#111111", strokeWidth: 6, radius: 22, padding: 28 })
+      ],
+      textSlots: [0, 1, 2, 1, 3]
     }
   ];
 
   function makeText(text, overrides = {}) {
     return {
-      id: uid(), text, regionId: null, order: 0,
-      fontFamily: "dotum", fontSize: 78, align: "left",
+      id: uid(), text, regionId: null, order: 0, role: "body",
+      fontFamily: "dotum", fontSize: 54, align: "left",
       bold: true, italic: false, underline: false, strike: false,
-      scaleX: 1, letterSpacing: 0, lineHeight: 1.06,
-      effect: "outline", outlineWidth: 5,
+      scaleX: 1, letterSpacing: -1, lineHeight: 1.08,
+      effect: "none", outlineWidth: 3,
       colorMode: "auto", color: "#ffffff", effectColor: "#111111",
       gap: 12, unicodeStyle: "none", customUnicode: "★",
       prefixEnabled: false, prefixSymbol: "•", prefixGap: 12,
@@ -202,9 +353,9 @@
   const initialState = {
     orientation: "landscape",
     bleedMm: 0,
-    templateId: "otter-breaking",
-    palette: { primary: "#0d47a1", secondary: "#f4e900", tertiary: "#ff3b30" },
-    background: { mode:"solid", c1:"#0d47a1", c2:"#ffffff", pattern:"grid", patternColor:"#ffffff", angle:0, scale:58 },
+    templateId: "label-market",
+    palette: { primary: "#ffd400", secondary: "#111111", tertiary: "#0057ff" },
+    background: { mode:"solid", c1:"#ffd400", c2:"#ffd400", pattern:"dots", patternColor:"#111111", angle:0, scale:48 },
     regions: [],
     elements: [],
     texts: [],
@@ -213,7 +364,7 @@
     selectedRegionId: null,
     selectedElementId: null,
     jpgQuality: .92,
-    showRegions: true
+    showRegions: false
   };
 
   let state = deepClone(initialState);
@@ -252,31 +403,180 @@
     toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
   }
 
-  function createColorField(hostId, getter, setter, { allowNone = true, onCommit = null } = {}) {
-    const host = $(hostId);
-    if (!host) return null;
+  function rgbToHsv({ r, g, b }) {
+    const rn = r / 255, gn = g / 255, bn = b / 255;
+    const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+    const d = max - min;
+    let h = 0;
+    if (d) {
+      if (max === rn) h = 60 * (((gn - bn) / d) % 6);
+      else if (max === gn) h = 60 * ((bn - rn) / d + 2);
+      else h = 60 * ((rn - gn) / d + 4);
+    }
+    if (h < 0) h += 360;
+    return { h, s: max === 0 ? 0 : d / max, v: max };
+  }
+
+  function hsvToRgb({ h, s, v }) {
+    const c = v * s;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = v - c;
+    let rp = 0, gp = 0, bp = 0;
+    if (h < 60) [rp,gp,bp] = [c,x,0];
+    else if (h < 120) [rp,gp,bp] = [x,c,0];
+    else if (h < 180) [rp,gp,bp] = [0,c,x];
+    else if (h < 240) [rp,gp,bp] = [0,x,c];
+    else if (h < 300) [rp,gp,bp] = [x,0,c];
+    else [rp,gp,bp] = [c,0,x];
+    return { r:(rp+m)*255, g:(gp+m)*255, b:(bp+m)*255 };
+  }
+
+  function hsvToHex(hsv) { return rgbToHex(hsvToRgb(hsv)); }
+  function rgbToHsl({ r, g, b }) {
+    const rn = r / 255, gn = g / 255, bn = b / 255;
+    const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+    const d = max - min;
+    let h = 0;
+    if (d) {
+      if (max === rn) h = 60 * (((gn - bn) / d) % 6);
+      else if (max === gn) h = 60 * ((bn - rn) / d + 2);
+      else h = 60 * ((rn - gn) / d + 4);
+    }
+    if (h < 0) h += 360;
+    const l = (max + min) / 2;
+    const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    return { h, s: sat, l };
+  }
+  function rgbToCmyk({ r, g, b }) {
+    const rn = r / 255, gn = g / 255, bn = b / 255;
+    const k = 1 - Math.max(rn, gn, bn);
+    if (k >= .9999) return { c: 0, m: 0, y: 0, k: 1 };
+    return {
+      c: (1 - rn - k) / (1 - k),
+      m: (1 - gn - k) / (1 - k),
+      y: (1 - bn - k) / (1 - k),
+      k
+    };
+  }
+  function isHex(value) { return /^#[0-9a-f]{6}$/i.test(String(value || "")); }
+
+  function closeColorFields(except = null) {
+    document.querySelectorAll(".color-field.open").forEach((root) => {
+      if (root === except) return;
+      root.classList.remove("open");
+      root.querySelector(".color-trigger")?.setAttribute("aria-expanded", "false");
+      root.closest(".field-grid")?.classList.remove("picker-expanded");
+    });
+  }
+
+  function createColorPickerNode(getter, setter, { allowNone = true, onCommit = null } = {}) {
     const root = document.createElement("div");
     root.className = "color-field";
     root.innerHTML = `
-      <button type="button" class="color-trigger">
-        <span class="color-swatch"></span><strong></strong>
+      <button type="button" class="color-trigger" aria-expanded="false">
+        <span class="color-swatch"></span>
+        <span class="color-trigger-copy"><small>색상</small><strong></strong></span>
+        <span class="color-chevron">⌄</span>
       </button>
       <div class="color-popover">
-        <input class="color-native" type="color" />
-        <div class="color-popover-row">
-          <input class="color-hex" type="text" maxlength="7" />
-          ${allowNone ? '<button type="button" class="color-none-button">없음</button>' : ''}
+        <div class="color-picker-top">
+          <span class="color-preview"></span>
+          <div><strong class="color-picker-title">직접 선택</strong><small class="color-picker-value"></small></div>
+          ${allowNone ? '<button type="button" class="color-none-button">색 없음</button>' : ''}
         </div>
-        <div class="quick-swatches"></div>
+        <div class="sv-plane" role="slider" aria-label="채도와 밝기" tabindex="0"><span class="sv-cursor"></span></div>
+        <div class="hue-strip" role="slider" aria-label="색상" tabindex="0"><span class="hue-cursor"></span></div>
+        <div class="color-value-grid">
+          <label class="color-hex-field"><span>HEX</span><span class="color-hex-row"><input class="color-hex" type="text" maxlength="7" inputmode="text" /><button type="button" class="color-copy-button" title="HEX 복사" aria-label="HEX 복사">복사</button></span></label>
+          <div class="color-readout"><small>RGB</small><strong class="color-rgb"></strong></div>
+          <div class="color-readout"><small>CMYK</small><strong class="color-cmyk"></strong></div>
+          <div class="color-readout"><small>HSV</small><strong class="color-hsv"></strong></div>
+          <div class="color-readout"><small>HSL</small><strong class="color-hsl"></strong></div>
+        </div>
+        <div class="quick-swatches" aria-label="빠른 색상"></div>
       </div>`;
-    host.replaceChildren(root);
+
     const trigger = root.querySelector(".color-trigger");
     const swatch = root.querySelector(".color-swatch");
-    const label = root.querySelector("strong");
-    const native = root.querySelector(".color-native");
+    const label = root.querySelector(".color-trigger-copy strong");
+    const preview = root.querySelector(".color-preview");
+    const valueLabel = root.querySelector(".color-picker-value");
+    const svPlane = root.querySelector(".sv-plane");
+    const svCursor = root.querySelector(".sv-cursor");
+    const hueStrip = root.querySelector(".hue-strip");
+    const hueCursor = root.querySelector(".hue-cursor");
     const hex = root.querySelector(".color-hex");
+    const rgbReadout = root.querySelector(".color-rgb");
+    const cmykReadout = root.querySelector(".color-cmyk");
+    const hsvReadout = root.querySelector(".color-hsv");
+    const hslReadout = root.querySelector(".color-hsl");
+    const copyBtn = root.querySelector(".color-copy-button");
     const noneBtn = root.querySelector(".color-none-button");
     const swatches = root.querySelector(".quick-swatches");
+    let hsv = { h: 44, s: .99, v: .99 };
+    let lastColor = "#FCBA03";
+
+    function commit(value) {
+      setter(value);
+      update();
+      if (onCommit) onCommit(value);
+      queueRender();
+    }
+
+    function update() {
+      const value = getter();
+      const none = !value || value === "none";
+      if (!none && isHex(value)) {
+        lastColor = String(value).toUpperCase();
+        const next = rgbToHsv(hexToRgb(value));
+        if (next.s > .001) hsv.h = next.h;
+        hsv.s = next.s;
+        hsv.v = next.v;
+      }
+      const display = none ? "없음" : lastColor;
+      const checker = "repeating-conic-gradient(#d7d9df 0 25%, #777b86 0 50%) 50%/10px 10px";
+      swatch.style.background = none ? checker : lastColor;
+      preview.style.background = none ? checker : lastColor;
+      label.textContent = display;
+      valueLabel.textContent = none ? "채우기/선 사용 안 함" : lastColor;
+      hex.value = none ? "none" : lastColor;
+      svPlane.style.background = `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(${hsv.h} 100% 50%))`;
+      svCursor.style.left = `${hsv.s * 100}%`;
+      svCursor.style.top = `${(1 - hsv.v) * 100}%`;
+      hueCursor.style.left = `${(hsv.h / 360) * 100}%`;
+      const rgb = hexToRgb(lastColor);
+      const hsl = rgbToHsl(rgb);
+      const cmyk = rgbToCmyk(rgb);
+      rgbReadout.textContent = `${rgb.r}, ${rgb.g}, ${rgb.b}`;
+      cmykReadout.textContent = `${Math.round(cmyk.c*100)}%, ${Math.round(cmyk.m*100)}%, ${Math.round(cmyk.y*100)}%, ${Math.round(cmyk.k*100)}%`;
+      hsvReadout.textContent = `${Math.round(hsv.h)}°, ${Math.round(hsv.s*100)}%, ${Math.round(hsv.v*100)}%`;
+      hslReadout.textContent = `${Math.round(hsl.h)}°, ${Math.round(hsl.s*100)}%, ${Math.round(hsl.l*100)}%`;
+      trigger.setAttribute("aria-expanded", String(root.classList.contains("open")));
+    }
+
+    function updateSV(event) {
+      const rect = svPlane.getBoundingClientRect();
+      hsv.s = clamp((event.clientX - rect.left) / rect.width, 0, 1);
+      hsv.v = 1 - clamp((event.clientY - rect.top) / rect.height, 0, 1);
+      commit(hsvToHex(hsv));
+    }
+
+    function updateHue(event) {
+      const rect = hueStrip.getBoundingClientRect();
+      hsv.h = clamp((event.clientX - rect.left) / rect.width, 0, 1) * 360;
+      commit(hsvToHex(hsv));
+    }
+
+    function bindPointerSurface(node, handler) {
+      node.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        node.setPointerCapture(event.pointerId);
+        handler(event);
+      });
+      node.addEventListener("pointermove", (event) => {
+        if (node.hasPointerCapture(event.pointerId)) handler(event);
+      });
+    }
 
     QUICK_COLORS.forEach((color) => {
       const btn = document.createElement("button");
@@ -288,42 +588,61 @@
       swatches.append(btn);
     });
 
-    function commit(value) {
-      setter(value);
-      update();
-      if (onCommit) onCommit(value);
-      queueRender();
-    }
-    function update() {
-      const value = getter();
-      const isNone = !value || value === "none";
-      swatch.style.background = isNone ? "repeating-conic-gradient(#aaa 0 25%, #555 0 50%) 50%/8px 8px" : value;
-      label.textContent = isNone ? "없음" : String(value).toUpperCase();
-      native.value = isNone ? "#ffffff" : value;
-      hex.value = isNone ? "none" : value;
-    }
     trigger.addEventListener("click", () => {
-      const wasOpen = root.classList.contains("open");
-      colorFields.forEach((f) => f.root.classList.remove("open"));
-      if (!wasOpen) root.classList.add("open");
+      const opening = !root.classList.contains("open");
+      closeColorFields(root);
+      root.classList.toggle("open", opening);
+      root.closest(".field-grid")?.classList.toggle("picker-expanded", opening);
+      update();
     });
-    native.addEventListener("input", () => commit(native.value));
-    hex.addEventListener("change", () => {
+    bindPointerSurface(svPlane, updateSV);
+    bindPointerSurface(hueStrip, updateHue);
+    function commitHexInput() {
       const value = hex.value.trim();
-      if (value.toLowerCase() === "none" && allowNone) return commit("none");
-      if (/^#[0-9a-f]{6}$/i.test(value)) commit(value);
-      else { update(); toast("색상은 #RRGGBB 형식으로 입력하세요."); }
+      if (allowNone && value.toLowerCase() === "none") return commit("none");
+      if (isHex(value)) return commit(value.toUpperCase());
+      update();
+      toast("색상은 #RRGGBB 형식으로 입력하세요.");
+    }
+    hex.addEventListener("change", commitHexInput);
+    hex.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") { event.preventDefault(); commitHexInput(); }
     });
-    if (noneBtn) noneBtn.addEventListener("click", () => commit("none"));
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(lastColor);
+      } catch {
+        const helper = document.createElement("textarea");
+        helper.value = lastColor;
+        helper.style.position = "fixed";
+        helper.style.opacity = "0";
+        document.body.append(helper);
+        helper.select();
+        document.execCommand("copy");
+        helper.remove();
+      }
+      toast(`${lastColor} 복사됨`);
+    });
+    noneBtn?.addEventListener("click", () => commit("none"));
+
     const api = { root, update };
-    colorFields.push(api);
     update();
     return api;
   }
 
+  function createColorField(hostId, getter, setter, options = {}) {
+    const host = $(hostId);
+    if (!host) return null;
+    const api = createColorPickerNode(getter, setter, options);
+    host.replaceChildren(api.root);
+    colorFields.push(api);
+    return api;
+  }
+
   document.addEventListener("pointerdown", (event) => {
-    if (!event.target.closest(".color-field")) colorFields.forEach((f) => f.root.classList.remove("open"));
+    if (!event.target.closest(".color-field")) closeColorFields();
   });
+
 
   function cloneTemplateRegion(spec, W, H) {
     const region = deepClone(spec);
@@ -335,36 +654,133 @@
     return region;
   }
 
+  const ROLE_STYLE_DEFAULTS = {
+    headline: { fontFamily:"dotum", fontSize:72, align:"left", bold:true, italic:false, lineHeight:1.05, scaleX:.97, letterSpacing:-2, effect:"outline", outlineWidth:2, colorMode:"auto", gap:12 },
+    bullet: { fontFamily:"dotum", fontSize:44, align:"left", bold:true, italic:false, lineHeight:1.15, scaleX:1, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:10 },
+    callout: { fontFamily:"dotum", fontSize:38, align:"center", bold:true, italic:false, lineHeight:1.08, scaleX:.99, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:8 },
+    body: { fontFamily:"dotum", fontSize:48, align:"left", bold:true, italic:false, lineHeight:1.10, scaleX:1, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:10 },
+    footer: { fontFamily:"batang", fontSize:38, align:"center", bold:true, italic:false, lineHeight:1.06, scaleX:.99, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:8 },
+    tag: { fontFamily:"dotum", fontSize:30, align:"center", bold:true, italic:false, lineHeight:1.04, scaleX:1, letterSpacing:0, effect:"none", outlineWidth:2, colorMode:"auto", gap:6 }
+  };
+
+  function applyRoleStyle(text, role) {
+    const keep = {
+      unicodeStyle: text.unicodeStyle,
+      customUnicode: text.customUnicode,
+      prefixEnabled: text.prefixEnabled,
+      prefixSymbol: text.prefixSymbol,
+      prefixGap: text.prefixGap,
+      rangeColors: text.rangeColors
+    };
+    Object.assign(text, ROLE_STYLE_DEFAULTS[role] || ROLE_STYLE_DEFAULTS.body, keep);
+  }
+
+  function assignTextsToTemplate(spec, { restyle = false } = {}) {
+    const accepting = state.regions.filter((r) => r.acceptText && r.shape !== "line");
+    const orders = new Map(accepting.map((r) => [r.id, 0]));
+    const fallbackRoles = ["headline", "bullet", "callout", "body", "footer", "tag"];
+
+    state.texts.forEach((text, index) => {
+      if (!text.role) text.role = fallbackRoles[index] || "body";
+      const slotIndex = Number(spec.textSlots?.[index]);
+      let region = Number.isFinite(slotIndex) ? accepting[clamp(slotIndex, 0, Math.max(0, accepting.length - 1))] : null;
+      if (!region) {
+        const roleMatch = accepting.find((r) => (r.textRoles || []).includes(text.role));
+        region = roleMatch || accepting[index % Math.max(1, accepting.length)] || null;
+      }
+      text.regionId = region?.id || null;
+      text.order = region ? (orders.get(region.id) || 0) : index;
+      if (region) orders.set(region.id, text.order + 1);
+      if (restyle) applyRoleStyle(text, text.role);
+      text.manualX = null;
+      text.manualY = null;
+    });
+  }
+
   function applyTemplate(templateId, { preserveTexts = true } = {}) {
     const spec = templateSpecs.find((t) => t.id === templateId) || templateSpecs[0];
     const { trimW: W, trimH: H } = dimensions();
     state.templateId = spec.id;
     state.palette = { primary: spec.palette[0], secondary: spec.palette[1], tertiary: spec.palette[2] };
     state.background = deepClone(spec.bg);
+    state.background.mode = "solid";
+    state.background.c2 = state.background.c1;
+    state.background.pattern = "none";
     state.regions = spec.regions.map((r) => cloneTemplateRegion(r, W, H));
+    state.posterBorder = spec.border
+      ? { enabled:Boolean(spec.border.enabled), color:spec.border.color || "#111111", width:Number(spec.border.width) || 0, radius:Number(spec.border.radius) || 0 }
+      : { enabled:false, color:"#111111", width:0, radius:0 };
     state.selectedRegionId = null;
     state.selectedElementId = null;
 
-    if (!preserveTexts || !state.texts.length) {
+    const resetTexts = !preserveTexts || !state.texts.length;
+    if (resetTexts) {
       state.texts = [
-        makeText("수달이 왜 이렇게 귀엽냐는 질문에\n과학계는 아직 답을 내놓지 못했습니다", { fontSize: 94, fontFamily:"batang", italic:true }),
-        makeText("•물 위에 둥둥\n•배 위에 조개\n•마음에는 입덕", { fontSize: 64, prefixEnabled:false, effect:"none" }),
-        makeText("긴급 수달 상담소\n한 번 보면 계속 생각남", { fontSize: 62, unicodeStyle:"wrapPhone", colorMode:"custom", color:"#111111", effect:"none", align:"center" }),
-        makeText("오늘도 수달은 아무것도 안 했지만\n이미 홍보에 성공했습니다", { fontSize: 72, effect:"shadow", effectColor:"#111111" }),
-        makeText("지금 가입하면 평생 수달 편", { fontSize: 84, unicodeStyle:"star", fontFamily:"batang" })
+        makeText(`수달이 왜 이렇게 귀엽냐는 질문에
+과학계는 아직 답을 못했습니다`, { role:"headline", ...ROLE_STYLE_DEFAULTS.headline }),
+        makeText(`•물 위에 둥둥
+•배 위에는 조개
+•마음에는 입덕`, { role:"bullet", ...ROLE_STYLE_DEFAULTS.bullet }),
+        makeText(`전/국/수/달/긴/급/속/보
+귀여움 기준치 초과`, { role:"callout", ...ROLE_STYLE_DEFAULTS.callout }),
+        makeText(`오늘도 수달은 아무것도 안 했지만
+이미 홍보에 성공했습니다`, { role:"body", ...ROLE_STYLE_DEFAULTS.body }),
+        makeText("☎ 입덕 상담은 지금 바로 ☎", { role:"footer", unicodeStyle:"none", ...ROLE_STYLE_DEFAULTS.footer })
       ];
     }
 
-    const accepting = state.regions.filter((r) => r.acceptText);
-    state.texts.forEach((text, index) => {
-      text.regionId = accepting[index % Math.max(1, accepting.length)]?.id || null;
-      text.order = Math.floor(index / Math.max(1, accepting.length));
-      text.manualX = null;
-      text.manualY = null;
-    });
-    state.selectedTextId = state.texts[0]?.id || null;
+    assignTextsToTemplate(spec, { restyle: resetTexts });
+    if (!state.texts.some((t) => t.id === state.selectedTextId)) state.selectedTextId = state.texts[0]?.id || null;
     refreshAllUI();
     queueRender();
+  }
+
+  function thumbColor(spec, region, prop) {
+    const role = region[`${prop}Role`];
+    const map = { primary: spec.palette[0], secondary: spec.palette[1], tertiary: spec.palette[2] };
+    return role ? map[role] : region[prop];
+  }
+
+  function drawTemplateThumbnail(target, spec) {
+    const c = target.getContext("2d");
+    const W = target.width = 320;
+    const H = target.height = 180;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = spec.bg.c1;
+    c.fillRect(0, 0, W, H);
+
+    const pathFor = (r) => {
+      const x=r.x*W, y=r.y*H, w=r.w*W, h=r.h*H;
+      if (r.shape === "ellipse") { c.beginPath(); c.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2); }
+      else if (r.shape === "burst") burstPath(c,x,y,w,h,18);
+      else roundedRectPath(c,x,y,w,h,(r.radius||0)*Math.min(W/1600,H/900));
+      return {x,y,w,h};
+    };
+
+    spec.regions.forEach((r) => {
+      const box = pathFor(r);
+      if (!r.fillNone) { c.fillStyle = thumbColor(spec,r,"fill"); c.fill(); }
+      if (!r.strokeNone && r.strokeWidth > 0) {
+        pathFor(r); c.strokeStyle = thumbColor(spec,r,"stroke"); c.lineWidth = Math.max(1,r.strokeWidth*.35); c.stroke();
+      }
+      if (r.acceptText && r.shape !== "line") {
+        const fill = r.fillNone ? spec.bg.c1 : thumbColor(spec,r,"fill");
+        c.fillStyle = contrastText(fill);
+        c.globalAlpha = .72;
+        const inset = Math.max(4, Math.min(box.w,box.h)*.12);
+        const lineW = Math.max(10, box.w - inset*2);
+        const lineH = Math.max(2, Math.min(6, box.h*.07));
+        c.fillRect(box.x+inset,box.y+inset,lineW*.78,lineH);
+        if (box.h > 34) c.fillRect(box.x+inset,box.y+inset+lineH*2.3,lineW*.58,lineH);
+        c.globalAlpha = 1;
+      }
+    });
+
+    if (spec.border?.enabled && spec.border.width > 0) {
+      c.strokeStyle = spec.border.color;
+      c.lineWidth = Math.max(2,spec.border.width*.35);
+      c.strokeRect(c.lineWidth/2,c.lineWidth/2,W-c.lineWidth,H-c.lineWidth);
+    }
   }
 
   function renderTemplateGrid() {
@@ -374,8 +790,17 @@
       const button = document.createElement("button");
       button.type = "button";
       button.className = `template-card${state.templateId === template.id ? " active" : ""}`;
-      button.innerHTML = `<span class="template-thumb"></span><span>${template.name}</span>`;
-      button.querySelector(".template-thumb").style.background = template.thumb;
+      const canvasThumb = document.createElement("canvas");
+      canvasThumb.className = "template-thumb";
+      const meta = document.createElement("span");
+      meta.className = "template-meta";
+      const name = document.createElement("strong");
+      name.textContent = template.name;
+      const caption = document.createElement("small");
+      caption.textContent = template.caption || `${template.regions.filter((r) => r.acceptText).length}개 글자 영역`;
+      meta.append(name, caption);
+      button.append(canvasThumb, meta);
+      drawTemplateThumbnail(canvasThumb, template);
       button.addEventListener("click", () => applyTemplate(template.id, { preserveTexts: true }));
       grid.append(button);
     });
@@ -425,48 +850,9 @@
   }
 
   function makeInlineColorControl(host, getter, setter, allowNone = false) {
-    const root = document.createElement("div");
-    root.className = "color-field";
-    root.innerHTML = `
-      <button type="button" class="color-trigger"><span class="color-swatch"></span><strong></strong></button>
-      <div class="color-popover">
-        <input class="color-native" type="color" />
-        <div class="color-popover-row"><input class="color-hex" type="text" maxlength="7" />${allowNone ? '<button type="button" class="color-none-button">없음</button>' : ''}</div>
-        <div class="quick-swatches"></div>
-      </div>`;
-    host.append(root);
-    const trigger = root.querySelector(".color-trigger");
-    const swatch = root.querySelector(".color-swatch");
-    const label = root.querySelector("strong");
-    const native = root.querySelector(".color-native");
-    const hex = root.querySelector(".color-hex");
-    const swatches = root.querySelector(".quick-swatches");
-    function update() {
-      const value = getter();
-      const none = !value || value === "none";
-      swatch.style.background = none ? "repeating-conic-gradient(#aaa 0 25%, #555 0 50%) 50%/8px 8px" : value;
-      label.textContent = none ? "없음" : value.toUpperCase();
-      native.value = none ? "#ffffff" : value;
-      hex.value = none ? "none" : value;
-    }
-    function commit(value) { setter(value); update(); queueRender(); }
-    QUICK_COLORS.forEach((color) => {
-      const btn = document.createElement("button");
-      btn.type = "button"; btn.className = "quick-swatch"; btn.style.background = color;
-      btn.addEventListener("click", () => commit(color));
-      swatches.append(btn);
-    });
-    trigger.addEventListener("click", () => root.classList.toggle("open"));
-    native.addEventListener("input", () => commit(native.value));
-    hex.addEventListener("change", () => {
-      const value = hex.value.trim();
-      if (allowNone && value.toLowerCase() === "none") commit("none");
-      else if (/^#[0-9a-f]{6}$/i.test(value)) commit(value);
-      else update();
-    });
-    root.querySelector(".color-none-button")?.addEventListener("click", () => commit("none"));
-    update();
-    return root;
+    const api = createColorPickerNode(getter, setter, { allowNone });
+    host.append(api.root);
+    return api;
   }
 
   function makeSelect(options, value) {
@@ -623,17 +1009,20 @@
 
       const rangeBox = document.createElement("div"); rangeBox.className = "range-color-box";
       rangeBox.innerHTML = "<p>위 입력창에서 글자를 드래그한 뒤 색상을 적용하세요. 줄바꿈을 포함한 부분 선택도 가능합니다.</p>";
-      const inline = document.createElement("div"); inline.className = "inline-controls";
-      const rangeColor = document.createElement("input"); rangeColor.type="color"; rangeColor.value="#f4e900";
-      const apply = document.createElement("button"); apply.type="button"; apply.className="button"; apply.textContent="선택 글자 색 적용";
+      const inline = document.createElement("div"); inline.className = "range-color-controls";
+      let selectedRangeColor = "#F4E900";
+      const rangeColorHost = document.createElement("div");
+      rangeColorHost.innerHTML = '<span class="field-label">선택 부분 색</span>';
+      makeInlineColorControl(rangeColorHost, () => selectedRangeColor, (value) => { selectedRangeColor = value; });
+      const apply = document.createElement("button"); apply.type="button"; apply.className="button button-accent"; apply.textContent="선택 글자 색 적용";
       apply.addEventListener("click", () => {
         const ta = card.querySelector("textarea");
         const start = ta.selectionStart; const end = ta.selectionEnd;
         if (start === end) return toast("먼저 입력창에서 일부 글자를 선택하세요.");
-        text.rangeColors.push({ start, end, color: rangeColor.value });
+        text.rangeColors.push({ start, end, color: selectedRangeColor });
         renderTextList(); queueRender();
       });
-      inline.append(rangeColor, apply); rangeBox.append(inline);
+      inline.append(rangeColorHost, apply); rangeBox.append(inline);
       const chips = document.createElement("div"); chips.className="chips";
       text.rangeColors.forEach((range, ri) => {
         const chip = document.createElement("span"); chip.className="chip"; chip.style.borderColor=range.color;
@@ -741,8 +1130,15 @@
     }));
 
     $("addTextBtn").addEventListener("click", () => {
-      const region = state.regions.find((r) => r.acceptText);
-      const text = makeText("새로운 수달 소식", { regionId: region?.id || null, order: state.texts.filter((x) => x.regionId === region?.id).length });
+      const region = state.regions.find((r) => r.acceptText && (r.textRoles || []).includes("body")) || state.regions.find((r) => r.acceptText);
+      const text = makeText(`새 수달 제보
+여기에 문장을 입력하세요`, {
+        role:"body",
+        ...ROLE_STYLE_DEFAULTS.body,
+        fontSize:46,
+        regionId: region?.id || null,
+        order: state.texts.filter((x) => x.regionId === region?.id).length
+      });
       state.texts.push(text); state.selectedTextId = text.id; renderTextList(); queueRender();
     });
 
@@ -817,7 +1213,7 @@
     $("jpgQuality").addEventListener("input",()=>{state.jpgQuality=Number($("jpgQuality").value)/100;$("jpgQualityValue").textContent=`${$("jpgQuality").value}%`;});
     $("showRegions").addEventListener("change",()=>{state.showRegions=$("showRegions").checked;queueRender();});
 
-    $("resetBtn").addEventListener("click",()=>{state=deepClone(initialState);applyTemplate("otter-breaking",{preserveTexts:false});toast("처음 상태로 되돌렸습니다.");});
+    $("resetBtn").addEventListener("click",()=>{state=deepClone(initialState);applyTemplate("label-market",{preserveTexts:false});toast("처음 상태로 되돌렸습니다.");});
     [["exportPngBtn","png"],["exportPngBtn2","png"],["exportJpgBtn","jpg"],["exportJpgBtn2","jpg"]].forEach(([id,type])=>$(id).addEventListener("click",()=>exportImage(type)));
   }
 
@@ -1054,7 +1450,9 @@
   }
 
   function regionContentBox(region){
-    const pad=Math.max(0,region.padding||0);
+    let pad=Math.max(0,region.padding||0);
+    if(region.shape==="ellipse") pad += Math.min(region.w,region.h)*.10;
+    if(region.shape==="burst") pad += Math.min(region.w,region.h)*.14;
     return {x:region.x+pad,y:region.y+pad,w:Math.max(10,region.w-pad*2),h:Math.max(10,region.h-pad*2)};
   }
 
@@ -1081,7 +1479,7 @@
   }
 
   function findPlacement(box,y,h,desiredW,obstacles){
-    let probe=clamp(y,box.y,box.y+box.h-h);
+    let probe=clamp(y,box.y,Math.max(box.y,box.y+box.h-h));
     for(let loops=0;loops<80;loops++){
       const intervals=availableIntervals(box,probe,h,obstacles).sort((a,b)=>(b[1]-b[0])-(a[1]-a[0]));
       if(intervals.length){
@@ -1091,47 +1489,136 @@
       const next=obstacles.filter((o)=>probe+h>o.y&&probe<o.y+o.h).reduce((m,o)=>Math.max(m,o.y+o.h+4),probe+8);
       if(next+h>box.y+box.h)break; probe=next;
     }
-    return {x:box.x,y:clamp(probe,box.y,box.y+box.h-h),w:box.w,fit:Math.min(1,box.w/Math.max(1,desiredW))};
+    return {x:box.x,y:clamp(probe,box.y,Math.max(box.y,box.y+box.h-h)),w:box.w,fit:Math.min(1,box.w/Math.max(1,desiredW))};
+  }
+
+  function flattenTokens(tokens){
+    const chars=[];
+    tokens.forEach((token)=>{ for(const ch of token.ch) chars.push({ch,index:token.index}); });
+    return chars;
+  }
+
+  function wrapDecoratedLine(c,text,raw,lineStart,maxWidth){
+    const chars=flattenTokens(decoratedLine(text,raw,lineStart));
+    if(!chars.length)return [{raw:"",tokens:[],width:0}];
+    const limit=Math.max(20,maxWidth/Math.max(.2,text.scaleX));
+    const lines=[];
+    let current=[]; let width=0; let lastBreak=-1;
+
+    const recalc=()=>tokenWidth(c,current,text.letterSpacing);
+    const pushLine=(items)=>{
+      const trimmed=[...items];
+      while(trimmed.length&&/^\s$/.test(trimmed[0].ch))trimmed.shift();
+      while(trimmed.length&&/^\s$/.test(trimmed.at(-1).ch))trimmed.pop();
+      lines.push({raw:trimmed.map((x)=>x.ch).join(""),tokens:trimmed,width:tokenWidth(c,trimmed,text.letterSpacing)});
+    };
+
+    chars.forEach((item)=>{
+      const cw=c.measureText(item.ch).width+(current.length?text.letterSpacing:0);
+      if(current.length&&width+cw>limit){
+        if(lastBreak>=0){
+          const head=current.slice(0,lastBreak+1);
+          const tail=current.slice(lastBreak+1);
+          pushLine(head);
+          current=tail;
+          width=recalc();
+        }else{
+          pushLine(current);
+          current=[]; width=0;
+        }
+        lastBreak=-1;
+        current.forEach((x,i)=>{if(/\s/.test(x.ch))lastBreak=i;});
+      }
+      current.push(item);
+      width+=c.measureText(item.ch).width+(current.length>1?text.letterSpacing:0);
+      if(/\s/.test(item.ch))lastBreak=current.length-1;
+    });
+    if(current.length||!lines.length)pushLine(current);
+    return lines;
+  }
+
+  function layoutTextLines(c,text,fontSize,maxWidth){
+    setTextFont(c,text,fontSize);
+    let charStart=0;
+    const lines=[];
+    text.text.split("\n").forEach((raw)=>{
+      lines.push(...wrapDecoratedLine(c,text,raw,charStart,maxWidth));
+      charStart+=raw.length+1;
+    });
+    return lines;
   }
 
   function buildLayout(c){
     const fragments=[];
     const obstacles=obstacleRects();
     let overflow=false;
+    const {trimH}=dimensions();
+
     state.regions.filter((r)=>r.acceptText&&r.shape!=="line").forEach((region)=>{
       const box=regionContentBox(region);
       const texts=state.texts.filter((t)=>t.regionId===region.id).sort((a,b)=>a.order-b.order);
       if(!texts.length)return;
-      const rawHeights=texts.map((t)=>Math.max(1,t.text.split("\n").length)*t.fontSize*t.lineHeight+t.gap);
-      const total=rawHeights.reduce((a,b)=>a+b,0);
-      const commonScale=Math.min(1,Math.max(.32,box.h/Math.max(1,total)));
-      let cursorY=box.y;
-      texts.forEach((text)=>{
+
+      let commonScale=1;
+      let estimated=[];
+      for(let pass=0;pass<3;pass++){
+        estimated=texts.map((text)=>{
+          const fontSize=Math.max(12,text.fontSize*commonScale);
+          const lines=layoutTextLines(c,text,fontSize,box.w);
+          const lineH=fontSize*text.lineHeight;
+          const h=Math.max(lineH,lines.length*lineH);
+          return {text,fontSize,lines,lineH,h};
+        });
+        const total=estimated.reduce((sum,item)=>sum+item.h+item.text.gap*commonScale,0)-texts.at(-1).gap*commonScale;
+        if(total<=box.h+1)break;
+        commonScale*=clamp(box.h/Math.max(1,total),.55,.98);
+      }
+      commonScale=Math.max(.28,commonScale);
+      estimated=texts.map((text)=>{
         const fontSize=Math.max(12,text.fontSize*commonScale);
-        setTextFont(c,text,fontSize);
-        const rawLines=text.text.split("\n");
-        let charStart=0;
-        const lines=rawLines.map((line)=>{const tokens=decoratedLine(text,line,charStart);charStart+=line.length+1;return {raw:line,tokens,width:tokenWidth(c,tokens,text.letterSpacing)};});
-        const maxWidth=Math.max(1,...lines.map((l)=>l.width*text.scaleX));
+        const lines=layoutTextLines(c,text,fontSize,box.w);
         const lineH=fontSize*text.lineHeight;
-        const blockH=Math.max(lineH,lines.length*lineH);
+        return {text,fontSize,lines,lineH,h:Math.max(lineH,lines.length*lineH)};
+      });
+
+      const groupHeight=estimated.reduce((sum,item)=>sum+item.h+item.text.gap*commonScale,0)-texts.at(-1).gap*commonScale;
+      const centerSingle=texts.length===1&&(region.shape!=="rect"||region.radius>55||region.h<trimH*.34);
+      let cursorY=centerSingle?box.y+Math.max(0,(box.h-groupHeight)/2):box.y;
+
+      estimated.forEach((estimate)=>{
+        const {text,fontSize,lineH}=estimate;
+        let lines=estimate.lines;
+        let blockH=estimate.h;
+        let desiredW=Math.max(1,...lines.map((l)=>l.width*text.scaleX));
         let place;
+
         if(text.manualX!=null&&text.manualY!=null){
-          const x=clamp(text.manualX,box.x,box.x+box.w-20),y=clamp(text.manualY,box.y,box.y+box.h-blockH);
+          const y=clamp(text.manualY,box.y,Math.max(box.y,box.y+box.h-blockH));
           const intervals=availableIntervals(box,y,blockH,obstacles);
-          const interval=intervals.find(([a,b])=>x>=a&&x<=b)||intervals[0]||[box.x,box.x+box.w];
-          const placedX=clamp(x,interval[0],interval[1]-20);
-          place={x:placedX,y,w:Math.max(20,interval[1]-placedX),fit:Math.min(1,Math.max(20,interval[1]-placedX)/maxWidth)};
+          const preferred=clamp(text.manualX,box.x,box.x+box.w-20);
+          const interval=intervals.find(([a,b])=>preferred>=a&&preferred<=b)||intervals[0]||[box.x,box.x+box.w];
+          const placedX=clamp(preferred,interval[0],Math.max(interval[0],interval[1]-20));
+          const availableW=Math.max(20,interval[1]-placedX);
+          lines=layoutTextLines(c,text,fontSize,availableW);
+          blockH=Math.max(lineH,lines.length*lineH);
+          desiredW=Math.max(1,...lines.map((l)=>l.width*text.scaleX));
+          place={x:placedX,y:clamp(y,box.y,Math.max(box.y,box.y+box.h-blockH)),w:availableW,fit:Math.min(1,availableW/desiredW)};
         }else{
-          place=findPlacement(box,cursorY,blockH,maxWidth,obstacles);
+          place=findPlacement(box,cursorY,blockH,desiredW,obstacles);
+          lines=layoutTextLines(c,text,fontSize,place.w);
+          blockH=Math.max(lineH,lines.length*lineH);
+          desiredW=Math.max(1,...lines.map((l)=>l.width*text.scaleX));
+          place=findPlacement(box,place.y,blockH,desiredW,obstacles);
           cursorY=place.y+blockH+text.gap*commonScale;
         }
+
         if(place.y+blockH>box.y+box.h+1)overflow=true;
-        fragments.push({text,region,lines,fontSize,lineH,x:place.x,y:place.y,w:place.w,h:blockH,fit:place.fit,box});
+        fragments.push({text,region,lines,fontSize,lineH,x:place.x,y:place.y,w:place.w,h:blockH,fit:Math.max(.55,place.fit),box});
       });
     });
     return {fragments,overflow};
   }
+
 
   function drawTokenLine(c,fragment,line,lineIndex,baseColor){
     const {text,fontSize,lineH}=fragment;
@@ -1183,10 +1670,10 @@
   }
 
   function drawGuides(c,fragments){
-    if(!state.showRegions)return;
     const {bleed}=dimensions();
     c.save();c.translate(bleed,bleed);
     state.regions.forEach((r)=>{
+      if(!state.showRegions&&r.id!==state.selectedRegionId)return;
       c.save();c.setLineDash([10,8]);c.lineWidth=3;c.strokeStyle=r.id===state.selectedRegionId?"#f4e900":"rgba(255,255,255,.64)";
       shapePath(c,r);c.stroke();
       if(r.acceptText){const b=regionContentBox(r);c.strokeStyle="rgba(91,240,255,.75)";c.lineWidth=2;c.strokeRect(b.x,b.y,b.w,b.h);}
@@ -1201,7 +1688,7 @@
       if(f.text.id!==state.selectedTextId)return;
       c.save();c.strokeStyle="#67e8a5";c.lineWidth=3;c.setLineDash([8,6]);c.strokeRect(f.x,f.y,f.w,f.h);c.restore();
     });
-    if(bleed>0){
+    if(bleed>0&&state.showRegions){
       c.save();c.strokeStyle="rgba(255,255,255,.8)";c.lineWidth=2;c.setLineDash([16,10]);c.strokeRect(0,0,dimensions().trimW,dimensions().trimH);c.restore();
     }
     c.restore();
@@ -1391,7 +1878,7 @@
 
   bindControls();
   setupColorFields();
-  applyTemplate("otter-breaking",{preserveTexts:false});
+  applyTemplate("label-market",{preserveTexts:false});
   $("showRegions").checked=state.showRegions;
   renderUnicodeGrid("전체","");
   queueRender();
