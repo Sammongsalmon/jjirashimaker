@@ -111,237 +111,236 @@
   const templateSpecs = [
     {
       id: "label-market",
-      name: "시장 속보형",
-      caption: "풀폭 검은띠 · 큰 제목 · 우측 도장",
-      bg: { mode:"solid", role:"primary", c1:"#ffd400", c2:"#ffd400", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "큰 제목 · 본문 2칸",
+      caption: "제목과 원형 강조, 아래 비대칭 2칸",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("상단 검은띠", 0, .040, 1, .115, { fillRole:"secondary", radius:0, padding:18 }),
-        R("대제목", .035, .185, .665, .245, { fillNone:true, padding:4 }),
-        R("오른쪽 도장", .725, .150, .235, .255, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:28, effect:"shadow", effectColor:"#111111", effectSize:12 }),
-        R("본문 종이", .050, .455, .575, .345, { fillRole:"paper", strokeNone:true, radius:30, padding:28 }),
-        R("우측 검정 상담", .665, .455, .295, .345, { fillRole:"secondary", strokeNone:true, radius:22, padding:26 }),
-        R("하단 전화띠", 0, .835, 1, .125, { fillRole:"secondary", radius:0, padding:20 })
+        R("큰 제목", .035, .045, .660, .300, { fillNone:true, padding:2, textRoles:["headline"] }),
+        R("원형 강조", .735, .055, .220, .250, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:28, effect:"shadow", effectColor:"#111111", effectSize:10, textRoles:["callout","tag"] }),
+        R("큰 본문", .050, .405, .565, .390, { fillRole:"paper", strokeNone:true, radius:30, padding:30, textRoles:["body","bullet"] }),
+        R("짧은 강조", .660, .440, .300, .320, { fillRole:"secondary", strokeNone:true, radius:22, padding:28, textRoles:["callout","body"] }),
+        R("아래 문구", .055, .840, .885, .105, { fillNone:true, padding:2, textRoles:["footer","tag"] })
       ],
-      textSlots:[1,3,2,3,5]
+      textSlots:[0,2,1,3,4]
     },
     {
       id: "apothecary-band",
-      name: "약장수 긴급띠",
-      caption: "상하 띠 · 중앙 흰 안내판",
-      bg: { mode:"solid", role:"primary", c1:"#ff3b30", c2:"#ff3b30", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "중앙 띠 · 본문 + 원형",
+      caption: "큰 제목 아래 전폭 띠, 본문과 원형 강조",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("대제목", .035, .035, .930, .210, { fillNone:true, padding:4 }),
-        R("검은 중간띠", 0, .275, 1, .125, { fillRole:"secondary", radius:0, padding:20 }),
-        R("흰 본문판", .050, .440, .605, .330, { fillRole:"paper", strokeNone:true, radius:18, padding:28 }),
-        R("원형 특보", .690, .425, .270, .270, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:34 }),
-        R("검은 하단띠", 0, .810, 1, .130, { fillRole:"secondary", radius:0, padding:20 })
+        R("큰 제목", .040, .040, .920, .220, { fillNone:true, padding:2, textRoles:["headline"] }),
+        R("중앙 띠", 0, .295, 1, .125, { fillRole:"secondary", radius:0, padding:20, textRoles:["callout","tag"] }),
+        R("본문 카드", .055, .475, .600, .310, { fillRole:"paper", strokeNone:true, radius:20, padding:30, textRoles:["body","bullet"] }),
+        R("원형 강조", .700, .455, .250, .280, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:34, textRoles:["callout","tag"] }),
+        R("아래 문구", .055, .835, .890, .105, { fillNone:true, padding:2, textRoles:["footer"] })
       ],
       textSlots:[0,2,3,2,4]
     },
     {
       id: "blue-bulletin",
-      name: "파랑 게시판형",
-      caption: "흰 종이 큰판 · 우측 원/검정판",
-      bg: { mode:"solid", role:"primary", c1:"#0757c9", c2:"#0757c9", pattern:"none", patternColor:"#ffffff", angle:0, scale:48 },
+      name: "큰 카드 · 우측 2칸",
+      caption: "왼쪽 큰 카드와 오른쪽 원형·세로 카드",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("큰 흰 제목판", .045, .055, .620, .225, { fillRole:"paper", strokeNone:true, radius:32, padding:24, effect:"shadow", effectColor:"#111111", effectSize:10 }),
-        R("큰 흰 본문판", .045, .305, .620, .455, { fillRole:"paper", strokeNone:true, radius:28, padding:30 }),
-        R("우상 원형", .705, .070, .245, .245, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:30 }),
-        R("우측 검정판", .700, .355, .255, .405, { fillRole:"secondary", strokeNone:true, radius:18, padding:26 }),
-        R("하단 자막띠", 0, .815, 1, .120, { fillRole:"secondary", radius:0, padding:18 })
+        R("제목 카드", .045, .055, .615, .225, { fillRole:"paper", strokeNone:true, radius:32, padding:26, effect:"shadow", effectColor:"#111111", effectSize:9, textRoles:["headline"] }),
+        R("본문 카드", .045, .320, .615, .465, { fillRole:"paper", strokeNone:true, radius:28, padding:32, textRoles:["body","bullet"] }),
+        R("원형 강조", .705, .065, .245, .255, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:30, textRoles:["callout","tag"] }),
+        R("세로 카드", .700, .370, .255, .415, { fillRole:"secondary", strokeNone:true, radius:18, padding:28, textRoles:["body","callout"] }),
+        R("아래 문구", .055, .835, .890, .105, { fillNone:true, padding:2, textRoles:["footer"] })
       ],
       textSlots:[0,1,2,1,4]
     },
     {
       id: "phonebook-dense",
-      name: "전화번호부 압축",
-      caption: "검은 헤더 · 3열 정보 · 큰 번호띠",
-      bg: { mode:"solid", role:"primary", c1:"#22d45f", c2:"#22d45f", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "상단 제목 · 3단 정보",
+      caption: "전폭 머리말 아래 3단 카드와 하단 문구",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("검은 헤더", 0, .035, 1, .125, { fillRole:"secondary", radius:0, padding:18 }),
-        R("왼쪽 문구", .040, .210, .295, .435, { fillRole:"paper", strokeNone:true, radius:8, padding:22 }),
-        R("가운데 강조", .355, .210, .290, .435, { fillRole:"tertiary", strokeNone:true, radius:8, padding:22 }),
-        R("오른쪽 문구", .665, .210, .295, .435, { fillRole:"paper", strokeNone:true, radius:8, padding:22 }),
-        R("하단 전화번호", 0, .705, 1, .210, { fillRole:"secondary", radius:0, padding:28 })
+        R("상단 띠", 0, .040, 1, .125, { fillRole:"secondary", radius:0, padding:20, textRoles:["headline","callout"] }),
+        R("왼쪽 정보", .040, .225, .290, .430, { fillRole:"paper", strokeNone:true, radius:10, padding:24, textRoles:["body","bullet"] }),
+        R("가운데 강조", .355, .225, .290, .430, { fillRole:"tertiary", strokeNone:true, radius:10, padding:24, textRoles:["callout","body"] }),
+        R("오른쪽 정보", .670, .225, .290, .430, { fillRole:"paper", strokeNone:true, radius:10, padding:24, textRoles:["body","bullet"] }),
+        R("하단 문구", .055, .770, .890, .150, { fillNone:true, padding:2, textRoles:["footer","tag"] })
       ],
       textSlots:[0,1,2,3,4]
     },
     {
       id: "coupon-strip",
-      name: "접수표 줄광고",
-      caption: "둥근 행카드 · 검정 접수띠",
-      bg: { mode:"solid", role:"primary", c1:"#ff4f9a", c2:"#ff4f9a", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "제목 · 가로 카드 3줄",
+      caption: "큰 제목 아래 서로 다른 길이의 카드 3개",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("상단 제목띠", 0, .045, 1, .150, { fillRole:"secondary", radius:0, padding:22 }),
-        R("첫 번째 쿠폰", .055, .255, .890, .130, { fillRole:"paper", strokeNone:true, radius:20, padding:16 }),
-        R("두 번째 쿠폰", .055, .430, .890, .130, { fillRole:"tertiary", strokeNone:true, radius:20, padding:16 }),
-        R("세 번째 쿠폰", .055, .605, .890, .130, { fillRole:"paper", strokeNone:true, radius:20, padding:16 }),
-        R("하단 번호띠", 0, .795, 1, .140, { fillRole:"secondary", radius:0, padding:22 })
+        R("큰 제목", .045, .045, .900, .190, { fillNone:true, padding:2, textRoles:["headline"] }),
+        R("첫 카드", .055, .285, .730, .130, { fillRole:"paper", strokeNone:true, radius:20, padding:18, textRoles:["body","callout"] }),
+        R("둘째 카드", .180, .465, .765, .130, { fillRole:"tertiary", strokeNone:true, radius:20, padding:18, textRoles:["callout","bullet"] }),
+        R("셋째 카드", .055, .645, .625, .130, { fillRole:"paper", strokeNone:true, radius:20, padding:18, textRoles:["body","tag"] }),
+        R("아래 문구", .560, .820, .390, .110, { fillNone:true, padding:2, textRoles:["footer","tag"] })
       ],
       textSlots:[0,1,2,3,4]
     },
     {
       id: "five-elements",
-      name: "음양오행 스티커",
-      caption: "왼쪽 세로판 · 우측 타원 배지",
-      bg: { mode:"solid", role:"primary", c1:"#7e35d9", c2:"#7e35d9", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "세로 제목 · 카드 + 타원",
+      caption: "왼쪽 세로판, 오른쪽 제목·본문·타원",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("왼쪽 검정 세로판", .030, .045, .210, .875, { fillRole:"secondary", strokeNone:true, radius:0, padding:24 }),
-        R("상단 큰 제목", .270, .055, .690, .215, { fillRole:"paper", strokeNone:true, radius:24, padding:24 }),
-        R("중앙 검정띠", .240, .305, .760, .120, { fillRole:"secondary", radius:0, padding:18 }),
-        R("본문 흰판", .270, .465, .455, .300, { fillRole:"paper", strokeNone:true, radius:22, padding:28 }),
-        R("오른쪽 타원", .755, .470, .220, .285, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:28 }),
-        R("하단 띠", 0, .815, 1, .110, { fillRole:"secondary", radius:0, padding:18 })
+        R("세로 제목", .030, .045, .205, .875, { fillRole:"secondary", strokeNone:true, radius:0, padding:24, textRoles:["headline","tag"] }),
+        R("상단 제목", .275, .055, .680, .220, { fillRole:"paper", strokeNone:true, radius:24, padding:26, textRoles:["headline"] }),
+        R("본문 카드", .275, .335, .445, .390, { fillRole:"paper", strokeNone:true, radius:22, padding:30, textRoles:["body","bullet"] }),
+        R("타원 강조", .755, .350, .215, .280, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:28, textRoles:["callout","tag"] }),
+        R("아래 문구", .300, .795, .650, .120, { fillNone:true, padding:2, textRoles:["footer"] })
       ],
-      textSlots:[1,3,2,4,5]
+      textSlots:[1,2,3,0,4]
     },
     {
       id: "earth-shock",
-      name: "지구충격형",
-      caption: "중앙 뾰족말풍선 · 좌우 대사",
-      bg: { mode:"solid", role:"primary", c1:"#00a6d7", c2:"#00a6d7", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "중앙 폭발 · 좌우 설명",
+      caption: "뾰족 말풍선 중심의 3열 충격 구성",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("상단 대제목", .035, .040, .930, .225, { fillNone:true, padding:4 }),
-        R("좌측 설명", .045, .315, .275, .315, { fillNone:true, padding:6 }),
-        R("중앙 충격", .340, .285, .330, .365, { shape:"burst", fillRole:"paper", strokeRole:"secondary", strokeWidth:5, strokeNone:false, padding:44, effect:"shadow", effectColor:"#111111", effectSize:12 }),
-        R("우측 설명", .695, .315, .260, .315, { fillNone:true, padding:6 }),
-        R("하단 큰띠", 0, .745, 1, .165, { fillRole:"secondary", radius:0, padding:26 })
+        R("상단 제목", .035, .040, .930, .225, { fillNone:true, padding:2, textRoles:["headline"] }),
+        R("왼쪽 설명", .045, .330, .270, .330, { fillNone:true, padding:6, textRoles:["body","bullet"] }),
+        R("중앙 폭발", .340, .300, .330, .370, { shape:"burst", fillRole:"paper", strokeRole:"secondary", strokeWidth:5, strokeNone:false, padding:44, effect:"shadow", effectColor:"#111111", effectSize:12, textRoles:["callout","tag"] }),
+        R("오른쪽 설명", .695, .330, .260, .330, { fillNone:true, padding:6, textRoles:["body","bullet"] }),
+        R("아래 큰 문구", .055, .760, .890, .170, { fillNone:true, padding:2, textRoles:["footer","callout"] })
       ],
       textSlots:[0,1,2,3,4]
     },
     {
       id: "plain-rule",
-      name: "기본 검은 가로선",
-      caption: "단색 바탕 · 선 하나 · 원형 강조",
-      bg: { mode:"solid", role:"primary", c1:"#fff2cc", c2:"#fff2cc", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "한 줄 구분 · 본문 + 원형",
+      caption: "얇은 선 하나로 제목과 내용을 나눈 기본형",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("대제목", .045, .060, .910, .250, { fillNone:true, padding:4 }),
-        R("검은 선", 0, .350, 1, .035, { shape:"line", fillRole:"secondary", acceptText:false, radius:0, padding:0 }),
-        R("본문", .055, .430, .565, .330, { fillNone:true, padding:8 }),
-        R("강조 원", .675, .415, .270, .290, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:34 }),
-        R("하단 문의띠", 0, .820, 1, .105, { fillRole:"secondary", radius:0, padding:18 })
+        R("큰 제목", .045, .055, .910, .245, { fillNone:true, padding:2, textRoles:["headline"] }),
+        R("구분선", .040, .345, .920, .025, { shape:"line", fillRole:"secondary", acceptText:false, radius:0, padding:0 }),
+        R("본문", .055, .425, .560, .350, { fillNone:true, padding:8, textRoles:["body","bullet"] }),
+        R("원형 강조", .680, .410, .265, .300, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:34, textRoles:["callout","tag"] }),
+        R("짧은 보조", .620, .760, .330, .105, { fillRole:"secondary", strokeNone:true, radius:0, padding:18, textRoles:["tag","footer"] }),
+        R("아래 문구", .055, .835, .480, .090, { fillNone:true, padding:2, textRoles:["footer"] })
       ],
-      textSlots:[0,2,3,2,4]
+      textSlots:[0,1,2,1,4]
     },
     {
       id: "round-card",
-      name: "둥근 종이 한 장",
-      caption: "흰 큰카드 · 우측 스탬프 · 하단띠",
-      bg: { mode:"solid", role:"primary", c1:"#1356c5", c2:"#1356c5", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "큰 카드 · 우측 배지",
+      caption: "한 장짜리 큰 카드와 오른쪽 강조 2칸",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("큰 종이", .060, .070, .610, .700, { fillRole:"paper", strokeNone:true, radius:40, padding:34, effect:"shadow", effectColor:"#111111", effectSize:12 }),
-        R("상단 전폭띠", 0, .095, 1, .115, { fillRole:"tertiary", radius:0, padding:18 }),
-        R("우측 검정판", .710, .275, .245, .280, { fillRole:"secondary", strokeNone:true, radius:26, padding:26 }),
-        R("우측 원형", .725, .600, .220, .220, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:26 }),
-        R("하단 문의", 0, .845, 1, .095, { fillRole:"secondary", radius:0, padding:16 })
+        R("큰 카드 제목", .060, .070, .610, .220, { fillRole:"paper", strokeNone:true, radius:40, padding:32, effect:"shadow", effectColor:"#111111", effectSize:11, textRoles:["headline"] }),
+        R("큰 카드 본문", .060, .275, .610, .500, { fillRole:"paper", strokeNone:true, radius:40, padding:36, textRoles:["body","bullet"] }),
+        R("우측 어두운 카드", .710, .160, .245, .285, { fillRole:"secondary", strokeNone:true, radius:26, padding:28, textRoles:["callout","body"] }),
+        R("우측 원형", .725, .530, .220, .245, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:28, textRoles:["tag","callout"] }),
+        R("아래 문구", .080, .845, .860, .095, { fillNone:true, padding:2, textRoles:["footer"] })
       ],
-      textSlots:[1,0,2,0,4]
+      textSlots:[0,1,2,1,4]
     },
     {
       id: "sticker-chaos",
-      name: "스티커 겹침형",
-      caption: "오프캔버스 원 · 카드 2장",
-      bg: { mode:"solid", role:"primary", c1:"#ff6a00", c2:"#ff6a00", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "겹친 원 · 카드 2개",
+      caption: "배경 원과 비대칭 카드가 겹치는 구성",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
         R("배경 큰 원", -.070, .065, .290, .330, { shape:"ellipse", fillRole:"tertiary", acceptText:false, strokeNone:true, padding:0 }),
-        R("상단 제목", .105, .055, .745, .230, { fillNone:true, padding:6 }),
-        R("작은 흰 원", .790, .050, .200, .210, { shape:"ellipse", fillRole:"paper", strokeNone:true, padding:24 }),
-        R("왼쪽 카드", .055, .345, .560, .335, { fillRole:"paper", strokeNone:true, radius:18, padding:28 }),
-        R("오른쪽 카드", .650, .345, .300, .335, { fillRole:"tertiary", strokeNone:true, radius:18, padding:26 }),
-        R("하단 띠", 0, .760, 1, .150, { fillRole:"secondary", radius:0, padding:24 })
+        R("상단 제목", .105, .055, .735, .230, { fillNone:true, padding:2, textRoles:["headline"] }),
+        R("작은 원", .790, .055, .195, .215, { shape:"ellipse", fillRole:"paper", strokeNone:true, padding:24, textRoles:["tag","callout"] }),
+        R("왼쪽 카드", .055, .365, .555, .355, { fillRole:"paper", strokeNone:true, radius:18, padding:30, textRoles:["body","bullet"] }),
+        R("오른쪽 카드", .650, .345, .300, .340, { fillRole:"tertiary", strokeNone:true, radius:18, padding:28, textRoles:["callout","body"] }),
+        R("아래 문구", .420, .800, .530, .120, { fillNone:true, padding:2, textRoles:["footer"] })
       ],
-      textSlots:[1,3,2,3,5]
+      textSlots:[0,2,1,3,4]
     },
     {
       id: "shop-window",
-      name: "상점 창구형",
-      caption: "명패 · 큰 창구 · 우측 딱지",
-      bg: { mode:"solid", role:"primary", c1:"#f23b35", c2:"#f23b35", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "큰 머리말 · 본문 + 보조 2칸",
+      caption: "큰 머리말 아래 본문과 작은 카드 2개",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("상단 명패", 0, .040, 1, .150, { fillRole:"secondary", radius:0, padding:24 }),
-        R("큰 창구", .060, .250, .580, .500, { fillRole:"paper", strokeNone:true, radius:6, padding:34 }),
-        R("우측 딱지", .680, .250, .275, .225, { fillRole:"tertiary", strokeNone:true, radius:16, padding:26 }),
-        R("우측 검정", .680, .525, .275, .225, { fillRole:"secondary", strokeNone:true, radius:16, padding:26 }),
-        R("하단 전폭", 0, .815, 1, .110, { fillRole:"secondary", radius:0, padding:20 })
+        R("큰 머리말", .045, .045, .910, .170, { fillNone:true, padding:2, textRoles:["headline","callout"] }),
+        R("큰 본문", .060, .255, .580, .520, { fillRole:"paper", strokeNone:true, radius:8, padding:36, textRoles:["body","bullet"] }),
+        R("오른쪽 위", .680, .255, .275, .225, { fillRole:"tertiary", strokeNone:true, radius:16, padding:26, textRoles:["callout","tag"] }),
+        R("오른쪽 아래", .680, .545, .275, .230, { fillRole:"secondary", strokeNone:true, radius:16, padding:26, textRoles:["body","callout"] }),
+        R("아래 문구", .065, .835, .880, .100, { fillNone:true, padding:2, textRoles:["footer"] })
       ],
       textSlots:[0,1,2,1,4]
     },
     {
       id: "notice-split",
-      name: "생활정보 쪼개기",
-      caption: "넓은 제목 · 보조칸 · 결론띠",
-      bg: { mode:"solid", role:"primary", c1:"#67e5c4", c2:"#67e5c4", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "제목 · 본문 + 목록",
+      caption: "넓은 제목과 본문, 오른쪽 목록 카드",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("대제목", .040, .050, .700, .240, { fillNone:true, padding:6 }),
-        R("상단 검정표", .765, .050, .195, .240, { fillRole:"secondary", strokeNone:true, radius:16, padding:20 }),
-        R("중앙 기사", .055, .345, .630, .360, { fillRole:"paper", strokeNone:true, radius:22, padding:30 }),
-        R("우측 목록", .725, .345, .235, .360, { fillRole:"tertiary", strokeNone:true, radius:22, padding:24 }),
-        R("하단 결론띠", 0, .770, 1, .145, { fillRole:"secondary", radius:0, padding:24 })
+        R("넓은 제목", .040, .050, .700, .240, { fillNone:true, padding:2, textRoles:["headline"] }),
+        R("상단 작은 카드", .765, .055, .195, .235, { fillRole:"secondary", strokeNone:true, radius:16, padding:22, textRoles:["tag","callout"] }),
+        R("본문 카드", .055, .355, .625, .395, { fillRole:"paper", strokeNone:true, radius:22, padding:32, textRoles:["body","bullet"] }),
+        R("목록 카드", .720, .355, .240, .395, { fillRole:"tertiary", strokeNone:true, radius:22, padding:26, textRoles:["bullet","body"] }),
+        R("아래 문구", .055, .825, .890, .110, { fillNone:true, padding:2, textRoles:["footer"] })
       ],
-      textSlots:[0,2,1,2,4]
+      textSlots:[0,2,1,3,4]
     },
     {
       id: "memo-badge",
-      name: "메모 배지형",
-      caption: "좌측 메모 · 우측 큰 배지",
-      bg: { mode:"solid", role:"primary", c1:"#3bd2f0", c2:"#3bd2f0", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "제목 · 원형 + 메모 2칸",
+      caption: "상단 제목과 큰 배지, 아래 메모 카드 2개",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("상단 제목", .045, .045, .575, .240, { fillNone:true, padding:6 }),
-        R("우측 큰 배지", .660, .045, .300, .300, { shape:"ellipse", fillRole:"secondary", strokeNone:true, padding:38 }),
-        R("좌측 메모", .060, .340, .550, .385, { fillRole:"paper", strokeNone:true, radius:20, padding:30 }),
-        R("우측 작은 메모", .660, .390, .300, .335, { fillRole:"tertiary", strokeNone:true, radius:20, padding:28 }),
-        R("하단 전폭", 0, .790, 1, .130, { fillRole:"secondary", radius:0, padding:22 })
+        R("상단 제목", .045, .050, .575, .245, { fillNone:true, padding:2, textRoles:["headline"] }),
+        R("큰 원형", .660, .045, .300, .310, { shape:"ellipse", fillRole:"secondary", strokeNone:true, padding:38, textRoles:["callout","tag"] }),
+        R("왼쪽 메모", .060, .380, .550, .390, { fillRole:"paper", strokeNone:true, radius:20, padding:32, textRoles:["body","bullet"] }),
+        R("오른쪽 메모", .660, .415, .300, .355, { fillRole:"tertiary", strokeNone:true, radius:20, padding:30, textRoles:["callout","body"] }),
+        R("아래 문구", .055, .835, .890, .100, { fillNone:true, padding:2, textRoles:["footer"] })
       ],
-      textSlots:[0,2,1,2,4]
+      textSlots:[0,2,1,3,4]
     },
     {
       id: "black-zine",
-      name: "검정 스티커판",
-      caption: "검은 배경 · 밝은 카드 · 강한 띠",
-      bg: { mode:"solid", role:"primary", c1:"#111111", c2:"#111111", pattern:"none", patternColor:"#ffffff", angle:0, scale:48 },
+      name: "중앙 띠 · 기사 2칸",
+      caption: "밝은 제목 카드와 중앙 띠, 아래 기사 2개",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#ffffff", width:0, radius:0 },
       regions: [
-        R("대제목 카드", .040, .045, .920, .230, { fillRole:"paper", strokeNone:true, radius:18, padding:26 }),
-        R("중앙 띠", 0, .335, 1, .125, { fillRole:"secondary", radius:0, padding:22 }),
-        R("왼쪽 기사", .050, .505, .405, .250, { fillRole:"tertiary", strokeNone:true, radius:14, padding:24 }),
-        R("오른쪽 기사", .500, .505, .450, .250, { fillRole:"paper", strokeNone:true, radius:14, padding:24 }),
-        R("하단 띠", 0, .805, 1, .110, { fillRole:"secondary", radius:0, padding:18 })
+        R("제목 카드", .040, .045, .920, .235, { fillRole:"paper", strokeNone:true, radius:18, padding:28, textRoles:["headline"] }),
+        R("중앙 띠", 0, .335, 1, .125, { fillRole:"secondary", radius:0, padding:22, textRoles:["callout","tag"] }),
+        R("왼쪽 기사", .050, .520, .405, .275, { fillRole:"tertiary", strokeNone:true, radius:14, padding:26, textRoles:["body","bullet"] }),
+        R("오른쪽 기사", .500, .520, .450, .275, { fillRole:"paper", strokeNone:true, radius:14, padding:26, textRoles:["body","callout"] }),
+        R("아래 문구", .055, .845, .890, .095, { fillNone:true, padding:2, textRoles:["footer"] })
       ],
       textSlots:[0,2,1,3,4]
     },
     {
       id: "stamp-bottom",
-      name: "하단 왕도장형",
-      caption: "넓은 제목 · 중간띠 · 큰 도장",
-      bg: { mode:"solid", role:"primary", c1:"#ffea00", c2:"#ffea00", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      name: "제목 · 본문 + 큰 원",
+      caption: "넓은 제목 아래 본문과 대형 원형 강조",
+      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
       border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("대제목", .035, .045, .930, .230, { fillNone:true, padding:4 }),
-        R("검은 중간띠", 0, .315, 1, .110, { fillRole:"secondary", radius:0, padding:16 }),
-        R("본문", .055, .475, .540, .260, { fillRole:"paper", strokeNone:true, radius:24, padding:26 }),
-        R("빨강 도장", .635, .450, .320, .320, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:34 }),
-        R("하단 대문장", .035, .795, .930, .150, { fillNone:true, padding:0 })
+        R("넓은 제목", .035, .045, .930, .250, { fillNone:true, padding:2, textRoles:["headline"] }),
+        R("본문 카드", .055, .365, .545, .350, { fillRole:"paper", strokeNone:true, radius:24, padding:30, textRoles:["body","bullet"] }),
+        R("큰 원형", .635, .340, .320, .355, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:38, textRoles:["callout","tag"] }),
+        R("짧은 강조", .085, .735, .390, .115, { fillRole:"secondary", strokeNone:true, radius:0, padding:20, textRoles:["callout","tag"] }),
+        R("아래 큰 문구", .035, .855, .930, .100, { fillNone:true, padding:2, textRoles:["footer"] })
       ],
-      textSlots:[0,2,1,2,4]
+      textSlots:[0,1,2,1,4]
     }
   ];
-
   function makeText(text, overrides = {}) {
     return {
       id: uid(), text, regionId: null, order: 0, role: "body",
+      styleMode: "auto", regionLocked: false,
       fontFamily: "dotum", fontSize: 54, align: "left",
       bold: true, italic: false, underline: false, strike: false,
       scaleX: 1, letterSpacing: -1, lineHeight: 1.08,
@@ -359,7 +358,8 @@
     return {
       id: uid(), type, x, y, w: defaults.w, h: defaults.h,
       fill: "#f4e900", fillNone: false, stroke: "#111111", strokeNone: false, strokeWidth: 4,
-      radius: type === "band" ? 60 : 0, rotation: 0,
+      radius: type === "band" ? 0 : 0, rotation: 0,
+      bandScope: type === "band" ? "canvas" : null, bandRegionId: null, bandPosition: .5,
       flowMargin: 0, affectFlow: true,
       effect: "none", effectColor: "#111111", effectSize: 20,
       label: "", labelSize: 72, labelColor: "#111111", imageFit: "cover", imageSrc: null,
@@ -389,12 +389,117 @@
   let regionHitBoxes = [];
   let elementHitBoxes = [];
   let dragState = null;
+  let transformTarget = null;
+  let longPressTimer = null;
+  let pendingLongPress = null;
+  let autoArrangeTimer = null;
   let activeTextarea = null;
   let renderQueued = false;
   let toastTimer = null;
   let unicodeTarget = null;
   const imageCache = new Map();
   const colorFields = [];
+
+  const HISTORY_LIMIT = 80;
+  let historyPast = [];
+  let historyFuture = [];
+  let historyLastSnapshot = "";
+  let historyTimer = null;
+  let historyReady = false;
+  let historyRestoring = false;
+
+  function snapshotState() {
+    return JSON.stringify(state);
+  }
+
+  function updateHistoryButtons() {
+    const undo = $("undoBtn");
+    const redo = $("redoBtn");
+    if (undo) undo.disabled = historyPast.length === 0;
+    if (redo) redo.disabled = historyFuture.length === 0;
+  }
+
+  function initializeHistory() {
+    clearTimeout(historyTimer);
+    historyPast = [];
+    historyFuture = [];
+    historyLastSnapshot = snapshotState();
+    historyReady = true;
+    updateHistoryButtons();
+  }
+
+  function commitHistorySnapshot() {
+    if (!historyReady || historyRestoring) return;
+    clearTimeout(historyTimer);
+    historyTimer = null;
+    const next = snapshotState();
+    if (!historyLastSnapshot) {
+      historyLastSnapshot = next;
+      updateHistoryButtons();
+      return;
+    }
+    if (next === historyLastSnapshot) {
+      updateHistoryButtons();
+      return;
+    }
+    historyPast.push(historyLastSnapshot);
+    if (historyPast.length > HISTORY_LIMIT) historyPast.shift();
+    historyLastSnapshot = next;
+    historyFuture = [];
+    updateHistoryButtons();
+  }
+
+  function markHistoryDirty(immediate = false) {
+    if (!historyReady || historyRestoring) return;
+    clearTimeout(historyTimer);
+    if (immediate) commitHistorySnapshot();
+    else historyTimer = setTimeout(commitHistorySnapshot, 520);
+  }
+
+  function restoreHistorySnapshot(snapshot) {
+    historyRestoring = true;
+    try {
+      state = JSON.parse(snapshot);
+      layoutFragments = [];
+      regionHitBoxes = [];
+      elementHitBoxes = [];
+      dragState = null;
+      transformTarget = null;
+      pendingLongPress = null;
+      if (autoArrangeTimer) clearTimeout(autoArrangeTimer);
+      refreshAllUI();
+      const show = $("showRegions");
+      if (show) show.checked = Boolean(state.showRegions);
+      queueRender();
+    } finally {
+      historyRestoring = false;
+    }
+  }
+
+  function undoHistory() {
+    if (!historyReady) return;
+    commitHistorySnapshot();
+    if (!historyPast.length) return;
+    const current = historyLastSnapshot || snapshotState();
+    const target = historyPast.pop();
+    historyFuture.push(current);
+    historyLastSnapshot = target;
+    restoreHistorySnapshot(target);
+    updateHistoryButtons();
+    toast("실행취소했습니다.");
+  }
+
+  function redoHistory() {
+    if (!historyReady || !historyFuture.length) return;
+    clearTimeout(historyTimer);
+    const target = historyFuture.pop();
+    if (historyLastSnapshot) historyPast.push(historyLastSnapshot);
+    if (historyPast.length > HISTORY_LIMIT) historyPast.shift();
+    historyLastSnapshot = target;
+    restoreHistorySnapshot(target);
+    updateHistoryButtons();
+    toast("재실행했습니다.");
+  }
 
   function dimensions() {
     const trimW = state.orientation === "portrait" ? 900 : 1600;
@@ -692,26 +797,252 @@
     Object.assign(text, ROLE_STYLE_DEFAULTS[role] || ROLE_STYLE_DEFAULTS.body, keep);
   }
 
-  function assignTextsToTemplate(spec, { restyle = false } = {}) {
-    const accepting = state.regions.filter((r) => r.acceptText && r.shape !== "line");
-    const orders = new Map(accepting.map((r) => [r.id, 0]));
-    const fallbackRoles = ["headline", "bullet", "callout", "body", "footer", "tag"];
 
+  function hashString(value) {
+    let hash = 2166136261;
+    for (const ch of String(value || "")) {
+      hash ^= ch.codePointAt(0);
+      hash = Math.imul(hash, 16777619);
+    }
+    return Math.abs(hash >>> 0);
+  }
+
+  function textFacts(text) {
+    const raw = String(text.text || "").trim();
+    const lines = raw ? raw.split("\n") : [""];
+    const compact = [...raw.replace(/\s/g, "")].length;
+    const words = raw.split(/\s+/).filter(Boolean).length;
+    const hasBullet = lines.filter(Boolean).length >= 2 && lines.filter(Boolean).every((line) => /^[•◦▪▫■□●○◆◇★☆♥♡☎☏✆※!\-*]/.test(line.trim()));
+    const hasContact = /☎|☏|✆|전화|문의|상담|연락|접수|예약|@/.test(raw);
+    return { raw, lines, compact, words, hasBullet, hasContact };
+  }
+
+  function inferTextRole(text, index = 0) {
+    const facts = textFacts(text);
+    if (facts.hasContact) return "footer";
+    if (facts.hasBullet) return "bullet";
+    if (index === 0 && facts.compact >= 14) return "headline";
+    if (facts.compact <= 10) return "tag";
+    if (facts.compact <= 26 && facts.lines.length <= 2) return "callout";
+    if (facts.lines.length >= 3 && facts.compact <= 70) return "bullet";
+    if (index === 0) return "headline";
+    return "body";
+  }
+
+  function regionTextScore(region, role, facts, occupied) {
+    const box = regionContentBox(region);
+    const area = box.w * box.h;
+    const aspect = box.w / Math.max(1, box.h);
+    const potential = Math.sqrt(area / Math.max(5, facts.compact + facts.lines.length * 5));
+    const roleTarget = { headline: 100, body: 56, bullet: 50, callout: 72, footer: 48, tag: 62 }[role] || 54;
+    let score = 80 - Math.abs(potential - roleTarget) * .34;
+    const hints = region.textRoles || [];
+    if (hints.includes(role)) score += 76 - hints.indexOf(role) * 9;
+    if (region.shape === "ellipse" || region.shape === "burst") {
+      score += ["callout", "tag"].includes(role) ? 48 : -92;
+      if (facts.compact > 34) score -= 78;
+      if (occupied > 0) score -= 240 * occupied;
+    }
+    if (aspect > 4.2) score += ["headline", "footer", "tag", "callout"].includes(role) ? 32 : -24;
+    if (aspect < .78) score += ["tag", "footer", "callout"].includes(role) ? 18 : -20;
+    if (role === "body" && area > 170000) score += 20;
+    if (role === "headline" && (region.y < dimensions().trimH * .34 || area > 180000)) score += 18;
+    if (role === "footer" && region.y > dimensions().trimH * .62) score += 24;
+    score += (Number(region.emphasis) || 1) * 14;
+    const occupancyPenalty = area > 260000 ? 48 : area > 190000 ? 96 : 172;
+    score -= occupied * occupancyPenalty;
+    if (occupied > 0 && area < 190000) score -= 220 * occupied;
+    if (occupied > 0 && aspect > 4.2) score -= 190 * occupied;
+    return score;
+  }
+
+  function autoDecoration(text, role, region) {
+    const facts = textFacts(text);
+    const seed = hashString(`${text.id}:${facts.raw}`);
+    const regionBg = region.fillNone ? state.background.c1 : resolveColor(region, "fill");
+    const baseColor = contrastText(regionBg);
+    const opposite = luminance(baseColor) > .5 ? mix(state.palette.secondary, "#000000", .18) : mix(state.palette.tertiary, "#ffffff", .18);
+    text.bold = role !== "footer" || seed % 3 !== 0;
+    text.italic = role === "callout" && seed % 5 === 0;
+    text.underline = false;
+    text.strike = false;
+    text.colorMode = "auto";
+    text.effectColor = opposite;
+    text.prefixEnabled = false;
+    text.prefixGap = 10;
+    text.customUnicode = ["★", "※", "◆", "☎"][seed % 4];
+
+    if (role === "headline") {
+      text.fontFamily = "dotum";
+      text.align = region.w / Math.max(1, region.h) > 3.6 ? "center" : "left";
+      text.lineHeight = facts.lines.length > 1 ? .98 : .92;
+      text.scaleX = facts.compact < 18 ? 1.08 : .96;
+      text.letterSpacing = facts.compact < 18 ? -1 : -3;
+      text.unicodeStyle = facts.compact <= 18 && facts.words >= 2 ? (seed % 2 ? "slash" : "dot") : "none";
+      text.effect = facts.compact <= 48 ? "extrude" : "outline";
+      text.outlineWidth = facts.compact <= 24 ? 11 : 5;
+    } else if (role === "callout") {
+      text.fontFamily = "dotum";
+      text.align = "center";
+      text.lineHeight = .98;
+      text.scaleX = facts.compact <= 12 ? 1.12 : 1;
+      text.letterSpacing = facts.compact <= 12 ? 0 : -1;
+      text.unicodeStyle = ["wrapQuote", "wrapCard", "custom"][seed % 3];
+      text.effect = ["extrude", "outline", "hollow"][seed % 3];
+      text.outlineWidth = text.effect === "extrude" ? 9 : 3;
+    } else if (role === "tag") {
+      text.fontFamily = seed % 3 === 0 ? "batang" : "dotum";
+      text.align = "center";
+      text.lineHeight = .94;
+      text.scaleX = 1.12;
+      text.letterSpacing = 0;
+      text.unicodeStyle = ["wrapQuote", "wrapPhone", "custom"][seed % 3];
+      text.effect = seed % 2 ? "extrude" : "outline";
+      text.outlineWidth = text.effect === "extrude" ? 8 : 3;
+    } else if (role === "bullet") {
+      text.fontFamily = "dotum";
+      text.align = "left";
+      text.lineHeight = 1.08;
+      text.scaleX = .99;
+      text.letterSpacing = -1;
+      text.unicodeStyle = "none";
+      text.prefixEnabled = !facts.hasBullet;
+      text.prefixSymbol = ["•", "■", "★", "♥"][seed % 4];
+      text.effect = region.fillNone ? "outline" : "none";
+      text.outlineWidth = 2;
+    } else if (role === "footer") {
+      text.fontFamily = seed % 2 ? "batang" : "dotum";
+      text.align = "center";
+      text.lineHeight = .98;
+      text.scaleX = 1;
+      text.letterSpacing = -1;
+      text.unicodeStyle = /☎|☏|✆/.test(facts.raw) ? "none" : "wrapPhone";
+      text.effect = "outline";
+      text.outlineWidth = 2;
+    } else {
+      text.fontFamily = seed % 5 === 0 ? "batang" : "dotum";
+      text.align = "left";
+      text.lineHeight = facts.lines.length >= 3 ? 1.10 : 1.04;
+      text.scaleX = .98;
+      text.letterSpacing = -2;
+      text.unicodeStyle = "none";
+      text.effect = "none";
+      text.outlineWidth = 2;
+    }
+  }
+
+  function fitTextFontSize(c, text, box, targetHeight, role, emphasis = 1) {
+    const caps = { headline: 210, callout: 180, tag: 150, bullet: 90, footer: 112, body: 96 };
+    let low = 12;
+    let high = Math.max(18, Math.min(caps[role] || 100, box.h * .92, box.w * .48) * clamp(emphasis, .76, 1.4));
+    const fits = (size) => {
+      const lines = layoutTextLines(c, text, size, box.w);
+      const height = Math.max(size * text.lineHeight, lines.length * size * text.lineHeight);
+      const widest = Math.max(1, ...lines.map((line) => line.width * text.scaleX));
+      return height <= targetHeight + 1 && widest <= box.w + 1;
+    };
+    for (let i = 0; i < 12; i++) {
+      const mid = (low + high) / 2;
+      if (fits(mid)) low = mid; else high = mid;
+    }
+    return Math.max(12, Math.floor(low));
+  }
+
+  function autoStyleAssignedTexts({ force = false } = {}) {
+    const groups = new Map();
     state.texts.forEach((text, index) => {
-      if (!text.role) text.role = fallbackRoles[index] || "body";
-      const slotIndex = Number(spec.textSlots?.[index]);
-      let region = Number.isFinite(slotIndex) ? accepting[clamp(slotIndex, 0, Math.max(0, accepting.length - 1))] : null;
-      if (!region) {
-        const roleMatch = accepting.find((r) => (r.textRoles || []).includes(text.role));
-        region = roleMatch || accepting[index % Math.max(1, accepting.length)] || null;
-      }
-      text.regionId = region?.id || null;
-      text.order = region ? (orders.get(region.id) || 0) : index;
-      if (region) orders.set(region.id, text.order + 1);
-      if (restyle) applyRoleStyle(text, text.role);
+      text.autoRole = inferTextRole(text, index);
+      if (!groups.has(text.regionId)) groups.set(text.regionId, []);
+      groups.get(text.regionId).push(text);
+    });
+
+    groups.forEach((texts, regionId) => {
+      const region = state.regions.find((item) => item.id === regionId);
+      if (!region) return;
+      const box = regionContentBox(region);
+      const styled = texts.filter((text) => force || text.styleMode !== "manual");
+      if (!styled.length) return;
+      const weights = styled.map((text) => {
+        const facts = textFacts(text);
+        const role = text.autoRole || "body";
+        const factor = { headline: 1.34, callout: 1.14, tag: .88, bullet: 1.02, footer: .82, body: 1.16 }[role] || 1;
+        const shortBoost = facts.compact <= 14 ? 1.34 : facts.compact <= 26 ? 1.16 : 1;
+        return clamp(Math.sqrt(facts.compact + 8) * factor * shortBoost, 2.5, 14);
+      });
+      const totalWeight = weights.reduce((sum, value) => sum + value, 0) || 1;
+      const gapBudget = Math.max(0, styled.length - 1) * 10;
+      styled.forEach((text, index) => {
+        const role = text.autoRole || "body";
+        autoDecoration(text, role, region);
+        const targetHeight = styled.length === 1
+          ? box.h
+          : Math.max(36, (box.h - gapBudget) * weights[index] / totalWeight);
+        const facts = textFacts(text);
+        const emphasis = (Number(region.emphasis) || 1) * (facts.compact <= 14 ? 1.18 : 1);
+        text.fontSize = fitTextFontSize(sceneCtx, text, box, targetHeight, role, emphasis);
+        text.gap = Math.round(clamp(text.fontSize * .14, 5, 20));
+      });
+    });
+  }
+
+  function autoArrangeTexts({ reassign = true, forceStyle = false, announce = false } = {}) {
+    const regions = state.regions.filter((region) => region.acceptText && region.shape !== "line");
+    if (!regions.length) return;
+    if (reassign) {
+      const validIds = new Set(regions.map((region) => region.id));
+      const occupancy = new Map(regions.map((region) => [region.id, 0]));
+      const locked = state.texts.filter((text) => text.regionLocked && validIds.has(text.regionId));
+      locked.forEach((text) => {
+        text.order = occupancy.get(text.regionId) || 0;
+        occupancy.set(text.regionId, text.order + 1);
+      });
+      const ranked = state.texts.filter((text) => !locked.includes(text)).map((text, index) => {
+        const role = inferTextRole(text, state.texts.indexOf(text));
+        const facts = textFacts(text);
+        const priority = ({ footer: 170, headline: 160, bullet: 130, body: 120, callout: 110, tag: 105 }[role] || 100) + facts.compact;
+        return { text, index, role, facts, priority };
+      }).sort((a, b) => b.priority - a.priority);
+
+      ranked.forEach(({ text, role, facts }) => {
+        let best = regions[0];
+        let bestScore = -Infinity;
+        regions.forEach((region) => {
+          const occupied = occupancy.get(region.id) || 0;
+          const score = regionTextScore(region, role, facts, occupied);
+          if (score > bestScore) { best = region; bestScore = score; }
+        });
+        text.regionId = best.id;
+        text.order = occupancy.get(best.id) || 0;
+        text.manualX = null;
+        text.manualY = null;
+        text.autoRole = role;
+        occupancy.set(best.id, text.order + 1);
+      });
+      normalizeTextOrders();
+    }
+    autoStyleAssignedTexts({ force: forceStyle });
+    if (announce) toast("문장 길이와 영역을 다시 계산해 자동 정리했습니다.");
+  }
+
+  function scheduleAutoArrange({ reassign = true, refreshControls = false } = {}) {
+    clearTimeout(autoArrangeTimer);
+    autoArrangeTimer = setTimeout(() => {
+      autoArrangeTexts({ reassign, forceStyle: false });
+      if (refreshControls) renderTextList();
+      queueRender();
+    }, 220);
+  }
+
+  function assignTextsToTemplate(spec, { restyle = false } = {}) {
+    state.texts.forEach((text, index) => {
+      if (!text.styleMode) text.styleMode = "auto";
+      text.role = inferTextRole(text, index);
+      text.autoRole = text.role;
+      text.regionLocked = false;
       text.manualX = null;
       text.manualY = null;
     });
+    autoArrangeTexts({ reassign: true, forceStyle: restyle });
   }
 
   function applyTemplate(templateId, { preserveTexts = true } = {}) {
@@ -896,8 +1227,163 @@
     const input = document.createElement("input");
     input.type = "range"; input.min = min; input.max = max; input.step = step; input.value = value;
     input.addEventListener("input", () => { b.textContent = formatter(Number(input.value)); onInput(Number(input.value)); queueRender(); });
+    input.addEventListener("pointerup", () => markHistoryDirty(true));
+    input.addEventListener("change", () => markHistoryDirty(true));
     label.append(input);
     return label;
+  }
+
+  function numericStepperControl(labelText, value, min, max, step, formatter, onInput) {
+    const wrap = document.createElement("div");
+    wrap.className = "numeric-stepper";
+    const head = document.createElement("div");
+    head.className = "numeric-stepper-head";
+    const title = document.createElement("span");
+    title.textContent = labelText;
+    const readout = document.createElement("b");
+    head.append(title, readout);
+
+    const body = document.createElement("div");
+    body.className = "numeric-stepper-body";
+    const minus = document.createElement("button");
+    minus.type = "button";
+    minus.className = "step-button";
+    minus.textContent = "−";
+    minus.title = `${labelText} 줄이기`;
+    const number = document.createElement("input");
+    number.type = "number";
+    number.min = min;
+    number.max = max;
+    number.step = step;
+    number.inputMode = "decimal";
+    const plus = document.createElement("button");
+    plus.type = "button";
+    plus.className = "step-button";
+    plus.textContent = "+";
+    plus.title = `${labelText} 키우기`;
+    body.append(minus, number, plus);
+
+    const range = document.createElement("input");
+    range.type = "range";
+    range.min = min;
+    range.max = max;
+    range.step = step;
+
+    const normalize = (next) => {
+      const numeric = Number(next);
+      const fallback = Number(value) || min;
+      const clamped = clamp(Number.isFinite(numeric) ? numeric : fallback, min, max);
+      const steps = Math.round((clamped - min) / step);
+      const fixed = min + steps * step;
+      return step < 1 ? Number(fixed.toFixed(2)) : Math.round(fixed);
+    };
+    let committed = normalize(value);
+    let editingStart = committed;
+    const syncDisplay = (next) => {
+      committed = normalize(next);
+      number.value = String(committed);
+      range.value = String(committed);
+      readout.textContent = formatter(committed);
+      return committed;
+    };
+    const preview = (next) => {
+      const fixed = normalize(next);
+      range.value = String(fixed);
+      readout.textContent = formatter(fixed);
+      onInput(fixed);
+      queueRender();
+      return fixed;
+    };
+    syncDisplay(committed);
+
+    minus.addEventListener("click", () => {
+      const fixed = syncDisplay(committed - step);
+      onInput(fixed);
+      queueRender();
+      markHistoryDirty(true);
+    });
+    plus.addEventListener("click", () => {
+      const fixed = syncDisplay(committed + step);
+      onInput(fixed);
+      queueRender();
+      markHistoryDirty(true);
+    });
+    number.addEventListener("focus", () => { editingStart = committed; });
+    number.addEventListener("input", () => {
+      const raw = number.value.trim();
+      if (raw === "" || raw === "-" || raw === "." || raw === "-.") return;
+      if (!Number.isFinite(Number(raw))) return;
+      preview(Number(raw));
+    });
+    number.addEventListener("change", () => {
+      const raw = number.value.trim();
+      const fixed = syncDisplay(raw === "" ? committed : Number(raw));
+      onInput(fixed);
+      queueRender();
+      markHistoryDirty(true);
+    });
+    number.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") { event.preventDefault(); number.blur(); }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        const fixed = syncDisplay(editingStart);
+        onInput(fixed);
+        queueRender();
+        number.blur();
+      }
+    });
+    range.addEventListener("input", () => {
+      const fixed = syncDisplay(Number(range.value));
+      onInput(fixed);
+      queueRender();
+    });
+    range.addEventListener("pointerup", () => markHistoryDirty(true));
+    range.addEventListener("change", () => markHistoryDirty(true));
+
+    wrap.append(head, body, range);
+    return wrap;
+  }
+
+  function makeSegmentedControl(options, value, onChange, className = "") {
+    const wrap = document.createElement("div");
+    wrap.className = `segmented-control${className ? ` ${className}` : ""}`;
+    wrap.setAttribute("role", "group");
+    options.forEach(([optionValue, label]) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.value = optionValue;
+      button.textContent = label;
+      button.classList.toggle("active", optionValue === value);
+      button.addEventListener("click", () => {
+        wrap.querySelectorAll("button").forEach((item) => item.classList.toggle("active", item === button));
+        onChange(optionValue);
+      });
+      wrap.append(button);
+    });
+    return wrap;
+  }
+
+  function syncSegmented(id, value) {
+    const root = $(id);
+    if (!root) return;
+    root.dataset.value = value;
+    root.querySelectorAll("button[data-value]").forEach((button) => button.classList.toggle("active", button.dataset.value === value));
+  }
+
+  function bindSegmented(id, handler) {
+    const root = $(id);
+    if (!root) return;
+    root.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-value]");
+      if (!button || !root.contains(button)) return;
+      syncSegmented(id, button.dataset.value);
+      handler(button.dataset.value);
+      queueRender();
+    });
+  }
+
+  function markTextManual(text) {
+    text.styleMode = "manual";
   }
 
   function openUnicodeBrowser(target, hint) {
@@ -908,121 +1394,222 @@
     $("unicodeDialog").showModal();
   }
 
+  function effectLabel(value) {
+    return ({ none: "효과 없음", outline: "외곽선", shadow: "그림자", hollow: "빈 그림자", extrude: "입체" })[value] || "효과 없음";
+  }
+
   function renderTextList() {
     const list = $("textList");
     list.replaceChildren();
-    const { trimW, trimH } = dimensions();
-    const accepting = state.regions.filter((r) => r.acceptText);
+    const accepting = state.regions.filter((region) => region.acceptText && region.shape !== "line");
 
     state.texts.forEach((text, index) => {
+      if (!text.styleMode) text.styleMode = "auto";
       const card = document.createElement("article");
       card.className = `text-card${state.selectedTextId === text.id ? " active" : ""}`;
       card.dataset.textId = text.id;
+      card.dataset.auto = String(text.styleMode !== "manual");
+
       const head = document.createElement("div");
       head.className = "text-card-head";
-      const grip = document.createElement("div"); grip.className = "drag-grip"; grip.textContent = String(index + 1).padStart(2, "0");
+      const grip = document.createElement("div");
+      grip.className = "drag-grip";
+      grip.textContent = String(index + 1).padStart(2, "0");
       const textarea = document.createElement("textarea");
-      textarea.className = "text-input"; textarea.value = text.text; textarea.rows = Math.max(2, Math.min(5, text.text.split("\n").length + 1));
-      textarea.addEventListener("focus", () => { state.selectedTextId = text.id; activeTextarea = textarea; list.querySelectorAll(".text-card").forEach((node) => node.classList.toggle("active", node.dataset.textId === text.id)); queueRender(); });
+      textarea.className = "text-input";
+      textarea.value = text.text;
+      textarea.rows = Math.max(2, Math.min(6, text.text.split("\n").length + 1));
+      textarea.addEventListener("focus", () => {
+        state.selectedTextId = text.id;
+        activeTextarea = textarea;
+        list.querySelectorAll(".text-card").forEach((node) => node.classList.toggle("active", node.dataset.textId === text.id));
+        queueRender();
+      });
       textarea.addEventListener("click", () => { state.selectedTextId = text.id; activeTextarea = textarea; });
-      textarea.addEventListener("input", () => { text.text = textarea.value; queueRender(); });
+      textarea.addEventListener("input", () => {
+        text.text = textarea.value;
+        textarea.rows = Math.max(2, Math.min(6, textarea.value.split("\n").length + 1));
+        scheduleAutoArrange({ reassign: !text.regionLocked, refreshControls: false });
+        queueRender();
+      });
+      textarea.addEventListener("blur", () => {
+        if (text.styleMode !== "manual") {
+          autoArrangeTexts({ reassign: !text.regionLocked, forceStyle: false });
+          renderTextList();
+          queueRender();
+        }
+      });
       textarea.addEventListener("select", () => { activeTextarea = textarea; });
-      const actions = document.createElement("div"); actions.className = "text-card-actions";
-      const up = document.createElement("button"); up.className = "small-button"; up.type = "button"; up.textContent = "↑";
-      const down = document.createElement("button"); down.className = "small-button"; down.type = "button"; down.textContent = "↓";
-      const remove = document.createElement("button"); remove.className = "small-button"; remove.type = "button"; remove.textContent = "×";
+
+      const actions = document.createElement("div");
+      actions.className = "text-card-actions";
+      const up = document.createElement("button"); up.className = "small-button"; up.type = "button"; up.textContent = "↑"; up.title = "위로";
+      const down = document.createElement("button"); down.className = "small-button"; down.type = "button"; down.textContent = "↓"; down.title = "아래로";
+      const remove = document.createElement("button"); remove.className = "small-button"; remove.type = "button"; remove.textContent = "×"; remove.title = "삭제";
       up.addEventListener("click", () => moveTextInList(text.id, -1));
       down.addEventListener("click", () => moveTextInList(text.id, 1));
       remove.addEventListener("click", () => {
         if (state.texts.length === 1) return toast("문장은 하나 이상 필요합니다.");
-        state.texts = state.texts.filter((x) => x.id !== text.id);
+        state.texts = state.texts.filter((item) => item.id !== text.id);
         state.selectedTextId = state.texts[Math.max(0, index - 1)]?.id || null;
-        renderTextList(); queueRender();
+        autoArrangeTexts({ reassign: true, forceStyle: false });
+        renderTextList();
+        queueRender();
       });
       actions.append(up, down, remove);
       head.append(grip, textarea, actions);
       head.addEventListener("pointerdown", (event) => {
         if (event.target.closest("textarea,button,input,select")) return;
-        state.selectedTextId = text.id; list.querySelectorAll(".text-card").forEach((node) => node.classList.toggle("active", node.dataset.textId === text.id)); queueRender();
+        state.selectedTextId = text.id;
+        list.querySelectorAll(".text-card").forEach((node) => node.classList.toggle("active", node.dataset.textId === text.id));
+        queueRender();
       });
       card.append(head);
 
       const controls = document.createElement("div");
       controls.className = "inline-text-controls";
-      const title = document.createElement("p"); title.className = "control-title"; title.textContent = "선택 문장 꾸미기";
-      controls.append(title);
+      const titleRow = document.createElement("div");
+      titleRow.className = "text-style-heading";
+      const title = document.createElement("p");
+      title.className = "control-title";
+      title.textContent = "선택 문장 꾸미기";
+      const mode = makeSegmentedControl([["auto", "자동 맞춤"], ["manual", "직접 꾸미기"]], text.styleMode, (value) => {
+        text.styleMode = value;
+        if (value === "auto") {
+          autoStyleAssignedTexts({ force: false });
+          toast("이 문장의 크기와 효과를 영역에 맞췄습니다.");
+        }
+        renderTextList();
+        queueRender();
+      }, "compact");
+      titleRow.append(title, mode);
+      controls.append(titleRow);
+
+      const settingsDetails = document.createElement("details");
+      settingsDetails.className = "text-settings-details";
+      settingsDetails.open = text.styleMode === "manual";
+      const settingsSummary = document.createElement("summary");
+      const settingsSummaryTitle = document.createElement("span");
+      settingsSummaryTitle.textContent = "세부 꾸미기";
+      const settingsSummaryMeta = document.createElement("small");
+      const updateSettingsSummary = () => {
+        const assignedRegionName = state.regions.find((region) => region.id === text.regionId)?.name || "영역 미지정";
+        settingsSummaryMeta.textContent = `${text.styleMode === "manual" ? "직접" : "자동"} · ${assignedRegionName} · ${Math.round(text.fontSize)}px · ${effectLabel(text.effect)}`;
+      };
+      updateSettingsSummary();
+      settingsSummary.append(settingsSummaryTitle, settingsSummaryMeta);
+      const settingsBody = document.createElement("div");
+      settingsBody.className = "text-settings-body";
+      settingsDetails.append(settingsSummary, settingsBody);
+      controls.append(settingsDetails);
+
+      const manual = (action) => {
+        markTextManual(text);
+        action();
+        card.dataset.auto = "false";
+        mode.querySelectorAll("button[data-value]").forEach((button) => button.classList.toggle("active", button.dataset.value === "manual"));
+        settingsDetails.open = true;
+        updateSettingsSummary();
+        queueRender();
+      };
 
       const row1 = document.createElement("div"); row1.className = "field-grid three";
-      const fontSelect = makeSelect([["dotum","KoPub 돋움"],["batang","KoPub 바탕"],["gulim","굴림체"]], text.fontFamily);
-      fontSelect.addEventListener("change", () => { text.fontFamily = fontSelect.value; queueRender(); });
-      const fontSize = document.createElement("input"); fontSize.type = "number"; fontSize.min = 12; fontSize.max = 300; fontSize.value = text.fontSize;
-      fontSize.addEventListener("input", () => { text.fontSize = clamp(Number(fontSize.value),12,300); queueRender(); });
+      const fontSelect = makeSelect([["dotum", "KoPub 돋움"], ["batang", "KoPub 바탕"], ["gulim", "굴림체"]], text.fontFamily);
+      fontSelect.addEventListener("change", () => manual(() => { text.fontFamily = fontSelect.value; }));
+      const fontSize = numericStepperControl("크기", text.fontSize, 12, 300, 1, (value) => `${Math.round(value)}px`, (value) => manual(() => { text.fontSize = clamp(Number(value), 12, 300); }));
       const regionSelect = document.createElement("select");
-      accepting.forEach((region) => { const o = document.createElement("option"); o.value = region.id; o.textContent = region.name; o.selected = text.regionId === region.id; regionSelect.append(o); });
-      regionSelect.addEventListener("change", () => { text.regionId = regionSelect.value; text.manualX = null; text.manualY = null; normalizeTextOrders(); queueRender(); });
-      row1.append(labeledControl("폰트", fontSelect), labeledControl("크기", fontSize), labeledControl("글자 영역", regionSelect));
-      controls.append(row1);
+      accepting.forEach((region) => {
+        const option = document.createElement("option");
+        option.value = region.id;
+        option.textContent = region.name;
+        option.selected = text.regionId === region.id;
+        regionSelect.append(option);
+      });
+      regionSelect.disabled = !accepting.length;
+      regionSelect.addEventListener("change", () => {
+        text.regionId = regionSelect.value;
+        text.regionLocked = true;
+        text.manualX = null;
+        text.manualY = null;
+        normalizeTextOrders();
+        autoStyleAssignedTexts({ force: false });
+        updateSettingsSummary();
+        queueRender();
+      });
+      row1.append(labeledControl("폰트", fontSelect), fontSize, labeledControl("글자 영역", regionSelect));
+      settingsBody.append(row1);
 
       const row2 = document.createElement("div"); row2.className = "field-grid three";
-      const align = makeSelect([["left","왼쪽"],["center","가운데"],["right","오른쪽"]], text.align);
-      align.addEventListener("change", () => { text.align = align.value; queueRender(); });
+      const align = makeSelect([["left", "왼쪽"], ["center", "가운데"], ["right", "오른쪽"]], text.align);
+      align.addEventListener("change", () => manual(() => { text.align = align.value; }));
       const unicode = makeSelect(UNICODE_PRESETS, text.unicodeStyle);
-      unicode.addEventListener("change", () => { text.unicodeStyle = unicode.value; queueRender(); renderTextList(); });
-      const lineHeight = rangeControl("줄 간격", text.lineHeight, .8, 1.8, .02, (v) => `${v.toFixed(2)}배`, (v) => text.lineHeight = v);
+      unicode.addEventListener("change", () => manual(() => { text.unicodeStyle = unicode.value; renderTextList(); }));
+      const lineHeight = rangeControl("줄 간격", text.lineHeight, .8, 1.8, .02, (value) => `${value.toFixed(2)}배`, (value) => manual(() => { text.lineHeight = value; }));
       row2.append(labeledControl("정렬", align), labeledControl("유니코드 연출", unicode), lineHeight);
-      controls.append(row2);
+      settingsBody.append(row2);
 
       const unicodeRow = document.createElement("div"); unicodeRow.className = "field-grid two";
       const customWrap = document.createElement("div"); customWrap.innerHTML = '<span class="field-label">직접 기호</span>';
       const customInputRow = document.createElement("div"); customInputRow.className = "unicode-row";
       const customInput = document.createElement("input"); customInput.value = text.customUnicode || "★";
-      customInput.addEventListener("input", () => { text.customUnicode = customInput.value; queueRender(); });
+      customInput.addEventListener("input", () => manual(() => { text.customUnicode = customInput.value; text.unicodeStyle = "custom"; }));
       const customBrowse = document.createElement("button"); customBrowse.type = "button"; customBrowse.className = "button"; customBrowse.textContent = "찾아보기";
-      customBrowse.addEventListener("click", () => openUnicodeBrowser((char) => { text.customUnicode = char; text.unicodeStyle = "custom"; renderTextList(); queueRender(); }, "선택한 문장의 단어 사이 기호로 넣습니다."));
+      customBrowse.addEventListener("click", () => openUnicodeBrowser((char) => {
+        markTextManual(text); text.customUnicode = char; text.unicodeStyle = "custom"; renderTextList(); queueRender();
+      }, "선택한 문장의 단어 사이 기호로 넣습니다."));
       customInputRow.append(customInput, customBrowse); customWrap.append(customInputRow);
 
       const prefixWrap = document.createElement("div"); prefixWrap.innerHTML = '<span class="field-label">각 줄 앞 기호</span>';
       const prefixInputRow = document.createElement("div"); prefixInputRow.className = "unicode-row";
       const prefixInput = document.createElement("input"); prefixInput.value = text.prefixSymbol || "•";
-      prefixInput.addEventListener("input", () => { text.prefixSymbol = prefixInput.value; text.prefixEnabled = true; queueRender(); });
+      prefixInput.addEventListener("input", () => manual(() => { text.prefixSymbol = prefixInput.value; text.prefixEnabled = true; }));
       const prefixBrowse = document.createElement("button"); prefixBrowse.type = "button"; prefixBrowse.className = "button"; prefixBrowse.textContent = "찾아보기";
-      prefixBrowse.addEventListener("click", () => openUnicodeBrowser((char) => { text.prefixSymbol = char; text.prefixEnabled = true; renderTextList(); queueRender(); }, "선택한 문장의 각 줄 앞에 붙일 기호입니다."));
+      prefixBrowse.addEventListener("click", () => openUnicodeBrowser((char) => {
+        markTextManual(text); text.prefixSymbol = char; text.prefixEnabled = true; renderTextList(); queueRender();
+      }, "선택한 문장의 각 줄 앞에 붙일 기호입니다."));
       prefixInputRow.append(prefixInput, prefixBrowse); prefixWrap.append(prefixInputRow);
-      unicodeRow.append(customWrap, prefixWrap); controls.append(unicodeRow);
+      unicodeRow.append(customWrap, prefixWrap); settingsBody.append(unicodeRow);
 
       const toggles = document.createElement("div"); toggles.className = "toggle-row";
-      [["bold","볼드"],["italic","이탤릭"],["underline","밑줄"],["strike","취소선"],["prefixEnabled","줄 앞 기호 사용"]].forEach(([key,labelText]) => {
-        const l = document.createElement("label"); const i = document.createElement("input"); i.type="checkbox"; i.checked = Boolean(text[key]);
-        i.addEventListener("change", () => { text[key] = i.checked; queueRender(); }); l.append(i, labelText); toggles.append(l);
+      [["bold", "볼드"], ["italic", "이탤릭"], ["underline", "밑줄"], ["strike", "취소선"], ["prefixEnabled", "줄 앞 기호 사용"]].forEach(([key, labelText]) => {
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = Boolean(text[key]);
+        input.addEventListener("change", () => manual(() => { text[key] = input.checked; }));
+        label.append(input, labelText);
+        toggles.append(label);
       });
-      controls.append(toggles);
+      settingsBody.append(toggles);
 
       const row3 = document.createElement("div"); row3.className = "field-grid three";
       row3.append(
-        rangeControl("글자 폭", text.scaleX * 100, 50, 180, 1, (v) => `${Math.round(v)}%`, (v) => text.scaleX = v / 100),
-        rangeControl("자간", text.letterSpacing, -12, 36, 1, (v) => String(v), (v) => text.letterSpacing = v),
-        rangeControl("줄 앞 간격", text.prefixGap, 0, 60, 1, (v) => String(v), (v) => text.prefixGap = v)
+        rangeControl("글자 폭", text.scaleX * 100, 50, 180, 1, (value) => `${Math.round(value)}%`, (value) => manual(() => { text.scaleX = value / 100; })),
+        rangeControl("자간", text.letterSpacing, -12, 36, 1, (value) => String(value), (value) => manual(() => { text.letterSpacing = value; })),
+        rangeControl("줄 앞 간격", text.prefixGap, 0, 60, 1, (value) => String(value), (value) => manual(() => { text.prefixGap = value; }))
       );
-      controls.append(row3);
+      settingsBody.append(row3);
 
       const row4 = document.createElement("div"); row4.className = "field-grid three";
-      const effect = makeSelect([["none","없음"],["outline","외곽선"],["shadow","그림자"],["hollow","빈 그림자"]], text.effect);
-      effect.addEventListener("change", () => { text.effect = effect.value; queueRender(); });
-      const outline = document.createElement("input"); outline.type="number"; outline.min=0; outline.max=30; outline.value=text.outlineWidth;
-      outline.addEventListener("input", () => { text.outlineWidth = Number(outline.value); queueRender(); });
-      const gap = document.createElement("input"); gap.type="number"; gap.min=0; gap.max=120; gap.value=text.gap;
-      gap.addEventListener("input", () => { text.gap = Number(gap.value); queueRender(); });
-      row4.append(labeledControl("효과", effect), labeledControl("외곽선/그림자 크기", outline), labeledControl("문장 아래 여백", gap));
-      controls.append(row4);
+      const effect = makeSelect([["none", "없음"], ["outline", "외곽선"], ["shadow", "그림자"], ["hollow", "빈 그림자"], ["extrude", "입체"]], text.effect);
+      effect.addEventListener("change", () => manual(() => { text.effect = effect.value; }));
+      const outline = document.createElement("input"); outline.type = "number"; outline.min = 0; outline.max = 48; outline.value = text.outlineWidth;
+      outline.addEventListener("input", () => manual(() => { text.outlineWidth = Number(outline.value); }));
+      const gap = document.createElement("input"); gap.type = "number"; gap.min = 0; gap.max = 120; gap.value = text.gap;
+      gap.addEventListener("input", () => manual(() => { text.gap = Number(gap.value); }));
+      row4.append(labeledControl("효과", effect), labeledControl("효과 두께", outline), labeledControl("문장 아래 여백", gap));
+      settingsBody.append(row4);
 
       const row5 = document.createElement("div"); row5.className = "field-grid three";
-      const colorMode = makeSelect([["auto","배경 따라 자동"],["custom","직접 선택"]], text.colorMode);
-      colorMode.addEventListener("change", () => { text.colorMode = colorMode.value; queueRender(); });
+      const colorModeWrap = document.createElement("div"); colorModeWrap.className = "segmented-field";
+      const colorModeLabel = document.createElement("span"); colorModeLabel.className = "field-label"; colorModeLabel.textContent = "글자 색";
+      const colorMode = makeSegmentedControl([["auto", "배경 따라"], ["custom", "직접 선택"]], text.colorMode, (value) => manual(() => { text.colorMode = value; }));
+      colorModeWrap.append(colorModeLabel, colorMode);
       const textColorHost = document.createElement("div"); textColorHost.innerHTML = '<span class="field-label">본문 색</span>';
-      makeInlineColorControl(textColorHost, () => text.color, (v) => { text.color = v; text.colorMode = "custom"; });
+      makeInlineColorControl(textColorHost, () => text.color, (value) => manual(() => { text.color = value; text.colorMode = "custom"; }));
       const effectColorHost = document.createElement("div"); effectColorHost.innerHTML = '<span class="field-label">효과 색</span>';
-      makeInlineColorControl(effectColorHost, () => text.effectColor, (v) => text.effectColor = v);
-      row5.append(labeledControl("색상 방식", colorMode), textColorHost, effectColorHost); controls.append(row5);
+      makeInlineColorControl(effectColorHost, () => text.effectColor, (value) => manual(() => { text.effectColor = value; }));
+      row5.append(colorModeWrap, textColorHost, effectColorHost); settingsBody.append(row5);
 
       const rangeBox = document.createElement("div"); rangeBox.className = "range-color-box";
       rangeBox.innerHTML = "<p>위 입력창에서 글자를 드래그한 뒤 색상을 적용하세요. 줄바꿈을 포함한 부분 선택도 가능합니다.</p>";
@@ -1031,23 +1618,28 @@
       const rangeColorHost = document.createElement("div");
       rangeColorHost.innerHTML = '<span class="field-label">선택 부분 색</span>';
       makeInlineColorControl(rangeColorHost, () => selectedRangeColor, (value) => { selectedRangeColor = value; });
-      const apply = document.createElement("button"); apply.type="button"; apply.className="button button-accent"; apply.textContent="선택 글자 색 적용";
+      const apply = document.createElement("button"); apply.type = "button"; apply.className = "button button-accent"; apply.textContent = "선택 글자 색 적용";
       apply.addEventListener("click", () => {
-        const ta = card.querySelector("textarea");
-        const start = ta.selectionStart; const end = ta.selectionEnd;
+        const target = card.querySelector("textarea");
+        const start = target.selectionStart;
+        const end = target.selectionEnd;
         if (start === end) return toast("먼저 입력창에서 일부 글자를 선택하세요.");
+        markTextManual(text);
         text.rangeColors.push({ start, end, color: selectedRangeColor });
-        renderTextList(); queueRender();
+        renderTextList();
+        queueRender();
       });
       inline.append(rangeColorHost, apply); rangeBox.append(inline);
-      const chips = document.createElement("div"); chips.className="chips";
-      text.rangeColors.forEach((range, ri) => {
-        const chip = document.createElement("span"); chip.className="chip"; chip.style.borderColor=range.color;
+      const chips = document.createElement("div"); chips.className = "chips";
+      text.rangeColors.forEach((range, rangeIndex) => {
+        const chip = document.createElement("span"); chip.className = "chip"; chip.style.borderColor = range.color;
         chip.innerHTML = `${range.start + 1}–${range.end} <button type="button">×</button>`;
-        chip.querySelector("button").addEventListener("click", () => { text.rangeColors.splice(ri,1); renderTextList(); queueRender(); });
+        chip.querySelector("button").addEventListener("click", () => {
+          markTextManual(text); text.rangeColors.splice(rangeIndex, 1); renderTextList(); queueRender();
+        });
         chips.append(chip);
       });
-      rangeBox.append(chips); controls.append(rangeBox);
+      rangeBox.append(chips); settingsBody.append(rangeBox);
 
       card.append(controls);
       list.append(card);
@@ -1073,15 +1665,20 @@
 
   function updateRegionControls() {
     const region = selectedRegion();
-    $("regionControls").classList.toggle("is-disabled", !region);
+    const controls = $("regionControls");
+    controls.classList.toggle("is-disabled", !region);
+    controls.classList.toggle("transform-active", Boolean(region && transformTarget?.kind === "region" && transformTarget.id === region.id));
     if (!region) {
       $("selectedRegionName").textContent = "선택된 영역 없음";
       $("selectedRegionBadge").textContent = "미리보기에서 선택";
-      colorFields.forEach((f) => f.update());
+      $("toggleRegionTransformBtn").textContent = "핸들 열기";
+      colorFields.forEach((field) => field.update());
       return;
     }
+    const active = transformTarget?.kind === "region" && transformTarget.id === region.id;
     $("selectedRegionName").textContent = region.name;
-    $("selectedRegionBadge").textContent = region.acceptText ? "문장 영역" : "장식 영역";
+    $("selectedRegionBadge").textContent = active ? "캔버스 조작 중" : (region.acceptText ? "문장 영역" : "장식 영역");
+    $("toggleRegionTransformBtn").textContent = active ? "핸들 닫기" : "핸들 열기";
     $("regionX").value = round(region.x); $("regionY").value = round(region.y);
     $("regionW").value = round(region.w); $("regionH").value = round(region.h);
     $("regionShape").value = region.shape;
@@ -1089,44 +1686,77 @@
     $("regionPadding").value = region.padding; $("regionPaddingValue").textContent = round(region.padding);
     $("regionStrokeWidth").value = region.strokeWidth;
     $("regionRotation").value = region.rotation; $("regionRotationValue").textContent = `${round(region.rotation)}°`;
-    $("regionAcceptText").value = region.acceptText ? "yes" : "no";
+    syncSegmented("regionAcceptText", region.acceptText ? "yes" : "no");
     $("regionEffect").value = region.effect; $("regionEffectSize").value = region.effectSize;
-    colorFields.forEach((f) => f.update());
+    colorFields.forEach((field) => field.update());
   }
 
   function updateElementControls() {
     const element = selectedElement();
-    $("elementControls").classList.toggle("is-disabled", !element);
+    const controls = $("elementControls");
+    controls.classList.toggle("is-disabled", !element);
+    controls.classList.toggle("transform-active", Boolean(element && transformTarget?.kind === "element" && transformTarget.id === element.id));
     if (!element) {
       $("selectedElementName").textContent = "선택된 요소 없음";
       $("selectedElementBadge").textContent = "미리보기에서 선택";
-      colorFields.forEach((f) => f.update());
+      $("toggleElementTransformBtn").textContent = "핸들 열기";
+      $("bandControls").classList.add("hidden");
+      colorFields.forEach((field) => field.update());
       return;
     }
     const labels = { rect:"사각형", band:"띠", circle:"원형", heart:"하트", burst:"뾰족 말풍선", image:"사진" };
+    const active = transformTarget?.kind === "element" && transformTarget.id === element.id;
+    const geometry = elementGeometry(element);
     $("selectedElementName").textContent = labels[element.type] || "요소";
-    $("selectedElementBadge").textContent = element.type === "image" ? "사진" : "도형";
-    $("elementX").value = round(element.x); $("elementY").value = round(element.y);
-    $("elementW").value = round(element.w); $("elementH").value = round(element.h);
+    $("selectedElementBadge").textContent = active ? "캔버스 조작 중" : (element.type === "image" ? "사진" : "도형");
+    $("toggleElementTransformBtn").textContent = active ? "핸들 닫기" : "핸들 열기";
+    $("elementX").value = round(geometry.x); $("elementY").value = round(geometry.y);
+    $("elementW").value = round(geometry.w); $("elementH").value = round(geometry.h);
+    const isBand = element.type === "band";
+    $("elementX").disabled = isBand;
+    $("elementW").disabled = isBand;
+    $("elementY").disabled = isBand && element.bandScope === "region";
     $("elementStrokeWidth").value = element.strokeWidth;
     $("elementRadius").value = element.radius; $("elementRadiusValue").textContent = round(element.radius);
     $("elementRotation").value = element.rotation; $("rotationValue").textContent = `${round(element.rotation)}°`;
     $("flowMargin").value = element.flowMargin; $("flowMarginValue").textContent = round(element.flowMargin);
-    $("affectFlow").checked = element.affectFlow;
+    syncSegmented("affectFlow", element.affectFlow ? "avoid" : "overlap");
     $("elementEffect").value = element.effect; $("elementEffectSize").value = element.effectSize;
     $("elementLabel").value = element.label || ""; $("elementLabelSize").value = element.labelSize;
-    $("imageFit").value = element.imageFit || "cover";
-    colorFields.forEach((f) => f.update());
+    syncSegmented("imageFit", element.imageFit || "cover");
+
+    $("bandControls").classList.toggle("hidden", !isBand);
+    if (isBand) {
+      syncSegmented("bandScope", element.bandScope || "canvas");
+      const select = $("bandRegion");
+      const current = element.bandRegionId;
+      select.replaceChildren();
+      state.regions.filter((region) => region.acceptText && region.shape !== "line").forEach((region) => {
+        const option = document.createElement("option");
+        option.value = region.id;
+        option.textContent = region.name;
+        option.selected = current === region.id;
+        select.append(option);
+      });
+      if (!element.bandRegionId || !state.regions.some((region) => region.id === element.bandRegionId && region.acceptText)) {
+        element.bandRegionId = select.value || null;
+      }
+      select.value = element.bandRegionId || "";
+      select.disabled = element.bandScope !== "region";
+      $("bandPosition").value = Math.round(clamp(Number(element.bandPosition) || .5, 0, 1) * 100);
+      $("bandPositionValue").textContent = `${$("bandPosition").value}%`;
+    }
+    colorFields.forEach((field) => field.update());
   }
 
   function syncBackgroundControls() {
-    $("orientation").value = state.orientation;
+    syncSegmented("orientation", state.orientation);
     $("bleedMm").value = String(state.bleedMm);
     $("backgroundMode").value = state.background.mode;
     $("gradientAngle").value = state.background.angle; $("gradientAngleValue").textContent = `${round(state.background.angle)}°`;
     $("patternType").value = state.background.pattern;
     $("patternScale").value = state.background.scale; $("patternScaleValue").textContent = round(state.background.scale);
-    $("posterBorderEnabled").checked = state.posterBorder.enabled;
+    syncSegmented("posterBorderEnabled", state.posterBorder.enabled ? "on" : "off");
     $("posterBorderWidth").value = state.posterBorder.width; $("posterBorderWidthValue").textContent = round(state.posterBorder.width);
     $("posterBorderRadius").value = state.posterBorder.radius; $("posterBorderRadiusValue").textContent = round(state.posterBorder.radius);
     $("jpgQuality").value = Math.round(state.jpgQuality * 100); $("jpgQualityValue").textContent = `${Math.round(state.jpgQuality * 100)}%`;
@@ -1141,111 +1771,290 @@
   }
 
   function bindControls() {
-    document.querySelectorAll(".tool-tab").forEach((tab) => tab.addEventListener("click", () => {
-      document.querySelectorAll(".tool-tab").forEach((x) => x.classList.toggle("active", x === tab));
-      document.querySelectorAll(".tool-pane").forEach((pane) => pane.classList.toggle("active", pane.dataset.toolPane === tab.dataset.toolTab));
-    }));
+    document.querySelectorAll(".tool-tab").forEach((tab) => tab.addEventListener("click", () => openToolTab(tab.dataset.toolTab)));
+    $("undoBtn")?.addEventListener("click", undoHistory);
+    $("redoBtn")?.addEventListener("click", redoHistory);
+    document.addEventListener("keydown", (event) => {
+      const key = event.key.toLowerCase();
+      const command = event.ctrlKey || event.metaKey;
+      if (!command || event.altKey) return;
+      const editable = event.target && event.target.closest && event.target.closest("input, textarea, [contenteditable='true']");
+      if (editable) return;
+      if (key === "z" && event.shiftKey) { event.preventDefault(); redoHistory(); }
+      else if (key === "z") { event.preventDefault(); undoHistory(); }
+      else if (key === "y") { event.preventDefault(); redoHistory(); }
+    });
+
+    $("autoArrangeBtn").addEventListener("click", () => {
+      state.texts.forEach((text) => {
+        text.styleMode = "auto";
+        text.regionLocked = false;
+        text.manualX = null;
+        text.manualY = null;
+      });
+      autoArrangeTexts({ reassign: true, forceStyle: true, announce: true });
+      renderTextList();
+      queueRender();
+    });
 
     $("addTextBtn").addEventListener("click", () => {
-      const region = state.regions.find((r) => r.acceptText && (r.textRoles || []).includes("body")) || state.regions.find((r) => r.acceptText);
-      const text = makeText(`새 수달 제보
-여기에 문장을 입력하세요`, {
-        role:"body",
-        ...ROLE_STYLE_DEFAULTS.body,
-        fontSize:46,
-        regionId: region?.id || null,
-        order: state.texts.filter((x) => x.regionId === region?.id).length
-      });
-      state.texts.push(text); state.selectedTextId = text.id; renderTextList(); queueRender();
+      const text = makeText("새로운 수달 소식\n여기에 문장을 입력하세요", { role: "body", styleMode: "auto" });
+      state.texts.push(text);
+      state.selectedTextId = text.id;
+      autoArrangeTexts({ reassign: true, forceStyle: false });
+      renderTextList();
+      queueRender();
     });
 
     $("addRegionBtn").addEventListener("click", () => {
       const { trimW: W, trimH: H } = dimensions();
-      const region = R(`새 영역 ${state.regions.length + 1}`, Math.round(W*.18), Math.round(H*.18), Math.round(W*.45), Math.round(H*.28), { fill:"#ffffff", stroke:"#111111", strokeWidth:4, radius:24, padding:30 });
-      state.regions.push(region); state.selectedRegionId = region.id; state.selectedElementId = null;
-      renderRegionList(); updateRegionControls(); updateElementControls(); queueRender();
+      const region = R(`영역 ${state.regions.length + 1}`, Math.round(W * .18), Math.round(H * .18), Math.round(W * .45), Math.round(H * .28), {
+        fillRole: "paper", strokeNone: true, strokeWidth: 0, radius: 22, padding: 28
+      });
+      state.regions.push(region);
+      state.selectedRegionId = region.id;
+      state.selectedElementId = null;
+      transformTarget = null;
+      renderRegionList();
+      updateRegionControls();
+      updateElementControls();
+      queueRender();
     });
 
     document.querySelectorAll("[data-add-shape]").forEach((button) => button.addEventListener("click", () => {
       const { trimW: W, trimH: H } = dimensions();
       const type = button.dataset.addShape;
-      let element;
-      if (type === "band") {
-        element = makeElement("band", Math.round(-W * .07), Math.round(H * .44), {
-          w: Math.round(W * 1.14), h: Math.round(H * .125), radius: 0,
-          fill: state.palette.secondary, strokeNone: true, strokeWidth: 0, flowMargin: -12,
-          label: "", labelColor: contrastText(state.palette.secondary)
-        });
-      } else {
-        const presets = type === "heart"
-          ? { fill: state.palette.tertiary, strokeNone: true, strokeWidth: 0 }
-          : type === "burst"
-            ? { fill: paletteColor("paper", state.palette), stroke: state.palette.secondary, strokeNone: false, strokeWidth: 4, effect: "shadow", effectSize: 12 }
-            : { fill: state.palette.tertiary, strokeNone: true, strokeWidth: 0 };
-        element = makeElement(type, Math.round(W*.34), Math.round(H*.34), presets);
-      }
-      state.elements.push(element); state.selectedElementId = element.id; state.selectedRegionId = null;
-      updateElementControls(); updateRegionControls(); queueRender();
+      const presets = type === "heart"
+        ? { fill: state.palette.tertiary, strokeNone: true, strokeWidth: 0 }
+        : type === "burst"
+          ? { fill: paletteColor("paper", state.palette), stroke: state.palette.secondary, strokeNone: false, strokeWidth: 4, effect: "shadow", effectSize: 12 }
+          : { fill: state.palette.tertiary, strokeNone: true, strokeWidth: 0 };
+      const element = makeElement(type, Math.round(W * .34), Math.round(H * .34), presets);
+      state.elements.push(element);
+      state.selectedElementId = element.id;
+      state.selectedRegionId = null;
+      transformTarget = null;
+      openToolTab("elements");
+      updateElementControls();
+      updateRegionControls();
+      queueRender();
+    }));
+
+    document.querySelectorAll("[data-add-band]").forEach((button) => button.addEventListener("click", () => {
+      const { trimW: W, trimH: H } = dimensions();
+      const scope = button.dataset.addBand === "region" ? "region" : "canvas";
+      const region = selectedRegion()?.acceptText ? selectedRegion() : state.regions.find((item) => item.acceptText && item.shape !== "line");
+      if (scope === "region" && !region) return toast("먼저 문장을 넣을 영역을 만들어 주세요.");
+      const element = makeElement("band", 0, Math.round(H * .44), {
+        w: W,
+        h: Math.round(H * .115),
+        radius: 0,
+        fill: state.palette.secondary,
+        strokeNone: true,
+        strokeWidth: 0,
+        flowMargin: -10,
+        affectFlow: false,
+        label: "",
+        labelColor: contrastText(state.palette.secondary),
+        bandScope: scope,
+        bandRegionId: scope === "region" ? region.id : null,
+        bandPosition: .5
+      });
+      state.elements.push(element);
+      state.selectedElementId = element.id;
+      state.selectedRegionId = null;
+      transformTarget = null;
+      openToolTab("elements");
+      updateElementControls();
+      updateRegionControls();
+      queueRender();
     }));
 
     $("addPhotoBtn").addEventListener("click", () => $("photoInput").click());
     $("photoInput").addEventListener("change", () => {
-      const file = $("photoInput").files?.[0]; if (!file) return;
+      const file = $("photoInput").files?.[0];
+      if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
         const { trimW: W, trimH: H } = dimensions();
-        const element = makeElement("image", Math.round(W*.3), Math.round(H*.25), { w:Math.round(W*.38), h:Math.round(H*.48), imageSrc:String(reader.result), fillNone:true, stroke:"#ffffff", strokeWidth:5, radius:20 });
-        state.elements.push(element); state.selectedElementId = element.id; state.selectedRegionId = null;
-        updateElementControls(); updateRegionControls(); queueRender();
+        const element = makeElement("image", Math.round(W * .3), Math.round(H * .25), {
+          w: Math.round(W * .38), h: Math.round(H * .48), imageSrc: String(reader.result), fillNone: true,
+          stroke: "#ffffff", strokeWidth: 5, radius: 20, flowMargin: 0, affectFlow: true
+        });
+        state.elements.push(element);
+        state.selectedElementId = element.id;
+        state.selectedRegionId = null;
+        transformTarget = null;
+        openToolTab("elements");
+        updateElementControls();
+        updateRegionControls();
+        queueRender();
       };
-      reader.readAsDataURL(file); $("photoInput").value = "";
+      reader.readAsDataURL(file);
+      $("photoInput").value = "";
     });
 
-    ["regionX","regionY","regionW","regionH"].forEach((id) => bindValue(id, () => 0, (v) => { const r=selectedRegion(); if (r) r[{regionX:"x",regionY:"y",regionW:"w",regionH:"h"}[id]]=v; }));
-    bindValue("regionShape",()=>"rect",(v)=>{const r=selectedRegion(); if(r) r.shape=v;},"change");
-    bindValue("regionRadius",()=>0,(v)=>{const r=selectedRegion(); if(r) r.radius=v;},"input",()=>$("regionRadiusValue").textContent=$("regionRadius").value);
-    bindValue("regionPadding",()=>0,(v)=>{const r=selectedRegion(); if(r) r.padding=v;},"input",()=>$("regionPaddingValue").textContent=$("regionPadding").value);
-    bindValue("regionStrokeWidth",()=>0,(v)=>{const r=selectedRegion(); if(r) r.strokeWidth=v;});
-    bindValue("regionRotation",()=>0,(v)=>{const r=selectedRegion(); if(r) r.rotation=v;},"input",()=>$("regionRotationValue").textContent=`${$("regionRotation").value}°`);
-    bindValue("regionAcceptText",()=>"yes",(v)=>{const r=selectedRegion(); if(r) r.acceptText=v==="yes";},"change",()=>{ renderRegionList(); renderTextList(); });
-    bindValue("regionEffect",()=>"none",(v)=>{const r=selectedRegion(); if(r) r.effect=v;},"change");
-    bindValue("regionEffectSize",()=>0,(v)=>{const r=selectedRegion(); if(r) r.effectSize=v;});
+    ["regionX", "regionY", "regionW", "regionH"].forEach((id) => bindValue(id, () => 0, (value) => {
+      const region = selectedRegion();
+      if (!region) return;
+      const key = { regionX: "x", regionY: "y", regionW: "w", regionH: "h" }[id];
+      region[key] = value;
+      if (key === "w" || key === "h") region[key] = Math.max(20, region[key]);
+      autoStyleAssignedTexts({ force: false });
+    }));
+    bindValue("regionShape", () => "rect", (value) => { const region = selectedRegion(); if (region) region.shape = value; }, "change");
+    bindValue("regionRadius", () => 0, (value) => { const region = selectedRegion(); if (region) region.radius = value; }, "input", () => $("regionRadiusValue").textContent = $("regionRadius").value);
+    bindValue("regionPadding", () => 0, (value) => {
+      const region = selectedRegion(); if (region) region.padding = value;
+      autoStyleAssignedTexts({ force: false });
+    }, "input", () => $("regionPaddingValue").textContent = $("regionPadding").value);
+    bindValue("regionStrokeWidth", () => 0, (value) => { const region = selectedRegion(); if (region) region.strokeWidth = value; });
+    bindValue("regionRotation", () => 0, (value) => { const region = selectedRegion(); if (region) region.rotation = value; }, "input", () => $("regionRotationValue").textContent = `${$("regionRotation").value}°`);
+    bindSegmented("regionAcceptText", (value) => {
+      const region = selectedRegion();
+      if (!region) return;
+      const next = value === "yes";
+      if (!next && region.acceptText) {
+        const replacement = state.regions.find((item) => item.id !== region.id && item.acceptText && item.shape !== "line");
+        if (!replacement && state.texts.some((text) => text.regionId === region.id)) {
+          syncSegmented("regionAcceptText", "yes");
+          return toast("문장이 들어갈 다른 영역을 먼저 만들어 주세요.");
+        }
+        state.texts.filter((text) => text.regionId === region.id).forEach((text) => {
+          text.regionId = replacement?.id || null;
+          text.regionLocked = false;
+          text.manualX = null;
+          text.manualY = null;
+        });
+      }
+      region.acceptText = next;
+      autoArrangeTexts({ reassign: true, forceStyle: false });
+      renderRegionList();
+      renderTextList();
+      updateRegionControls();
+    });
+    bindValue("regionEffect", () => "none", (value) => { const region = selectedRegion(); if (region) region.effect = value; }, "change");
+    bindValue("regionEffectSize", () => 0, (value) => { const region = selectedRegion(); if (region) region.effectSize = value; });
+    $("toggleRegionTransformBtn").addEventListener("click", () => toggleTransform("region", selectedRegion()?.id));
     $("deleteRegionBtn").addEventListener("click", () => {
-      const r=selectedRegion(); if(!r) return;
-      if(state.regions.length===1) return toast("영역은 하나 이상 필요합니다.");
-      state.regions=state.regions.filter((x)=>x.id!==r.id);
-      const replacement=state.regions.find((x)=>x.acceptText);
-      state.texts.filter((t)=>t.regionId===r.id).forEach((t)=>{t.regionId=replacement?.id||null;t.manualX=null;t.manualY=null;});
-      state.selectedRegionId=null; renderRegionList(); renderTextList(); updateRegionControls(); queueRender();
+      const region = selectedRegion();
+      if (!region) return;
+      if (state.regions.length === 1) return toast("영역은 하나 이상 필요합니다.");
+      state.regions = state.regions.filter((item) => item.id !== region.id);
+      const replacement = state.regions.find((item) => item.acceptText && item.shape !== "line");
+      state.texts.filter((text) => text.regionId === region.id).forEach((text) => {
+        text.regionId = replacement?.id || null;
+        text.regionLocked = false;
+        text.manualX = null;
+        text.manualY = null;
+      });
+      state.elements.filter((element) => element.type === "band" && element.bandRegionId === region.id).forEach((element) => {
+        element.bandRegionId = replacement?.id || null;
+        if (!replacement) element.bandScope = "canvas";
+      });
+      state.selectedRegionId = null;
+      transformTarget = null;
+      autoArrangeTexts({ reassign: true, forceStyle: false });
+      renderRegionList();
+      renderTextList();
+      updateRegionControls();
+      updateElementControls();
+      queueRender();
     });
 
-    ["elementX","elementY","elementW","elementH"].forEach((id) => bindValue(id,()=>0,(v)=>{const e=selectedElement(); if(e) e[{elementX:"x",elementY:"y",elementW:"w",elementH:"h"}[id]]=v;}));
-    bindValue("elementStrokeWidth",()=>0,(v)=>{const e=selectedElement(); if(e)e.strokeWidth=v;});
-    bindValue("elementRadius",()=>0,(v)=>{const e=selectedElement();if(e)e.radius=v;},"input",()=>$("elementRadiusValue").textContent=$("elementRadius").value);
-    bindValue("elementRotation",()=>0,(v)=>{const e=selectedElement();if(e)e.rotation=v;},"input",()=>$("rotationValue").textContent=`${$("elementRotation").value}°`);
-    bindValue("flowMargin",()=>0,(v)=>{const e=selectedElement();if(e)e.flowMargin=v;},"input",()=>$("flowMarginValue").textContent=$("flowMargin").value);
-    $("affectFlow").addEventListener("change",()=>{const e=selectedElement();if(e)e.affectFlow=$("affectFlow").checked;queueRender();});
-    bindValue("elementEffect",()=>"none",(v)=>{const e=selectedElement();if(e)e.effect=v;},"change");
-    bindValue("elementEffectSize",()=>0,(v)=>{const e=selectedElement();if(e)e.effectSize=v;});
-    bindValue("elementLabel",()=>"",(v)=>{const e=selectedElement();if(e)e.label=v;});
-    bindValue("elementLabelSize",()=>0,(v)=>{const e=selectedElement();if(e)e.labelSize=v;});
-    bindValue("imageFit",()=>"cover",(v)=>{const e=selectedElement();if(e)e.imageFit=v;},"change");
-    $("deleteElementBtn").addEventListener("click",()=>{const e=selectedElement();if(!e)return;state.elements=state.elements.filter((x)=>x.id!==e.id);state.selectedElementId=null;updateElementControls();queueRender();});
+    const setElementGeometry = (key, value) => {
+      const element = selectedElement();
+      if (!element) return;
+      if (element.type === "band") {
+        if (key === "h") element.h = Math.max(18, value);
+        else if (key === "y" && element.bandScope === "canvas") element.y = value;
+      } else {
+        element[key] = value;
+        if (key === "w" || key === "h") element[key] = Math.max(20, element[key]);
+      }
+      updateElementControls();
+    };
+    ["elementX", "elementY", "elementW", "elementH"].forEach((id) => {
+      $(id).addEventListener("input", () => {
+        const key = { elementX: "x", elementY: "y", elementW: "w", elementH: "h" }[id];
+        setElementGeometry(key, Number($(id).value));
+        queueRender();
+      });
+    });
+    bindValue("elementStrokeWidth", () => 0, (value) => { const element = selectedElement(); if (element) element.strokeWidth = value; });
+    bindValue("elementRadius", () => 0, (value) => { const element = selectedElement(); if (element) element.radius = value; }, "input", () => $("elementRadiusValue").textContent = $("elementRadius").value);
+    bindValue("elementRotation", () => 0, (value) => { const element = selectedElement(); if (element) element.rotation = value; }, "input", () => $("rotationValue").textContent = `${$("elementRotation").value}°`);
+    bindValue("flowMargin", () => 0, (value) => { const element = selectedElement(); if (element) element.flowMargin = value; }, "input", () => $("flowMarginValue").textContent = $("flowMargin").value);
+    bindSegmented("affectFlow", (value) => { const element = selectedElement(); if (element) element.affectFlow = value === "avoid"; });
+    bindValue("elementEffect", () => "none", (value) => { const element = selectedElement(); if (element) element.effect = value; }, "change");
+    bindValue("elementEffectSize", () => 0, (value) => { const element = selectedElement(); if (element) element.effectSize = value; });
+    bindValue("elementLabel", () => "", (value) => { const element = selectedElement(); if (element) element.label = value; });
+    bindValue("elementLabelSize", () => 0, (value) => { const element = selectedElement(); if (element) element.labelSize = value; });
+    bindSegmented("imageFit", (value) => { const element = selectedElement(); if (element) element.imageFit = value; });
+    bindSegmented("bandScope", (value) => {
+      const element = selectedElement();
+      if (!element || element.type !== "band") return;
+      element.bandScope = value;
+      if (value === "region") {
+        const region = state.regions.find((item) => item.id === element.bandRegionId && item.acceptText) || selectedRegion() || state.regions.find((item) => item.acceptText && item.shape !== "line");
+        if (!region) {
+          element.bandScope = "canvas";
+          syncSegmented("bandScope", "canvas");
+          return toast("글자 영역을 먼저 만들어 주세요.");
+        }
+        element.bandRegionId = region.id;
+      }
+      updateElementControls();
+    });
+    $("bandRegion").addEventListener("change", () => {
+      const element = selectedElement();
+      if (!element || element.type !== "band") return;
+      element.bandRegionId = $("bandRegion").value || null;
+      updateElementControls();
+      queueRender();
+    });
+    $("bandPosition").addEventListener("input", () => {
+      const element = selectedElement();
+      if (!element || element.type !== "band") return;
+      element.bandPosition = Number($("bandPosition").value) / 100;
+      $("bandPositionValue").textContent = `${$("bandPosition").value}%`;
+      updateElementControls();
+      queueRender();
+    });
+    $("toggleElementTransformBtn").addEventListener("click", () => toggleTransform("element", selectedElement()?.id));
+    $("deleteElementBtn").addEventListener("click", () => {
+      const element = selectedElement();
+      if (!element) return;
+      state.elements = state.elements.filter((item) => item.id !== element.id);
+      state.selectedElementId = null;
+      transformTarget = null;
+      updateElementControls();
+      queueRender();
+    });
 
-    $("orientation").addEventListener("change", () => changeOrientation($("orientation").value));
-    $("bleedMm").addEventListener("change",()=>{state.bleedMm=Number($("bleedMm").value);updateCanvasMeta();queueRender();});
-    bindValue("backgroundMode",()=>"solid",(v)=>state.background.mode=v,"change");
-    bindValue("gradientAngle",()=>0,(v)=>state.background.angle=v,"input",()=>$("gradientAngleValue").textContent=`${$("gradientAngle").value}°`);
-    bindValue("patternType",()=>"dots",(v)=>state.background.pattern=v,"change");
-    bindValue("patternScale",()=>48,(v)=>state.background.scale=v,"input",()=>$("patternScaleValue").textContent=$("patternScale").value);
-    $("posterBorderEnabled").addEventListener("change",()=>{state.posterBorder.enabled=$("posterBorderEnabled").checked;queueRender();});
-    bindValue("posterBorderWidth",()=>0,(v)=>state.posterBorder.width=v,"input",()=>$("posterBorderWidthValue").textContent=$("posterBorderWidth").value);
-    bindValue("posterBorderRadius",()=>0,(v)=>state.posterBorder.radius=v,"input",()=>$("posterBorderRadiusValue").textContent=$("posterBorderRadius").value);
-    $("jpgQuality").addEventListener("input",()=>{state.jpgQuality=Number($("jpgQuality").value)/100;$("jpgQualityValue").textContent=`${$("jpgQuality").value}%`;});
-    $("showRegions").addEventListener("change",()=>{state.showRegions=$("showRegions").checked;queueRender();});
+    bindSegmented("orientation", (value) => changeOrientation(value));
+    $("bleedMm").addEventListener("change", () => { state.bleedMm = Number($("bleedMm").value); updateCanvasMeta(); queueRender(); });
+    bindValue("backgroundMode", () => "solid", (value) => state.background.mode = value, "change");
+    bindValue("gradientAngle", () => 0, (value) => state.background.angle = value, "input", () => $("gradientAngleValue").textContent = `${$("gradientAngle").value}°`);
+    bindValue("patternType", () => "dots", (value) => state.background.pattern = value, "change");
+    bindValue("patternScale", () => 48, (value) => state.background.scale = value, "input", () => $("patternScaleValue").textContent = $("patternScale").value);
+    bindSegmented("posterBorderEnabled", (value) => { state.posterBorder.enabled = value === "on"; });
+    bindValue("posterBorderWidth", () => 0, (value) => state.posterBorder.width = value, "input", () => $("posterBorderWidthValue").textContent = $("posterBorderWidth").value);
+    bindValue("posterBorderRadius", () => 0, (value) => state.posterBorder.radius = value, "input", () => $("posterBorderRadiusValue").textContent = $("posterBorderRadius").value);
+    $("jpgQuality").addEventListener("input", () => { state.jpgQuality = Number($("jpgQuality").value) / 100; $("jpgQualityValue").textContent = `${$("jpgQuality").value}%`; });
+    $("showRegions").addEventListener("change", () => { state.showRegions = $("showRegions").checked; queueRender(); });
 
-    $("resetBtn").addEventListener("click",()=>{state=deepClone(initialState);applyTemplate("label-market",{preserveTexts:false});toast("처음 상태로 되돌렸습니다.");});
-    [["exportPngBtn","png"],["exportPngBtn2","png"],["exportJpgBtn","jpg"],["exportJpgBtn2","jpg"]].forEach(([id,type])=>$(id).addEventListener("click",()=>exportImage(type)));
+    $("resetBtn").addEventListener("click", () => {
+      state = deepClone(initialState);
+      transformTarget = null;
+      applyTemplate("label-market", { preserveTexts: false });
+      initializeHistory();
+      toast("처음 상태로 되돌렸습니다.");
+    });
+    [["exportPngBtn", "png"], ["exportPngBtn2", "png"], ["exportJpgBtn", "jpg"], ["exportJpgBtn2", "jpg"]].forEach(([id, type]) => {
+      const button = $(id);
+      if (button) button.addEventListener("click", () => exportImage(type));
+    });
   }
 
   function changeOrientation(next) {
@@ -1258,6 +2067,72 @@
     state.elements.forEach((e)=>{e.x*=sx;e.y*=sy;e.w*=sx;e.h*=sy;});
     state.texts.forEach((t)=>{if(t.manualX!=null)t.manualX*=sx;if(t.manualY!=null)t.manualY*=sy;});
     updateCanvasMeta(); updateRegionControls(); updateElementControls(); queueRender();
+  }
+
+  function elementGeometry(element) {
+    if (!element || element.type !== "band") return element;
+    const { trimW } = dimensions();
+    if ((element.bandScope || "canvas") === "region") {
+      const region = state.regions.find((item) => item.id === element.bandRegionId && item.acceptText) || state.regions.find((item) => item.acceptText && item.shape !== "line");
+      if (region) {
+        const position = clamp(Number(element.bandPosition) || .5, 0, 1);
+        return {
+          ...element,
+          x: region.x,
+          y: region.y + region.h * position - element.h / 2,
+          w: region.w,
+          h: element.h,
+          clipRegion: region
+        };
+      }
+    }
+    return { ...element, x: 0, w: trimW, y: element.y, h: element.h, clipRegion: null };
+  }
+
+  function rotatePoint(point, center, degrees) {
+    const angle = (degrees || 0) * Math.PI / 180;
+    const cos = Math.cos(angle), sin = Math.sin(angle);
+    const dx = point.x - center.x, dy = point.y - center.y;
+    return { x: center.x + dx * cos - dy * sin, y: center.y + dx * sin + dy * cos };
+  }
+
+  function localPoint(point, item) {
+    const center = { x: item.x + item.w / 2, y: item.y + item.h / 2 };
+    return rotatePoint(point, center, -(item.rotation || 0));
+  }
+
+  function pointInItem(point, item, padding = 0) {
+    const local = localPoint(point, item);
+    return local.x >= item.x - padding && local.x <= item.x + item.w + padding && local.y >= item.y - padding && local.y <= item.y + item.h + padding;
+  }
+
+  function clipItemPath(c, item) {
+    const center = { x:item.x+item.w/2, y:item.y+item.h/2 };
+    const angle = (item.rotation||0)*Math.PI/180;
+    c.translate(center.x,center.y);c.rotate(angle);c.translate(-center.x,-center.y);
+    shapePath(c,item);c.clip();
+    c.translate(center.x,center.y);c.rotate(-angle);c.translate(-center.x,-center.y);
+  }
+
+  function itemHandlePoints(item) {
+    const center = { x: item.x + item.w / 2, y: item.y + item.h / 2 };
+    const raw = {
+      nw: { x: item.x, y: item.y },
+      ne: { x: item.x + item.w, y: item.y },
+      se: { x: item.x + item.w, y: item.y + item.h },
+      sw: { x: item.x, y: item.y + item.h },
+      rotate: { x: item.x + item.w / 2, y: item.y - Math.max(58, Math.min(92, item.h * .18)) }
+    };
+    return Object.fromEntries(Object.entries(raw).map(([key, point]) => [key, rotatePoint(point, center, item.rotation || 0)]));
+  }
+
+  function transformHandleAt(point, item) {
+    const handles = itemHandlePoints(item);
+    const radius = 30;
+    for (const key of ["rotate", "nw", "ne", "se", "sw"]) {
+      if (Math.hypot(point.x - handles[key].x, point.y - handles[key].y) <= radius) return key;
+    }
+    return pointInItem(point, item, 6) ? "move" : null;
   }
 
   function roundedRectPath(c, x, y, w, h, radius) {
@@ -1344,23 +2219,80 @@
   }
 
   function applyShapeEffect(c, item) {
-    if(item.effect === "none") return;
-    if(item.effect === "shadow") { c.shadowColor=item.effectColor||"#111111"; c.shadowBlur=Math.max(0,item.effectSize*.35); c.shadowOffsetX=item.effectSize*.55; c.shadowOffsetY=item.effectSize*.55; }
-    if(item.effect === "glow") { c.shadowColor=item.effectColor||"#ffffff"; c.shadowBlur=item.effectSize; c.shadowOffsetX=0; c.shadowOffsetY=0; }
+    if (item.effect === "shadow") {
+      c.shadowColor = item.effectColor || "#111111";
+      c.shadowBlur = Math.max(0, item.effectSize * .35);
+      c.shadowOffsetX = item.effectSize * .55;
+      c.shadowOffsetY = item.effectSize * .55;
+    } else if (item.effect === "glow") {
+      c.shadowColor = item.effectColor || "#ffffff";
+      c.shadowBlur = item.effectSize;
+      c.shadowOffsetX = 0;
+      c.shadowOffsetY = 0;
+    }
+  }
+
+  function drawShapeExtrusion(c, item) {
+    if (item.effect !== "extrude") return;
+    const depth = clamp(Number(item.effectSize) || 16, 3, 70);
+    const step = depth > 34 ? 2 : 1;
+    const base = item.effectColor || "#111111";
+    c.save();
+    c.shadowColor = "rgba(0,0,0,.42)";
+    c.shadowBlur = Math.max(4, depth * .42);
+    c.shadowOffsetX = depth * .74;
+    c.shadowOffsetY = depth * .78;
+    c.translate(depth * .62, depth * .62);
+    shapePath(c, item);
+    c.fillStyle = mix(base, "#000000", .30);
+    c.fill();
+    c.restore();
+    for (let offset = depth; offset >= 1; offset -= step) {
+      const ratio = offset / depth;
+      c.save();
+      c.translate(offset * .58, offset * .58);
+      shapePath(c, item);
+      c.fillStyle = mix(base, "#000000", .10 + ratio * .22);
+      c.fill();
+      if (!item.strokeNone && item.strokeWidth > 0) {
+        shapePath(c, item);
+        c.strokeStyle = mix(base, "#000000", .32);
+        c.lineWidth = Math.max(1, item.strokeWidth * .45);
+        c.stroke();
+      }
+      c.restore();
+    }
   }
 
   function drawRegion(c, region) {
-    withItemTransform(c,region,()=>{
-      c.save(); applyShapeEffect(c,region);
-      if(region.shape === "line") {
-        if(!region.fillNone){c.fillStyle=resolveColor(region,"fill");roundedRectPath(c,region.x,region.y,region.w,Math.max(2,region.h),region.radius);c.fill();}
-      } else {
-        shapePath(c,region);
-        if(region.effect === "hollow") {
-          c.save(); c.translate(region.effectSize*.45,region.effectSize*.45); shapePath(c,region); c.strokeStyle=region.effectColor; c.lineWidth=Math.max(3,region.effectSize*.28); c.stroke(); c.restore();
+    withItemTransform(c, region, () => {
+      c.save();
+      if (region.effect === "extrude") drawShapeExtrusion(c, region);
+      applyShapeEffect(c, region);
+      if (region.shape === "line") {
+        if (!region.fillNone) {
+          c.fillStyle = resolveColor(region, "fill");
+          roundedRectPath(c, region.x, region.y, region.w, Math.max(2, region.h), region.radius);
+          c.fill();
         }
-        if(!region.fillNone){c.fillStyle=resolveColor(region,"fill");c.fill();}
-        if(!region.strokeNone && region.strokeWidth>0){shapePath(c,region);c.strokeStyle=resolveColor(region,"stroke");c.lineWidth=region.strokeWidth;c.stroke();}
+      } else {
+        if (region.effect === "hollow") {
+          c.save();
+          c.translate(region.effectSize * .45, region.effectSize * .45);
+          shapePath(c, region);
+          c.strokeStyle = region.effectColor;
+          c.lineWidth = Math.max(3, region.effectSize * .28);
+          c.stroke();
+          c.restore();
+        }
+        shapePath(c, region);
+        if (!region.fillNone) { c.fillStyle = resolveColor(region, "fill"); c.fill(); }
+        if (!region.strokeNone && region.strokeWidth > 0) {
+          shapePath(c, region);
+          c.strokeStyle = resolveColor(region, "stroke");
+          c.lineWidth = region.strokeWidth;
+          c.stroke();
+        }
       }
       c.restore();
     });
@@ -1373,43 +2305,69 @@
   }
 
   function drawElement(c, element) {
-    withItemTransform(c,element,()=>{
-      c.save(); applyShapeEffect(c,element);
-      if(element.effect === "hollow") {
-        c.save(); c.translate(element.effectSize*.45,element.effectSize*.45); shapePath(c,element); c.strokeStyle=element.effectColor;c.lineWidth=Math.max(3,element.effectSize*.28);c.stroke();c.restore();
+    const item = elementGeometry(element);
+    c.save();
+    if (item.clipRegion) clipItemPath(c, item.clipRegion);
+    withItemTransform(c, item, () => {
+      c.save();
+      if (item.effect === "extrude") drawShapeExtrusion(c, item);
+      applyShapeEffect(c, item);
+      if (item.effect === "hollow") {
+        c.save();
+        c.translate(item.effectSize * .45, item.effectSize * .45);
+        shapePath(c, item);
+        c.strokeStyle = item.effectColor;
+        c.lineWidth = Math.max(3, item.effectSize * .28);
+        c.stroke();
+        c.restore();
       }
-      if(element.type === "image") {
-        shapePath(c,element); c.clip();
-        if(!element.fillNone){c.fillStyle=element.fill;c.fillRect(element.x,element.y,element.w,element.h);}
-        const img=getImage(element.imageSrc);
-        if(img?.complete && img.naturalWidth){
-          const ir=img.naturalWidth/img.naturalHeight, er=element.w/element.h;
-          let dw,dh,dx,dy;
-          if((element.imageFit||"cover")==="contain"){
-            if(ir>er){dw=element.w;dh=dw/ir;dx=element.x;dy=element.y+(element.h-dh)/2;}
-            else{dh=element.h;dw=dh*ir;dy=element.y;dx=element.x+(element.w-dw)/2;}
+      if (item.type === "image") {
+        shapePath(c, item);
+        c.clip();
+        if (!item.fillNone) { c.fillStyle = item.fill; c.fillRect(item.x, item.y, item.w, item.h); }
+        const img = getImage(item.imageSrc);
+        if (img?.complete && img.naturalWidth) {
+          const ir = img.naturalWidth / img.naturalHeight, er = item.w / item.h;
+          let dw, dh, dx, dy;
+          if ((item.imageFit || "cover") === "contain") {
+            if (ir > er) { dw = item.w; dh = dw / ir; dx = item.x; dy = item.y + (item.h - dh) / 2; }
+            else { dh = item.h; dw = dh * ir; dy = item.y; dx = item.x + (item.w - dw) / 2; }
           } else {
-            if(ir>er){dh=element.h;dw=dh*ir;dy=element.y;dx=element.x+(element.w-dw)/2;}
-            else{dw=element.w;dh=dw/ir;dx=element.x;dy=element.y+(element.h-dh)/2;}
+            if (ir > er) { dh = item.h; dw = dh * ir; dy = item.y; dx = item.x + (item.w - dw) / 2; }
+            else { dw = item.w; dh = dw / ir; dx = item.x; dy = item.y + (item.h - dh) / 2; }
           }
-          c.drawImage(img,dx,dy,dw,dh);
+          c.drawImage(img, dx, dy, dw, dh);
         }
         c.restore();
         c.save();
-        if(!element.strokeNone && element.strokeWidth>0){shapePath(c,element);c.strokeStyle=element.stroke;c.lineWidth=element.strokeWidth;c.stroke();}
+        if (!item.strokeNone && item.strokeWidth > 0) {
+          shapePath(c, item); c.strokeStyle = item.stroke; c.lineWidth = item.strokeWidth; c.stroke();
+        }
       } else {
-        shapePath(c,element);
-        if(!element.fillNone){c.fillStyle=element.fill;c.fill();}
-        if(!element.strokeNone && element.strokeWidth>0){shapePath(c,element);c.strokeStyle=element.stroke;c.lineWidth=element.strokeWidth;c.stroke();}
+        shapePath(c, item);
+        if (!item.fillNone) { c.fillStyle = item.fill; c.fill(); }
+        if (!item.strokeNone && item.strokeWidth > 0) {
+          shapePath(c, item); c.strokeStyle = item.stroke; c.lineWidth = item.strokeWidth; c.stroke();
+        }
       }
-      c.shadowColor="transparent";
-      if(element.label){
-        c.fillStyle=element.labelColor||"#111111"; c.font=`700 ${element.labelSize||64}px ${fontFamilies.dotum}`; c.textAlign="center";c.textBaseline="middle";
-        const maxW=element.w*.82; const measured=c.measureText(element.label).width; const sx=Math.min(1,maxW/Math.max(1,measured));
-        c.save(); c.translate(element.x+element.w/2,element.y+element.h/2);c.scale(sx,1);c.fillText(element.label,0,0);c.restore();
+      c.shadowColor = "transparent";
+      if (item.label) {
+        c.fillStyle = item.labelColor || "#111111";
+        c.font = `700 ${item.labelSize || 64}px ${fontFamilies.dotum}`;
+        c.textAlign = "center";
+        c.textBaseline = "middle";
+        const maxW = item.w * .82;
+        const measured = c.measureText(item.label).width;
+        const sx = Math.min(1, maxW / Math.max(1, measured));
+        c.save();
+        c.translate(item.x + item.w / 2, item.y + item.h / 2);
+        c.scale(sx, 1);
+        c.fillText(item.label, 0, 0);
+        c.restore();
       }
       c.restore();
     });
+    c.restore();
   }
 
   function drawBaseScene(c) {
@@ -1488,10 +2446,11 @@
   }
 
   function obstacleRects(){
-    return state.elements.filter((e)=>e.affectFlow).map((e)=>{
-      const m=e.flowMargin||0;
-      return {x:e.x-m,y:e.y-m,w:e.w+m*2,h:e.h+m*2,id:e.id};
-    }).filter((r)=>r.w>0&&r.h>0);
+    return state.elements.filter((element) => element.affectFlow).map((element) => {
+      const item = elementGeometry(element);
+      const margin = element.flowMargin || 0;
+      return { x:item.x-margin, y:item.y-margin, w:item.w+margin*2, h:item.h+margin*2, id:element.id };
+    }).filter((rect) => rect.w > 0 && rect.h > 0);
   }
 
   function subtractIntervals(intervals,cutStart,cutEnd){
@@ -1661,24 +2620,59 @@
     if(text.align==="center")startX=fragment.x+(fragment.w-scaledW)/2;
     if(text.align==="right")startX=fragment.x+fragment.w-scaledW;
     const y=fragment.y+lineIndex*lineH+fontSize*.82;
-    c.save(); c.translate(startX,y); c.scale(sx,1); c.textAlign="left";c.textBaseline="alphabetic";
-    let pen=0;
-    const effect=text.effect;
-    if(effect==="shadow"){c.shadowColor=text.effectColor;c.shadowBlur=Math.max(0,text.outlineWidth*.9);c.shadowOffsetX=text.outlineWidth*1.4;c.shadowOffsetY=text.outlineWidth*1.4;}
-    for(const token of line.tokens){
-      for(const ch of token.ch){
-        const color=colorAtIndex(text,token.index,baseColor);
-        c.fillStyle=color;
-        if(effect==="hollow"){
-          c.save();c.shadowColor="transparent";c.strokeStyle=text.effectColor;c.lineWidth=Math.max(2,text.outlineWidth);c.strokeText(ch,pen+text.outlineWidth*1.4,text.outlineWidth*1.4);c.restore();
+    c.save(); c.translate(startX,y); c.scale(sx,1); c.textAlign="left"; c.textBaseline="alphabetic";
+
+    const drawGlyphs=(offsetX=0,offsetY=0,colorOverride=null,stroke=false,strokeWidth=0)=>{
+      let pen=0;
+      for(const token of line.tokens){
+        for(const ch of token.ch){
+          const color=colorOverride||colorAtIndex(text,token.index,baseColor);
+          if(stroke){
+            c.strokeStyle=color;
+            c.lineWidth=strokeWidth;
+            c.lineJoin="round";
+            c.strokeText(ch,pen+offsetX,offsetY);
+          }else{
+            c.fillStyle=color;
+            c.fillText(ch,pen+offsetX,offsetY);
+          }
+          pen+=c.measureText(ch).width+text.letterSpacing;
         }
-        if(effect==="outline"){c.strokeStyle=text.effectColor;c.lineJoin="round";c.lineWidth=Math.max(0,text.outlineWidth*2);c.strokeText(ch,pen,0);}
-        c.fillText(ch,pen,0);
-        pen+=c.measureText(ch).width+text.letterSpacing;
       }
+      return Math.max(0,pen-text.letterSpacing);
+    };
+
+    const effect=text.effect;
+    const thickness=clamp(Number(text.outlineWidth)||0,0,48);
+    if(effect==="extrude"){
+      const depth=clamp(thickness||8,3,38);
+      c.save();
+      c.shadowColor="rgba(0,0,0,.48)";
+      c.shadowBlur=Math.max(3,depth*.65);
+      c.shadowOffsetX=depth*.84;
+      c.shadowOffsetY=depth*.9;
+      drawGlyphs(depth*.62,depth*.62,mix(text.effectColor||"#111111","#000000",.28));
+      c.restore();
+      const step=depth>24?2:1;
+      for(let offset=depth;offset>=1;offset-=step){
+        const ratio=offset/depth;
+        drawGlyphs(offset*.58,offset*.58,mix(text.effectColor||"#111111","#000000",.08+ratio*.22));
+      }
+    }else if(effect==="shadow"){
+      c.save();
+      c.shadowColor=text.effectColor;
+      c.shadowBlur=Math.max(0,thickness*.9);
+      c.shadowOffsetX=thickness*1.4;
+      c.shadowOffsetY=thickness*1.4;
+      drawGlyphs();
+      c.restore();
+    }else if(effect==="hollow"){
+      drawGlyphs(thickness*1.35,thickness*1.35,text.effectColor,true,Math.max(2,thickness));
     }
+    if(effect==="outline") drawGlyphs(0,0,text.effectColor,true,Math.max(0,thickness*2));
+    const drawW=drawGlyphs();
+
     c.shadowColor="transparent";
-    const drawW=Math.max(0,pen-text.letterSpacing);
     c.strokeStyle=baseColor;c.lineWidth=Math.max(1,fontSize*.045);
     if(text.underline){c.beginPath();c.moveTo(0,fontSize*.12);c.lineTo(drawW,fontSize*.12);c.stroke();}
     if(text.strike){c.beginPath();c.moveTo(0,-fontSize*.31);c.lineTo(drawW,-fontSize*.31);c.stroke();}
@@ -1694,31 +2688,76 @@
     fragments.forEach((fragment)=>{
       const bg=sampleSceneColor(fragment.x+fragment.w/2,fragment.y+fragment.h/2);
       const base=fragment.text.colorMode==="auto"?contrastText(bg):fragment.text.color;
-      c.save(); shapePath(c,fragment.region);c.clip();
+      c.save(); clipItemPath(c,fragment.region);
       fragment.lines.forEach((line,i)=>drawTokenLine(c,fragment,line,i,base));
       c.restore();
     });
   }
 
+  function drawTransformHandles(c, item) {
+    const handles = itemHandlePoints(item);
+    const center = { x:item.x+item.w/2, y:item.y+item.h/2 };
+    const topMid = rotatePoint({ x:item.x+item.w/2, y:item.y }, center, item.rotation||0);
+    c.save();
+    c.strokeStyle="#ffe600";
+    c.fillStyle="#ffe600";
+    c.lineWidth=4;
+    c.setLineDash([]);
+    c.beginPath();
+    c.moveTo(handles.nw.x,handles.nw.y);
+    c.lineTo(handles.ne.x,handles.ne.y);
+    c.lineTo(handles.se.x,handles.se.y);
+    c.lineTo(handles.sw.x,handles.sw.y);
+    c.closePath();
+    c.stroke();
+    c.beginPath();c.moveTo(topMid.x,topMid.y);c.lineTo(handles.rotate.x,handles.rotate.y);c.stroke();
+    for(const key of ["nw","ne","se","sw"]){
+      const point=handles[key];
+      c.fillRect(point.x-13,point.y-13,26,26);
+      c.strokeStyle="#111111";c.lineWidth=2;c.strokeRect(point.x-13,point.y-13,26,26);c.strokeStyle="#ffe600";c.lineWidth=4;
+    }
+    c.beginPath();c.arc(handles.rotate.x,handles.rotate.y,16,0,Math.PI*2);c.fill();
+    c.strokeStyle="#111111";c.lineWidth=2;c.stroke();
+    c.fillStyle="#111111";c.font=`700 18px ${fontFamilies.dotum}`;c.textAlign="center";c.textBaseline="middle";c.fillText("↻",handles.rotate.x,handles.rotate.y+1);
+    c.restore();
+  }
+
   function drawGuides(c,fragments){
     const {bleed}=dimensions();
     c.save();c.translate(bleed,bleed);
-    state.regions.forEach((r)=>{
-      const selected = r.id===state.selectedRegionId;
-      if(!state.showRegions&&!selected)return;
-      c.save();c.setLineDash(selected?[10,7]:[6,8]);c.lineWidth=selected?2.5:1.25;c.strokeStyle=selected?"#f4e900":"rgba(255,255,255,.22)";
-      shapePath(c,r);c.stroke();
-      if(selected&&r.acceptText){const b=regionContentBox(r);c.strokeStyle="rgba(91,240,255,.55)";c.lineWidth=1.5;c.strokeRect(b.x,b.y,b.w,b.h);}
+    state.regions.forEach((region)=>{
+      const selected=region.id===state.selectedRegionId;
+      const active=transformTarget?.kind==="region"&&transformTarget.id===region.id;
+      if(!state.showRegions&&!selected&&!active)return;
+      c.save();
+      if(!active){
+        c.setLineDash(selected?[10,7]:[6,8]);
+        c.lineWidth=selected?2.5:1.25;
+        c.strokeStyle=selected?"#f4e900":"rgba(255,255,255,.22)";
+        withItemTransform(c,region,()=>{shapePath(c,region);c.stroke();});
+      }
+      if(selected&&region.acceptText){
+        const box=regionContentBox(region);
+        c.setLineDash([5,7]);c.strokeStyle="rgba(91,240,255,.52)";c.lineWidth=1.5;c.strokeRect(box.x,box.y,box.w,box.h);
+      }
+      if(active)drawTransformHandles(c,region);
       c.restore();
     });
-    state.elements.forEach((e)=>{
-      if(e.id!==state.selectedElementId)return;
-      c.save();c.strokeStyle="#f4e900";c.lineWidth=4;c.setLineDash([12,7]);c.strokeRect(e.x,e.y,e.w,e.h);
-      c.fillStyle="#f4e900";c.fillRect(e.x+e.w-12,e.y+e.h-12,24,24);c.restore();
+    state.elements.forEach((element)=>{
+      const selected=element.id===state.selectedElementId;
+      const active=transformTarget?.kind==="element"&&transformTarget.id===element.id;
+      if(!selected&&!active)return;
+      const item=elementGeometry(element);
+      c.save();
+      if(!active){
+        c.strokeStyle="#f4e900";c.lineWidth=3;c.setLineDash([12,7]);
+        withItemTransform(c,item,()=>{shapePath(c,item);c.stroke();});
+      }else drawTransformHandles(c,item);
+      c.restore();
     });
-    fragments.forEach((f)=>{
-      if(f.text.id!==state.selectedTextId)return;
-      c.save();c.strokeStyle="#67e8a5";c.lineWidth=3;c.setLineDash([8,6]);c.strokeRect(f.x,f.y,f.w,f.h);c.restore();
+    fragments.forEach((fragment)=>{
+      if(fragment.text.id!==state.selectedTextId)return;
+      c.save();c.strokeStyle="#67e8a5";c.lineWidth=3;c.setLineDash([8,6]);c.strokeRect(fragment.x,fragment.y,fragment.w,fragment.h);c.restore();
     });
     if(bleed>0&&state.showRegions){
       c.save();c.strokeStyle="rgba(255,255,255,.8)";c.lineWidth=2;c.setLineDash([16,10]);c.strokeRect(0,0,dimensions().trimW,dimensions().trimH);c.restore();
@@ -1737,14 +2776,14 @@
     if(recordHits){
       layoutFragments=layout.fragments.map((f)=>({id:f.text.id,regionId:f.region.id,x:f.x,y:f.y,w:f.w,h:f.h}));
       regionHitBoxes=state.regions.map((r)=>({id:r.id,x:r.x,y:r.y,w:r.w,h:r.h}));
-      elementHitBoxes=state.elements.map((e)=>({id:e.id,x:e.x,y:e.y,w:e.w,h:e.h}));
+      elementHitBoxes=state.elements.map((e)=>{const g=elementGeometry(e);return {id:e.id,x:g.x,y:g.y,w:g.w,h:g.h};});
       $("layoutStatus").textContent=layout.overflow?"일부 문장 축소 배치":"영역 안 자동 배치";
       $("layoutStatus").style.color=layout.overflow?"#ffd49a":"#9ef0b5";
     }
   }
 
   function render(){renderQueued=false;updateCanvasMeta();renderTo(ctx,{guides:true,recordHits:true});}
-  function queueRender(){if(renderQueued)return;renderQueued=true;requestAnimationFrame(render);}
+  function queueRender(){markHistoryDirty(false);if(renderQueued)return;renderQueued=true;requestAnimationFrame(render);}
 
   function canvasPoint(event){
     const rect=canvas.getBoundingClientRect();
@@ -1753,8 +2792,14 @@
   }
   const contains=(b,p,pad=0)=>p.x>=b.x-pad&&p.x<=b.x+b.w+pad&&p.y>=b.y-pad&&p.y<=b.y+b.h+pad;
   function hitText(p,exclude=null){return [...layoutFragments].reverse().find((b)=>b.id!==exclude&&contains(b,p))||null;}
-  function hitElement(p){return [...elementHitBoxes].reverse().find((b)=>contains(b,p))||null;}
-  function hitRegion(p,acceptOnly=false){return [...regionHitBoxes].reverse().find((b)=>contains(b,p)&&(!acceptOnly||state.regions.find((r)=>r.id===b.id)?.acceptText))||null;}
+  function hitElement(p){
+    const element=[...state.elements].reverse().find((item)=>pointInItem(p,elementGeometry(item),2));
+    return element?{id:element.id,...elementGeometry(element)}:null;
+  }
+  function hitRegion(p,acceptOnly=false){
+    const region=[...state.regions].reverse().find((item)=>pointInItem(p,item,2)&&(!acceptOnly||item.acceptText));
+    return region?{id:region.id,x:region.x,y:region.y,w:region.w,h:region.h}:null;
+  }
 
   function openToolTab(name){
     const tab=document.querySelector(`.tool-tab[data-tool-tab="${name}"]`);if(!tab)return;
@@ -1762,91 +2807,242 @@
     document.querySelectorAll(".tool-pane").forEach((pane)=>pane.classList.toggle("active",pane.dataset.toolPane===name));
   }
 
+  function transformSource(kind,id){
+    return kind==="region"?state.regions.find((item)=>item.id===id):state.elements.find((item)=>item.id===id);
+  }
+
+  function transformGeometry(kind,id){
+    const source=transformSource(kind,id);
+    return kind==="element"?elementGeometry(source):source;
+  }
+
+  function activateTransform(kind,id,{announce=false}={}){
+    const source=transformSource(kind,id);
+    if(!source)return;
+    transformTarget={kind,id};
+    if(kind==="region"){
+      state.selectedRegionId=id;state.selectedElementId=null;openToolTab("regions");renderRegionList();
+    }else{
+      state.selectedElementId=id;state.selectedRegionId=null;openToolTab("elements");
+    }
+    updateRegionControls();updateElementControls();queueRender();
+    if(announce)toast("이동·크기·회전 핸들을 열었습니다.");
+  }
+
+  function toggleTransform(kind,id){
+    if(!id)return toast("먼저 캔버스에서 항목을 선택하세요.");
+    if(transformTarget?.kind===kind&&transformTarget.id===id){
+      transformTarget=null;
+      updateRegionControls();updateElementControls();queueRender();
+      return;
+    }
+    activateTransform(kind,id,{announce:true});
+  }
+
+  function clearLongPress(){
+    clearTimeout(longPressTimer);longPressTimer=null;pendingLongPress=null;
+  }
+
+  function armLongPress(kind,id,event,point){
+    if(event.pointerType==="mouse")return;
+    clearLongPress();
+    pendingLongPress={kind,id,pointerId:event.pointerId,start:point,fired:false};
+    longPressTimer=setTimeout(()=>{
+      if(!pendingLongPress)return;
+      pendingLongPress.fired=true;
+      activateTransform(kind,id,{announce:false});
+      if(navigator.vibrate)navigator.vibrate(24);
+      toast("핸들이 열렸습니다. 이제 끌어서 조작하세요.");
+    },540);
+  }
+
+  function beginTransformDrag(event,point,handle){
+    if(!transformTarget)return false;
+    const {kind,id}=transformTarget;
+    const source=transformSource(kind,id);
+    const geometry=transformGeometry(kind,id);
+    if(!source||!geometry)return false;
+    const center={x:geometry.x+geometry.w/2,y:geometry.y+geometry.h/2};
+    dragState={
+      type:"transform",kind,id,handle,start:point,
+      orig:deepClone(source),geometry:{x:geometry.x,y:geometry.y,w:geometry.w,h:geometry.h,rotation:geometry.rotation||0},
+      center,startAngle:Math.atan2(point.y-center.y,point.x-center.x),moved:false,
+      textPositions:kind==="region"?state.texts.filter((text)=>text.regionId===id&&text.manualX!=null&&text.manualY!=null).map((text)=>({id:text.id,x:text.manualX,y:text.manualY})):[]
+    };
+    canvas.setPointerCapture(event.pointerId);
+    return true;
+  }
+
+  function resizeFromHandle(drag,point){
+    const source=transformSource(drag.kind,drag.id);
+    if(!source)return;
+    const {trimW:W,trimH:H}=dimensions();
+    const dx=point.x-drag.start.x,dy=point.y-drag.start.y;
+    if(drag.kind==="element"&&source.type==="band"){
+      const north=drag.handle==="nw"||drag.handle==="ne";
+      if(source.bandScope==="region"){
+        source.h=clamp(drag.orig.h+(north?-dy*2:dy*2),18,H);
+      }else{
+        if(north){source.y=drag.orig.y+dy;source.h=clamp(drag.orig.h-dy,18,H);}
+        else source.h=clamp(drag.orig.h+dy,18,H);
+      }
+      return;
+    }
+    const original=drag.geometry;
+    const center={x:original.x+original.w/2,y:original.y+original.h/2};
+    const local=rotatePoint(point,center,-(original.rotation||0));
+    const opposite={
+      nw:{x:original.x+original.w,y:original.y+original.h},
+      ne:{x:original.x,y:original.y+original.h},
+      se:{x:original.x,y:original.y},
+      sw:{x:original.x+original.w,y:original.y}
+    }[drag.handle];
+    if(!opposite)return;
+    let x=Math.min(local.x,opposite.x),y=Math.min(local.y,opposite.y);
+    let w=Math.abs(local.x-opposite.x),h=Math.abs(local.y-opposite.y);
+    const minW=source.shape==="line"?40:32,minH=source.shape==="line"?2:26;
+    if(w<minW){if(local.x<opposite.x)x=opposite.x-minW;w=minW;}
+    if(h<minH){if(local.y<opposite.y)y=opposite.y-minH;h=minH;}
+    source.x=clamp(x,-w*.8,W-w*.05);source.y=clamp(y,-h*.8,H-h*.05);source.w=w;source.h=h;
+  }
+
   canvas.addEventListener("pointerdown",(event)=>{
-    const p=canvasPoint(event);
-    const textHit=hitText(p);
+    const point=canvasPoint(event);
+    if(transformTarget){
+      const item=transformGeometry(transformTarget.kind,transformTarget.id);
+      const handle=item?transformHandleAt(point,item):null;
+      if(handle&&beginTransformDrag(event,point,handle)){
+        event.preventDefault();
+        return;
+      }
+    }
+
+    const textHit=hitText(point);
     if(textHit){
-      const text=state.texts.find((t)=>t.id===textHit.id);if(!text)return;
+      clearLongPress();
+      const text=state.texts.find((item)=>item.id===textHit.id);if(!text)return;
+      transformTarget=null;
       state.selectedTextId=text.id;state.selectedElementId=null;state.selectedRegionId=null;
-      dragState={type:"text",id:text.id,start:p,orig:{regionId:text.regionId,order:text.order,manualX:text.manualX,manualY:text.manualY},baseX:text.manualX??textHit.x,baseY:text.manualY??textHit.y,moved:false};
-      canvas.setPointerCapture(event.pointerId);renderTextList();updateElementControls();updateRegionControls();queueRender();return;
+      dragState={type:"text",id:text.id,start:point,orig:{regionId:text.regionId,order:text.order,manualX:text.manualX,manualY:text.manualY,regionLocked:text.regionLocked},baseX:text.manualX??textHit.x,baseY:text.manualY??textHit.y,moved:false};
+      canvas.setPointerCapture(event.pointerId);
+      renderTextList();updateElementControls();updateRegionControls();queueRender();return;
     }
-    const elementHit=hitElement(p);
+
+    const elementHit=hitElement(point);
     if(elementHit){
-      const e=state.elements.find((x)=>x.id===elementHit.id);if(!e)return;
-      state.selectedElementId=e.id;state.selectedRegionId=null;
-      const resize=Math.hypot(p.x-(e.x+e.w),p.y-(e.y+e.h))<34;
-      dragState={type:resize?"elementResize":"elementMove",id:e.id,start:p,orig:{x:e.x,y:e.y,w:e.w,h:e.h},moved:false};
-      canvas.setPointerCapture(event.pointerId);openToolTab("elements");updateElementControls();updateRegionControls();queueRender();return;
+      const element=state.elements.find((item)=>item.id===elementHit.id);if(!element)return;
+      if(!(transformTarget?.kind==="element"&&transformTarget.id===element.id))transformTarget=null;
+      state.selectedElementId=element.id;state.selectedRegionId=null;
+      openToolTab("elements");updateElementControls();updateRegionControls();renderRegionList();queueRender();
+      armLongPress("element",element.id,event,point);
+      try{canvas.setPointerCapture(event.pointerId);}catch{}
+      return;
     }
-    const regionHit=hitRegion(p);
+
+    const regionHit=hitRegion(point);
     if(regionHit){
-      const r=state.regions.find((x)=>x.id===regionHit.id);if(!r)return;
-      state.selectedRegionId=r.id;state.selectedElementId=null;
-      const resize=Math.hypot(p.x-(r.x+r.w),p.y-(r.y+r.h))<34;
-      dragState={type:resize?"regionResize":"regionMove",id:r.id,start:p,orig:{x:r.x,y:r.y,w:r.w,h:r.h},moved:false};
-      canvas.setPointerCapture(event.pointerId);openToolTab("regions");renderRegionList();updateRegionControls();updateElementControls();queueRender();return;
+      const region=state.regions.find((item)=>item.id===regionHit.id);if(!region)return;
+      if(!(transformTarget?.kind==="region"&&transformTarget.id===region.id))transformTarget=null;
+      state.selectedRegionId=region.id;state.selectedElementId=null;
+      openToolTab("regions");renderRegionList();updateRegionControls();updateElementControls();queueRender();
+      armLongPress("region",region.id,event,point);
+      try{canvas.setPointerCapture(event.pointerId);}catch{}
+      return;
     }
-    state.selectedElementId=null;state.selectedRegionId=null;updateElementControls();updateRegionControls();renderRegionList();queueRender();
+
+    clearLongPress();transformTarget=null;state.selectedElementId=null;state.selectedRegionId=null;
+    updateElementControls();updateRegionControls();renderRegionList();queueRender();
   });
 
   canvas.addEventListener("pointermove",(event)=>{
+    const point=canvasPoint(event);
+    if(pendingLongPress&&!pendingLongPress.fired){
+      if(Math.hypot(point.x-pendingLongPress.start.x,point.y-pendingLongPress.start.y)>14)clearLongPress();
+    }
     if(!dragState)return;
-    const p=canvasPoint(event),dx=p.x-dragState.start.x,dy=p.y-dragState.start.y;
+    const dx=point.x-dragState.start.x,dy=point.y-dragState.start.y;
     if(Math.abs(dx)+Math.abs(dy)>3)dragState.moved=true;
     const {trimW:W,trimH:H}=dimensions();
     if(dragState.type==="text"){
-      const t=state.texts.find((x)=>x.id===dragState.id);if(!t)return;
-      const region=state.regions.find((r)=>r.id===t.regionId);if(!region)return;
+      const text=state.texts.find((item)=>item.id===dragState.id);if(!text)return;
+      const region=state.regions.find((item)=>item.id===text.regionId);if(!region)return;
       const box=regionContentBox(region);
-      t.manualX=clamp(dragState.baseX+dx,box.x,box.x+box.w-20);
-      t.manualY=clamp(dragState.baseY+dy,box.y,box.y+box.h-20);
-    }else if(dragState.type==="elementMove"){
-      const e=state.elements.find((x)=>x.id===dragState.id);if(!e)return;
-      e.x=clamp(dragState.orig.x+dx,-e.w*.8,W-e.w*.2);e.y=clamp(dragState.orig.y+dy,-e.h*.8,H-e.h*.2);updateElementControls();
-    }else if(dragState.type==="elementResize"){
-      const e=state.elements.find((x)=>x.id===dragState.id);if(!e)return;
-      e.w=clamp(dragState.orig.w+dx,30,W*1.5);e.h=clamp(dragState.orig.h+dy,30,H*1.5);updateElementControls();
-    }else if(dragState.type==="regionMove"){
-      const r=state.regions.find((x)=>x.id===dragState.id);if(!r)return;
-      r.x=clamp(dragState.orig.x+dx,-r.w*.8,W-r.w*.2);r.y=clamp(dragState.orig.y+dy,-r.h*.8,H-r.h*.2);updateRegionControls();
-    }else if(dragState.type==="regionResize"){
-      const r=state.regions.find((x)=>x.id===dragState.id);if(!r)return;
-      r.w=clamp(dragState.orig.w+dx,30,W*1.5);r.h=clamp(dragState.orig.h+dy,20,H*1.5);updateRegionControls();
+      text.manualX=clamp(dragState.baseX+dx,box.x,box.x+box.w-20);
+      text.manualY=clamp(dragState.baseY+dy,box.y,box.y+box.h-20);
+      text.regionLocked=true;
+    }else if(dragState.type==="transform"){
+      const source=transformSource(dragState.kind,dragState.id);if(!source)return;
+      if(dragState.handle==="move"){
+        if(dragState.kind==="element"&&source.type==="band"){
+          if(source.bandScope==="region"){
+            const region=state.regions.find((item)=>item.id===source.bandRegionId);
+            if(region)source.bandPosition=clamp((dragState.geometry.y+dragState.geometry.h/2+dy-region.y)/Math.max(1,region.h),0,1);
+          }else source.y=clamp(dragState.orig.y+dy,-source.h*.7,H-source.h*.3);
+        }else{
+          source.x=clamp(dragState.orig.x+dx,-dragState.orig.w*.8,W-dragState.orig.w*.05);
+          source.y=clamp(dragState.orig.y+dy,-dragState.orig.h*.8,H-dragState.orig.h*.05);
+          if(dragState.kind==="region"){
+            dragState.textPositions.forEach((saved)=>{
+              const text=state.texts.find((item)=>item.id===saved.id);
+              if(text){text.manualX=saved.x+dx;text.manualY=saved.y+dy;}
+            });
+          }
+        }
+      }else if(dragState.handle==="rotate"){
+        const angle=Math.atan2(point.y-dragState.center.y,point.x-dragState.center.x);
+        source.rotation=Math.round(dragState.orig.rotation+(angle-dragState.startAngle)*180/Math.PI);
+      }else resizeFromHandle(dragState,point);
+      if(dragState.kind==="region")autoStyleAssignedTexts({force:false});
+      updateRegionControls();updateElementControls();
     }
     queueRender();
   });
 
   function finishPointer(event){
-    if(!dragState)return;
-    const p=canvasPoint(event);
+    const point=canvasPoint(event);
+    const pending=pendingLongPress;
+    clearLongPress();
+    if(!dragState){
+      try{canvas.releasePointerCapture(event.pointerId);}catch{}
+      return;
+    }
     if(dragState.type==="text"){
-      const a=state.texts.find((x)=>x.id===dragState.id);
-      const target=hitText(p,a.id);
-      if(a&&target){
-        const b=state.texts.find((x)=>x.id===target.id);
+      const a=state.texts.find((item)=>item.id===dragState.id);
+      const target=a?hitText(point,a.id):null;
+      if(a&&dragState.moved&&target){
+        const b=state.texts.find((item)=>item.id===target.id);
         if(b){
-          const bPos={regionId:b.regionId,order:b.order,manualX:b.manualX,manualY:b.manualY};
-          a.regionId=bPos.regionId;a.order=bPos.order;a.manualX=bPos.manualX;a.manualY=bPos.manualY;
-          b.regionId=dragState.orig.regionId;b.order=dragState.orig.order;b.manualX=dragState.orig.manualX;b.manualY=dragState.orig.manualY;
+          const bPos={regionId:b.regionId,order:b.order,manualX:b.manualX,manualY:b.manualY,regionLocked:b.regionLocked};
+          a.regionId=bPos.regionId;a.order=bPos.order;a.manualX=bPos.manualX;a.manualY=bPos.manualY;a.regionLocked=true;
+          b.regionId=dragState.orig.regionId;b.order=dragState.orig.order;b.manualX=dragState.orig.manualX;b.manualY=dragState.orig.manualY;b.regionLocked=true;
           toast("두 문장의 위치를 바꿨습니다.");
         }
-      }else if(a){
-        const regionHit=hitRegion(p,true);
+      }else if(a&&dragState.moved){
+        const regionHit=hitRegion(point,true);
         if(regionHit&&regionHit.id!==a.regionId){
-          a.regionId=regionHit.id;a.order=state.texts.filter((t)=>t.regionId===regionHit.id&&t.id!==a.id).length;
-          const region=state.regions.find((r)=>r.id===regionHit.id),box=regionContentBox(region);
-          a.manualX=clamp(p.x,box.x,box.x+box.w-20);a.manualY=clamp(p.y,box.y,box.y+box.h-20);
+          a.regionId=regionHit.id;
+          a.order=state.texts.filter((text)=>text.regionId===regionHit.id&&text.id!==a.id).length;
+          const region=state.regions.find((item)=>item.id===regionHit.id),box=regionContentBox(region);
+          a.manualX=clamp(point.x,box.x,box.x+box.w-20);a.manualY=clamp(point.y,box.y,box.y+box.h-20);a.regionLocked=true;
           toast(`“${region.name}” 영역으로 옮겼습니다.`);
         }
       }
       normalizeTextOrders();renderTextList();
     }
     try{canvas.releasePointerCapture(event.pointerId);}catch{}
-    dragState=null;renderRegionList();queueRender();
+    dragState=null;renderRegionList();updateRegionControls();updateElementControls();queueRender();markHistoryDirty(true);
   }
+
   canvas.addEventListener("pointerup",finishPointer);
   canvas.addEventListener("pointercancel",finishPointer);
+  canvas.addEventListener("dblclick",(event)=>{
+    const point=canvasPoint(event);
+    const elementHit=hitElement(point);
+    if(elementHit){event.preventDefault();activateTransform("element",elementHit.id,{announce:false});return;}
+    const regionHit=hitRegion(point);
+    if(regionHit){event.preventDefault();activateTransform("region",regionHit.id,{announce:false});}
+  });
+  canvas.addEventListener("contextmenu",(event)=>event.preventDefault());
 
   function renderUnicodeGrid(category="전체",query=""){
     const categories=$("unicodeCategories");categories.replaceChildren();
@@ -1911,6 +3107,7 @@
   bindControls();
   setupColorFields();
   applyTemplate("label-market",{preserveTexts:false});
+  initializeHistory();
   $("showRegions").checked=state.showRegions;
   renderUnicodeGrid("전체","");
   queueRender();

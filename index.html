@@ -17,8 +17,12 @@
       </div>
     </div>
     <div class="top-actions">
+      <div class="history-actions" aria-label="실행 기록">
+        <button id="undoBtn" class="button button-ghost history-button" type="button" disabled title="실행취소 (Ctrl/Cmd+Z)">↶ <span>실행취소</span></button>
+        <button id="redoBtn" class="button button-ghost history-button" type="button" disabled title="재실행 (Ctrl/Cmd+Shift+Z)">↷ <span>재실행</span></button>
+      </div>
       <button id="resetBtn" class="button button-ghost">초기화</button>
-      <button id="exportPngBtn" class="button">PNG</button>
+      <button id="exportPngBtn" class="button">PNG 저장</button>
       <button id="exportJpgBtn" class="button button-accent">JPG 저장</button>
     </div>
   </header>
@@ -30,9 +34,12 @@
           <span class="panel-kicker">COPY DESK</span>
           <h2>문장</h2>
         </div>
-        <button id="addTextBtn" class="button button-accent">+ 문장</button>
+        <div class="panel-heading-actions">
+          <button id="autoArrangeBtn" class="button">전체 자동 배치</button>
+          <button id="addTextBtn" class="button button-accent">+ 문장</button>
+        </div>
       </div>
-      <p class="panel-note">한 문장 안에서 줄바꿈할 수 있습니다. 선택한 문장의 꾸미기 도구가 바로 아래에 열립니다.</p>
+      <p class="panel-note">문장을 추가하면 영역의 크기와 남은 공간을 계산해 크기·행간·자간·기호·효과를 자동으로 맞춥니다. 문장을 선택하면 바로 아래에서 자동/직접 꾸미기를 바꿀 수 있습니다.</p>
       <div id="textList" class="text-list"></div>
     </section>
 
@@ -40,18 +47,18 @@
       <div class="workspace-bar">
         <div>
           <span class="panel-kicker">LIVE PREVIEW</span>
-          <strong id="currentTemplateName">노랑 상점 전단</strong>
+          <strong id="currentTemplateName">큰 제목 · 본문 2칸</strong>
           <small id="canvasSizeLabel">1600 × 900</small>
         </div>
         <div class="workspace-actions">
           <label class="switch-label"><input id="showRegions" type="checkbox" /> 영역선</label>
-          <span id="layoutStatus" class="status">자동 배치 준비</span>
+          <span id="layoutStatus" class="status">자동 조판 준비</span>
         </div>
       </div>
       <div id="canvasStage" class="canvas-stage">
         <canvas id="posterCanvas" width="1600" height="900" aria-label="찌라시 미리보기"></canvas>
       </div>
-      <p class="canvas-help">문장을 끌어 같은 영역 안에서 이동 · 다른 문장 위에 놓으면 자리 교환 · 빈 영역에 놓으면 영역 이동 · 배경 영역과 요소를 눌러 편집</p>
+      <p class="canvas-help">문장은 바로 끌어 이동하거나 서로 자리를 바꿀 수 있습니다. 영역·도형은 한 번 눌러 선택하고, 컴퓨터에서는 더블클릭·모바일에서는 길게 눌러 이동/크기/회전 핸들을 여세요.</p>
     </section>
 
     <section class="toolbox panel" aria-label="템플릿과 요소">
@@ -67,7 +74,7 @@
         <div class="section-heading">
           <div>
             <h2>찌라시 템플릿</h2>
-            <p>단색 배경, 0° 정렬, 풀폭 띠와 불균등 면분할을 중심으로 다시 만든 15종입니다.</p>
+            <p>색은 현재 주색·보조색을 따르고, 레이아웃만 바뀌는 15종입니다. 띠가 없는 구성과 한 줄만 쓰는 구성을 함께 넣었습니다.</p>
           </div>
         </div>
         <div id="templateGrid" class="template-grid"></div>
@@ -94,14 +101,21 @@
               <span class="panel-kicker">SELECTED REGION</span>
               <strong id="selectedRegionName">선택된 영역 없음</strong>
             </div>
-            <span id="selectedRegionBadge">미리보기에서 선택</span>
+            <div class="selected-head-actions">
+              <span id="selectedRegionBadge">미리보기에서 선택</span>
+              <button id="toggleRegionTransformBtn" class="small-button" type="button">핸들 열기</button>
+            </div>
           </div>
-          <div class="field-grid four">
-            <label>X<input id="regionX" type="number" /></label>
-            <label>Y<input id="regionY" type="number" /></label>
-            <label>가로<input id="regionW" type="number" min="20" /></label>
-            <label>세로<input id="regionH" type="number" min="20" /></label>
-          </div>
+          <p class="gesture-hint">PC 더블클릭 · 모바일 길게 누르면 이동·크기·회전 핸들이 열립니다.</p>
+          <details class="advanced-details">
+            <summary>정밀 위치·크기</summary>
+            <div class="field-grid four">
+              <label>X<input id="regionX" type="number" /></label>
+              <label>Y<input id="regionY" type="number" /></label>
+              <label>가로<input id="regionW" type="number" min="20" /></label>
+              <label>세로<input id="regionH" type="number" min="20" /></label>
+            </div>
+          </details>
           <div class="field-grid three">
             <label>모양
               <select id="regionShape">
@@ -121,12 +135,13 @@
           <div class="field-grid three">
             <label>선 두께<input id="regionStrokeWidth" type="number" min="0" max="80" /></label>
             <label>회전 <b id="regionRotationValue">0°</b><input id="regionRotation" type="range" min="-180" max="180" /></label>
-            <label>글자 수용
-              <select id="regionAcceptText">
-                <option value="yes">문장 배치</option>
-                <option value="no">장식 전용</option>
-              </select>
-            </label>
+            <div>
+              <span class="field-label">영역 용도</span>
+              <div id="regionAcceptText" class="segmented-control" role="group" aria-label="영역 용도">
+                <button type="button" data-value="yes">문장 배치</button>
+                <button type="button" data-value="no">장식 전용</button>
+              </div>
+            </div>
           </div>
           <div class="field-grid three">
             <label>효과
@@ -135,6 +150,7 @@
                 <option value="shadow">진한 그림자</option>
                 <option value="hollow">빈 그림자</option>
                 <option value="glow">번짐</option>
+                <option value="extrude">입체</option>
               </select>
             </label>
             <div><span class="field-label">효과 색</span><div id="regionEffectColorField" class="color-field-host"></div></div>
@@ -153,7 +169,8 @@
         </div>
         <div class="element-buttons">
           <button class="button" data-add-shape="rect">사각형</button>
-          <button class="button" data-add-shape="band">띠</button>
+          <button class="button" data-add-band="canvas">전체 띠</button>
+          <button class="button" data-add-band="region">영역 띠</button>
           <button class="button" data-add-shape="circle">원형</button>
           <button class="button" data-add-shape="heart">하트</button>
           <button class="button" data-add-shape="burst">뾰족 말풍선</button>
@@ -167,13 +184,34 @@
               <span class="panel-kicker">SELECTED ELEMENT</span>
               <strong id="selectedElementName">선택된 요소 없음</strong>
             </div>
-            <span id="selectedElementBadge">미리보기에서 선택</span>
+            <div class="selected-head-actions">
+              <span id="selectedElementBadge">미리보기에서 선택</span>
+              <button id="toggleElementTransformBtn" class="small-button" type="button">핸들 열기</button>
+            </div>
           </div>
-          <div class="field-grid four">
-            <label>X<input id="elementX" type="number" /></label>
-            <label>Y<input id="elementY" type="number" /></label>
-            <label>가로<input id="elementW" type="number" min="20" /></label>
-            <label>세로<input id="elementH" type="number" min="20" /></label>
+          <p class="gesture-hint">PC 더블클릭 · 모바일 길게 누르면 이동·크기·회전 핸들이 열립니다.</p>
+          <details class="advanced-details">
+            <summary>정밀 위치·크기</summary>
+            <div class="field-grid four">
+              <label>X<input id="elementX" type="number" /></label>
+              <label>Y<input id="elementY" type="number" /></label>
+              <label>가로<input id="elementW" type="number" min="20" /></label>
+              <label>세로<input id="elementH" type="number" min="20" /></label>
+            </div>
+          </details>
+          <div id="bandControls" class="band-controls hidden">
+            <div class="field-grid two">
+              <div>
+                <span class="field-label">띠 범위</span>
+                <div id="bandScope" class="segmented-control" role="group" aria-label="띠 범위">
+                  <button type="button" data-value="canvas">전체 캔버스</button>
+                  <button type="button" data-value="region">글자 영역</button>
+                </div>
+              </div>
+              <label>기준 영역<select id="bandRegion"></select></label>
+            </div>
+            <label>영역 안 세로 위치 <b id="bandPositionValue">50%</b><input id="bandPosition" type="range" min="0" max="100" value="50" /></label>
+            <p class="microcopy">전체 띠는 캔버스 폭, 영역 띠는 선택한 글자 영역의 폭에 정확히 맞춰집니다. 이동할 때는 세로 위치만 바뀝니다.</p>
           </div>
           <div class="field-grid two">
             <div><span class="field-label">채우기</span><div id="elementFillField" class="color-field-host"></div></div>
@@ -186,7 +224,13 @@
           </div>
           <label>글자·요소 회피 여백 <b id="flowMarginValue">0</b><input id="flowMargin" type="range" min="-160" max="240" /></label>
           <p class="microcopy">0은 요소 외곽선에 딱 맞춤, 음수는 글자가 더 가까워지거나 일부 겹침, 양수는 더 넓게 띄웁니다.</p>
-          <label class="check-row"><input id="affectFlow" type="checkbox" checked /> 문장이 이 요소·사진을 피해 배치되게 하기</label>
+          <div class="segmented-field">
+            <span class="field-label">문장과 겹침</span>
+            <div id="affectFlow" class="segmented-control" role="group" aria-label="문장과 겹침">
+              <button type="button" data-value="avoid">피해서 배치</button>
+              <button type="button" data-value="overlap">겹쳐도 됨</button>
+            </div>
+          </div>
           <div class="field-grid three">
             <label>효과
               <select id="elementEffect">
@@ -194,6 +238,7 @@
                 <option value="shadow">진한 그림자</option>
                 <option value="hollow">빈 그림자</option>
                 <option value="glow">번짐</option>
+                <option value="extrude">입체</option>
               </select>
             </label>
             <div><span class="field-label">효과 색</span><div id="elementEffectColorField" class="color-field-host"></div></div>
@@ -205,12 +250,13 @@
           </div>
           <div class="field-grid two">
             <div><span class="field-label">문구 색</span><div id="elementLabelColorField" class="color-field-host"></div></div>
-            <label>사진 맞춤
-              <select id="imageFit">
-                <option value="cover">영역 채우기</option>
-                <option value="contain">사진 전체 보기</option>
-              </select>
-            </label>
+            <div>
+              <span class="field-label">사진 맞춤</span>
+              <div id="imageFit" class="segmented-control" role="group" aria-label="사진 맞춤">
+                <button type="button" data-value="cover">영역 채우기</button>
+                <button type="button" data-value="contain">전체 보기</button>
+              </div>
+            </div>
           </div>
           <button id="deleteElementBtn" class="button button-danger button-wide">선택 요소 삭제</button>
         </div>
@@ -224,12 +270,13 @@
           </div>
         </div>
         <div class="field-grid three">
-          <label>찌라시 방향
-            <select id="orientation">
-              <option value="landscape">가로 1600×900</option>
-              <option value="portrait">세로 900×1600</option>
-            </select>
-          </label>
+          <div>
+            <span class="field-label">찌라시 방향</span>
+            <div id="orientation" class="segmented-control" role="group" aria-label="찌라시 방향">
+              <button type="button" data-value="landscape">가로</button>
+              <button type="button" data-value="portrait">세로</button>
+            </div>
+          </div>
           <label>재단여백
             <select id="bleedMm">
               <option value="0">없음</option>
@@ -267,7 +314,13 @@
           <label>패턴 크기 <b id="patternScaleValue">48</b><input id="patternScale" type="range" min="12" max="180" /></label>
         </div>
         <div class="divider"></div>
-        <label class="check-row"><input id="posterBorderEnabled" type="checkbox" /> 찌라시 테두리 사용</label>
+        <div class="segmented-field border-toggle-field">
+          <span class="field-label">찌라시 테두리</span>
+          <div id="posterBorderEnabled" class="segmented-control" role="group" aria-label="찌라시 테두리">
+            <button type="button" data-value="off">없음</button>
+            <button type="button" data-value="on">사용</button>
+          </div>
+        </div>
         <div class="field-grid three">
           <div><span class="field-label">테두리 색</span><div id="posterBorderColorField" class="color-field-host"></div></div>
           <label>테두리 두께 <b id="posterBorderWidthValue">12</b><input id="posterBorderWidth" type="range" min="0" max="100" /></label>
