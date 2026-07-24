@@ -21,7 +21,7 @@
         <button id="undoBtn" class="button button-ghost history-button" type="button" disabled title="실행취소 (Ctrl/Cmd+Z)">↶ <span>실행취소</span></button>
         <button id="redoBtn" class="button button-ghost history-button" type="button" disabled title="재실행 (Ctrl/Cmd+Shift+Z)">↷ <span>재실행</span></button>
       </div>
-      <button id="resetBtn" class="button button-ghost">초기화</button>
+      <button id="resetBtn" class="button button-ghost">전체 초기화</button>
       <button id="exportPngBtn" class="button">PNG 저장</button>
       <button id="exportJpgBtn" class="button button-accent">JPG 저장</button>
     </div>
@@ -35,7 +35,7 @@
           <h2>문장</h2>
         </div>
         <div class="panel-heading-actions">
-          <button id="autoArrangeBtn" class="button">전체 자동 배치</button>
+          <button id="autoArrangeBtn" class="button">문장 자동 정리</button>
           <button id="addTextBtn" class="button button-accent">+ 문장</button>
         </div>
       </div>
@@ -51,7 +51,7 @@
           <small id="canvasSizeLabel">1600 × 900</small>
         </div>
         <div class="workspace-actions">
-          <label class="switch-label"><input id="showRegions" type="checkbox" /> 영역선</label>
+          <label class="switch-label"><input id="showRegions" type="checkbox" /> 영역 보기</label>
           <span id="layoutStatus" class="status">자동 조판 준비</span>
         </div>
       </div>
@@ -69,6 +69,7 @@
         <button class="tool-tab" data-tool-tab="background" role="tab">배경·재단</button>
         <button class="tool-tab" data-tool-tab="export" role="tab">저장</button>
       </div>
+      <p class="numeric-usage-note"><strong>숫자 조절</strong><span>슬라이더</span><span>직접 입력</span><span>− / +</span><span>↺ 원상복귀</span></p>
 
       <div class="tool-pane active" data-tool-pane="templates">
         <div class="section-heading">
@@ -94,6 +95,13 @@
           </div>
           <button id="addRegionBtn" class="button button-accent">+ 새 영역</button>
         </div>
+        <div class="region-layout-toolbar">
+          <div class="region-layout-control">
+            <label>영역 사이 여백 줄이기 <b id="regionGapReductionValue">18px</b><input id="regionGapReduction" type="range" min="0" max="72" step="1" value="18" /></label>
+            <p class="microcopy">0은 템플릿 원본 간격입니다. 값이 클수록 글자 영역이 서로 가까워집니다. 수동으로 옮긴 영역은 유지됩니다.</p>
+          </div>
+          <button id="restoreAllRegionsBtn" class="button" type="button">전체 위치 복귀</button>
+        </div>
         <div id="regionList" class="region-list"></div>
         <div id="regionControls" class="editor-card is-disabled">
           <div class="selected-element-head">
@@ -103,17 +111,18 @@
             </div>
             <div class="selected-head-actions">
               <span id="selectedRegionBadge">미리보기에서 선택</span>
-              <button id="toggleRegionTransformBtn" class="small-button" type="button">핸들 열기</button>
+              <button id="restoreRegionLayoutBtn" class="small-button" type="button">원래 위치</button>
+              <button id="toggleRegionTransformBtn" class="small-button" type="button">위치 편집</button>
             </div>
           </div>
-          <p class="gesture-hint">PC 더블클릭 · 모바일 길게 누르면 이동·크기·회전 핸들이 열립니다.</p>
+          <p class="gesture-hint">PC에서는 더블클릭, 모바일에서는 길게 누르면 위치 편집 핸들이 열립니다. 원래 위치 버튼으로 템플릿 기준 배치에 다시 붙일 수 있습니다.</p>
           <details class="advanced-details">
             <summary>정밀 위치·크기</summary>
-            <div class="field-grid four">
-              <label>X<input id="regionX" type="number" /></label>
-              <label>Y<input id="regionY" type="number" /></label>
-              <label>가로<input id="regionW" type="number" min="20" /></label>
-              <label>세로<input id="regionH" type="number" min="20" /></label>
+            <div class="field-grid two numeric-grid">
+              <label>X<input id="regionX" type="number" min="-1600" max="3200" step="1" /></label>
+              <label>Y<input id="regionY" type="number" min="-1600" max="3200" step="1" /></label>
+              <label>가로<input id="regionW" type="number" min="20" max="3200" step="1" /></label>
+              <label>세로<input id="regionH" type="number" min="20" max="3200" step="1" /></label>
             </div>
           </details>
           <div class="field-grid three">
@@ -125,16 +134,16 @@
                 <option value="line">가로선</option>
               </select>
             </label>
-            <label>모서리 둥글기 <b id="regionRadiusValue">0</b><input id="regionRadius" type="range" min="0" max="240" /></label>
-            <label>안쪽 여백 <b id="regionPaddingValue">24</b><input id="regionPadding" type="range" min="0" max="180" /></label>
+            <label>모서리 둥글기 <b id="regionRadiusValue">0</b><input id="regionRadius" type="range" min="0" max="240" step="1" /></label>
+            <label>안쪽 여백 <b id="regionPaddingValue">24</b><input id="regionPadding" type="range" min="0" max="180" step="1" /></label>
           </div>
           <div class="field-grid two">
             <div><span class="field-label">채우기</span><div id="regionFillField" class="color-field-host"></div></div>
             <div><span class="field-label">선 색</span><div id="regionStrokeField" class="color-field-host"></div></div>
           </div>
           <div class="field-grid three">
-            <label>선 두께<input id="regionStrokeWidth" type="number" min="0" max="80" /></label>
-            <label>회전 <b id="regionRotationValue">0°</b><input id="regionRotation" type="range" min="-180" max="180" /></label>
+            <label>선 두께<input id="regionStrokeWidth" type="number" min="0" max="80" step="1" /></label>
+            <label>회전 <b id="regionRotationValue">0°</b><input id="regionRotation" type="range" min="-180" max="180" step="1" /></label>
             <div>
               <span class="field-label">영역 용도</span>
               <div id="regionAcceptText" class="segmented-control" role="group" aria-label="영역 용도">
@@ -147,14 +156,14 @@
             <label>효과
               <select id="regionEffect">
                 <option value="none">없음</option>
-                <option value="shadow">진한 그림자</option>
+                <option value="shadow">딱 떨어지는 그림자</option>
                 <option value="hollow">빈 그림자</option>
                 <option value="glow">번짐</option>
-                <option value="extrude">입체</option>
+                <option value="extrude">단색 입체</option>
               </select>
             </label>
             <div><span class="field-label">효과 색</span><div id="regionEffectColorField" class="color-field-host"></div></div>
-            <label>효과 크기<input id="regionEffectSize" type="range" min="0" max="100" /></label>
+            <label>효과 크기<input id="regionEffectSize" type="range" min="0" max="100" step="1" /></label>
           </div>
           <button id="deleteRegionBtn" class="button button-danger button-wide">선택 영역 삭제</button>
         </div>
@@ -186,17 +195,17 @@
             </div>
             <div class="selected-head-actions">
               <span id="selectedElementBadge">미리보기에서 선택</span>
-              <button id="toggleElementTransformBtn" class="small-button" type="button">핸들 열기</button>
+              <button id="toggleElementTransformBtn" class="small-button" type="button">위치 편집</button>
             </div>
           </div>
-          <p class="gesture-hint">PC 더블클릭 · 모바일 길게 누르면 이동·크기·회전 핸들이 열립니다.</p>
+          <p class="gesture-hint">PC에서는 더블클릭, 모바일에서는 길게 누르면 위치 편집 핸들이 열립니다. 원래 위치 버튼으로 템플릿 기준 배치에 다시 붙일 수 있습니다.</p>
           <details class="advanced-details">
             <summary>정밀 위치·크기</summary>
-            <div class="field-grid four">
-              <label>X<input id="elementX" type="number" /></label>
-              <label>Y<input id="elementY" type="number" /></label>
-              <label>가로<input id="elementW" type="number" min="20" /></label>
-              <label>세로<input id="elementH" type="number" min="20" /></label>
+            <div class="field-grid two numeric-grid">
+              <label>X<input id="elementX" type="number" min="-1600" max="3200" step="1" /></label>
+              <label>Y<input id="elementY" type="number" min="-1600" max="3200" step="1" /></label>
+              <label>가로<input id="elementW" type="number" min="20" max="3200" step="1" /></label>
+              <label>세로<input id="elementH" type="number" min="20" max="3200" step="1" /></label>
             </div>
           </details>
           <div id="bandControls" class="band-controls hidden">
@@ -210,7 +219,7 @@
               </div>
               <label>기준 영역<select id="bandRegion"></select></label>
             </div>
-            <label>영역 안 세로 위치 <b id="bandPositionValue">50%</b><input id="bandPosition" type="range" min="0" max="100" value="50" /></label>
+            <label>영역 안 세로 위치 <b id="bandPositionValue">50%</b><input id="bandPosition" type="range" min="0" max="100" step="1" value="50" /></label>
             <p class="microcopy">전체 띠는 캔버스 폭, 영역 띠는 선택한 글자 영역의 폭에 정확히 맞춰집니다. 이동할 때는 세로 위치만 바뀝니다.</p>
           </div>
           <div class="field-grid two">
@@ -218,11 +227,11 @@
             <div><span class="field-label">선 색</span><div id="elementStrokeField" class="color-field-host"></div></div>
           </div>
           <div class="field-grid three">
-            <label>선 두께<input id="elementStrokeWidth" type="number" min="0" max="80" /></label>
-            <label>모서리 둥글기 <b id="elementRadiusValue">0</b><input id="elementRadius" type="range" min="0" max="240" /></label>
-            <label>회전 <b id="rotationValue">0°</b><input id="elementRotation" type="range" min="-180" max="180" /></label>
+            <label>선 두께<input id="elementStrokeWidth" type="number" min="0" max="80" step="1" /></label>
+            <label>모서리 둥글기 <b id="elementRadiusValue">0</b><input id="elementRadius" type="range" min="0" max="240" step="1" /></label>
+            <label>회전 <b id="rotationValue">0°</b><input id="elementRotation" type="range" min="-180" max="180" step="1" /></label>
           </div>
-          <label>글자·요소 회피 여백 <b id="flowMarginValue">0</b><input id="flowMargin" type="range" min="-160" max="240" /></label>
+          <label>글자·요소 회피 여백 <b id="flowMarginValue">0</b><input id="flowMargin" type="range" min="-160" max="240" step="1" /></label>
           <p class="microcopy">0은 요소 외곽선에 딱 맞춤, 음수는 글자가 더 가까워지거나 일부 겹침, 양수는 더 넓게 띄웁니다.</p>
           <div class="segmented-field">
             <span class="field-label">문장과 겹침</span>
@@ -235,18 +244,18 @@
             <label>효과
               <select id="elementEffect">
                 <option value="none">없음</option>
-                <option value="shadow">진한 그림자</option>
+                <option value="shadow">딱 떨어지는 그림자</option>
                 <option value="hollow">빈 그림자</option>
                 <option value="glow">번짐</option>
-                <option value="extrude">입체</option>
+                <option value="extrude">단색 입체</option>
               </select>
             </label>
             <div><span class="field-label">효과 색</span><div id="elementEffectColorField" class="color-field-host"></div></div>
-            <label>효과 크기<input id="elementEffectSize" type="range" min="0" max="100" /></label>
+            <label>효과 크기<input id="elementEffectSize" type="range" min="0" max="100" step="1" /></label>
           </div>
           <div class="field-grid two">
             <label>요소 안 문구<input id="elementLabel" type="text" placeholder="예: 긴급입덕" /></label>
-            <label>문구 크기<input id="elementLabelSize" type="number" min="12" max="280" /></label>
+            <label>문구 크기<input id="elementLabelSize" type="number" min="12" max="280" step="1" /></label>
           </div>
           <div class="field-grid two">
             <div><span class="field-label">문구 색</span><div id="elementLabelColorField" class="color-field-host"></div></div>
@@ -277,13 +286,8 @@
               <button type="button" data-value="portrait">세로</button>
             </div>
           </div>
-          <label>재단여백
-            <select id="bleedMm">
-              <option value="0">없음</option>
-              <option value="3">3 mm</option>
-              <option value="5">5 mm</option>
-              <option value="10">10 mm</option>
-            </select>
+          <label>재단여백 <b id="bleedMmValue">없음</b>
+            <input id="bleedMm" type="range" min="0" max="20" step="1" value="0" />
           </label>
           <label>배경 방식
             <select id="backgroundMode">
@@ -297,7 +301,7 @@
         <div class="field-grid three">
           <div><span class="field-label">배경 1</span><div id="backgroundColor1Field" class="color-field-host"></div></div>
           <div><span class="field-label">배경 2</span><div id="backgroundColor2Field" class="color-field-host"></div></div>
-          <label>그라데이션 각도 <b id="gradientAngleValue">0°</b><input id="gradientAngle" type="range" min="0" max="360" /></label>
+          <label>그라데이션 각도 <b id="gradientAngleValue">0°</b><input id="gradientAngle" type="range" min="0" max="360" step="1" /></label>
         </div>
         <div class="field-grid three">
           <label>패턴
@@ -311,7 +315,7 @@
             </select>
           </label>
           <div><span class="field-label">패턴 색</span><div id="patternColorField" class="color-field-host"></div></div>
-          <label>패턴 크기 <b id="patternScaleValue">48</b><input id="patternScale" type="range" min="12" max="180" /></label>
+          <label>패턴 크기 <b id="patternScaleValue">48</b><input id="patternScale" type="range" min="12" max="180" step="1" /></label>
         </div>
         <div class="divider"></div>
         <div class="segmented-field border-toggle-field">
@@ -323,8 +327,8 @@
         </div>
         <div class="field-grid three">
           <div><span class="field-label">테두리 색</span><div id="posterBorderColorField" class="color-field-host"></div></div>
-          <label>테두리 두께 <b id="posterBorderWidthValue">12</b><input id="posterBorderWidth" type="range" min="0" max="100" /></label>
-          <label>모서리 둥글기 <b id="posterBorderRadiusValue">0</b><input id="posterBorderRadius" type="range" min="0" max="240" /></label>
+          <label>테두리 두께 <b id="posterBorderWidthValue">12</b><input id="posterBorderWidth" type="range" min="0" max="100" step="1" /></label>
+          <label>모서리 둥글기 <b id="posterBorderRadiusValue">0</b><input id="posterBorderRadius" type="range" min="0" max="240" step="1" /></label>
         </div>
       </div>
 
@@ -335,7 +339,7 @@
             <p>선택 표시와 영역 안내선은 제외되며, 재단여백을 포함한 전체 캔버스로 저장됩니다.</p>
           </div>
         </div>
-        <label>JPG 품질 <b id="jpgQualityValue">92%</b><input id="jpgQuality" type="range" min="50" max="100" value="92" /></label>
+        <label>JPG 품질 <b id="jpgQualityValue">92%</b><input id="jpgQuality" type="range" min="50" max="100" step="1" value="92" /></label>
         <div class="field-grid two export-buttons">
           <button id="exportPngBtn2" class="button">PNG 저장</button>
           <button id="exportJpgBtn2" class="button button-accent">JPG 저장</button>

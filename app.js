@@ -399,6 +399,17 @@
   let unicodeTarget = null;
   const imageCache = new Map();
   const colorFields = [];
+  const staticNumericControllers = new Map();
+  const itemNumericDefaults = new Map();
+  const textNumericDefaults = new Map();
+  const globalNumericDefaults = {
+    bleedMm: 0,
+    gradientAngle: 0,
+    patternScale: 48,
+    posterBorderWidth: 12,
+    posterBorderRadius: 0,
+    jpgQuality: 92
+  };
 
   const HISTORY_LIMIT = 80;
   let historyPast = [];
@@ -407,9 +418,15 @@
   let historyTimer = null;
   let historyReady = false;
   let historyRestoring = false;
+  let historyInteractionDepth = 0;
 
   function snapshotState() {
-    return JSON.stringify(state);
+    const documentState = deepClone(state);
+    delete documentState.selectedTextId;
+    delete documentState.selectedRegionId;
+    delete documentState.selectedElementId;
+    delete documentState.showRegions;
+    return JSON.stringify(documentState);
   }
 
   function updateHistoryButtons() {
@@ -449,8 +466,18 @@
     updateHistoryButtons();
   }
 
+  function beginHistoryInteraction() {
+    if (historyInteractionDepth === 0) clearTimeout(historyTimer);
+    historyInteractionDepth += 1;
+  }
+
+  function endHistoryInteraction({ commit = true } = {}) {
+    historyInteractionDepth = Math.max(0, historyInteractionDepth - 1);
+    if (historyInteractionDepth === 0 && commit) commitHistorySnapshot();
+  }
+
   function markHistoryDirty(immediate = false) {
-    if (!historyReady || historyRestoring) return;
+    if (!historyReady || historyRestoring || historyInteractionDepth > 0) return;
     clearTimeout(historyTimer);
     if (immediate) commitHistorySnapshot();
     else historyTimer = setTimeout(commitHistorySnapshot, 520);
@@ -459,7 +486,16 @@
   function restoreHistorySnapshot(snapshot) {
     historyRestoring = true;
     try {
-      state = JSON.parse(snapshot);
+      const uiState = {
+        selectedTextId: state.selectedTextId,
+        selectedRegionId: state.selectedRegionId,
+        selectedElementId: state.selectedElementId,
+        showRegions: state.showRegions
+      };
+      state = { ...JSON.parse(snapshot), ...uiState };
+      if (!state.texts.some((item) => item.id === state.selectedTextId)) state.selectedTextId = state.texts[0]?.id || null;
+      if (!state.regions.some((item) => item.id === state.selectedRegionId)) state.selectedRegionId = null;
+      if (!state.elements.some((item) => item.id === state.selectedElementId)) state.selectedElementId = null;
       layoutFragments = [];
       regionHitBoxes = [];
       elementHitBoxes = [];
@@ -468,6 +504,7 @@
       pendingLongPress = null;
       if (autoArrangeTimer) clearTimeout(autoArrangeTimer);
       refreshAllUI();
+      syncStaticNumericFields();
       const show = $("showRegions");
       if (show) show.checked = Boolean(state.showRegions);
       queueRender();
@@ -1058,6 +1095,10 @@
     state.posterBorder = spec.border
       ? { enabled:Boolean(spec.border.enabled), color:spec.border.color || state.palette.secondary || "#111111", width:Number(spec.border.width) || 0, radius:Number(spec.border.radius) || 0 }
       : { enabled:false, color:state.palette.secondary || "#111111", width:0, radius:0 };
+    globalNumericDefaults.gradientAngle = Number(state.background.angle) || 0;
+    globalNumericDefaults.patternScale = Number(state.background.scale) || 48;
+    globalNumericDefaults.posterBorderWidth = Number(state.posterBorder.width) || 0;
+    globalNumericDefaults.posterBorderRadius = Number(state.posterBorder.radius) || 0;
     state.selectedRegionId = null;
     state.selectedElementId = null;
 
@@ -1219,43 +1260,77 @@
     return label;
   }
 
-  function rangeControl(labelText, value, min, max, step, formatter, onInput) {
-    const label = document.createElement("label");
-    const b = document.createElement("b");
-    b.textContent = formatter(value);
-    label.append(document.createTextNode(`${labelText} `), b);
-    const input = document.createElement("input");
-    input.type = "range"; input.min = min; input.max = max; input.step = step; input.value = value;
-    input.addEventListener("input", () => { b.textContent = formatter(Number(input.value)); onInput(Number(input.value)); queueRender(); });
-    input.addEventListener("pointerup", () => markHistoryDirty(true));
-    input.addEventListener("change", () => markHistoryDirty(true));
-    label.append(input);
-    return label;
+  function isNumericDraftIntermediate(text) {
+    const value = String(text ?? "").trim().replace(",", ".");
+    return ["", "-", "+", ".", "-.", "+."].includes(value);
   }
 
-  function numericStepperControl(labelText, value, min, max, step, formatter, onInput) {
+  function parseNumericDraft(text) {
+    const value = String(text ?? "").trim().replace(",", ".");
+    if (isNumericDraftIntermediate(value)) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function numericPrecision(step) {
+    const text = String(step);
+    if (text.includes("e-")) return Number(text.split("e-")[1]) || 0;
+    return (text.split(".")[1] || "").length;
+  }
+
+  function normalizeNumericValue(value, min, max, step, fallback = min) {
+    const parsed = Number(value);
+    const safe = Number.isFinite(parsed) ? parsed : Number(fallback);
+    const clamped = clamp(safe, min, max);
+    const steps = Math.round((clamped - min) / step);
+    const normalized = min + steps * step;
+    return Number(normalized.toFixed(Math.min(8, numericPrecision(step))));
+  }
+
+  function updateNumericRangeVisual(range) {
+    const min = Number(range.min || 0);
+    const max = Number(range.max || 100);
+    const value = Number(range.value || min);
+    const ratio = max === min ? 0 : clamp((value - min) / (max - min), 0, 1);
+    range.style.setProperty("--numeric-progress", `${ratio * 100}%`);
+  }
+
+  function numericFieldControl(labelText, value, min, max, step, formatter, onInput, options = {}) {
     const wrap = document.createElement("div");
-    wrap.className = "numeric-stepper";
+    wrap.className = "numeric-field numeric-stepper";
     const head = document.createElement("div");
-    head.className = "numeric-stepper-head";
+    head.className = "numeric-field-head numeric-stepper-head";
     const title = document.createElement("span");
     title.textContent = labelText;
+    const headRight = document.createElement("span");
+    headRight.className = "numeric-field-head-right";
     const readout = document.createElement("b");
-    head.append(title, readout);
+    const reset = document.createElement("button");
+    reset.type = "button";
+    reset.className = "numeric-reset-button";
+    reset.textContent = "↺ 복귀";
+    reset.title = `${labelText} 원상복귀`;
+    reset.setAttribute("aria-label", `${labelText} 원상복귀`);
+    headRight.append(readout, reset);
+    head.append(title, headRight);
 
     const body = document.createElement("div");
-    body.className = "numeric-stepper-body";
+    body.className = "numeric-control-row numeric-stepper-body";
     const minus = document.createElement("button");
     minus.type = "button";
     minus.className = "step-button";
     minus.textContent = "−";
     minus.title = `${labelText} 줄이기`;
     const number = document.createElement("input");
-    number.type = "number";
-    number.min = min;
-    number.max = max;
-    number.step = step;
+    number.type = "text";
     number.inputMode = "decimal";
+    number.autocomplete = "off";
+    number.spellcheck = false;
+    number.className = "numeric-direct-input";
+    number.dataset.min = String(min);
+    number.dataset.max = String(max);
+    number.dataset.step = String(step);
+    number.setAttribute("aria-label", `${labelText} 직접 입력`);
     const plus = document.createElement("button");
     plus.type = "button";
     plus.className = "step-button";
@@ -1265,83 +1340,410 @@
 
     const range = document.createElement("input");
     range.type = "range";
-    range.min = min;
-    range.max = max;
-    range.step = step;
+    range.min = String(min);
+    range.max = String(max);
+    range.step = String(step);
+    range.className = "numeric-range-input";
+    range.setAttribute("aria-label", `${labelText} 슬라이더`);
 
-    const normalize = (next) => {
-      const numeric = Number(next);
-      const fallback = Number(value) || min;
-      const clamped = clamp(Number.isFinite(numeric) ? numeric : fallback, min, max);
-      const steps = Math.round((clamped - min) / step);
-      const fixed = min + steps * step;
-      return step < 1 ? Number(fixed.toFixed(2)) : Math.round(fixed);
-    };
-    let committed = normalize(value);
+    const defaultResolver = typeof options.defaultValue === "function"
+      ? options.defaultValue
+      : () => options.defaultValue ?? value;
+    let committed = normalizeNumericValue(value, min, max, step, value);
     let editingStart = committed;
-    const syncDisplay = (next) => {
-      committed = normalize(next);
-      number.value = String(committed);
+    let numberEditing = false;
+    let numberCancelled = false;
+    let rangeInteraction = false;
+    let keyboardInteraction = false;
+
+    const currentDefault = () => normalizeNumericValue(defaultResolver(), min, max, step, value);
+    const updateReset = () => {
+      const defaultValue = currentDefault();
+      reset.disabled = Math.abs(committed - defaultValue) < Math.max(1e-8, step / 1000);
+      reset.title = `${labelText} 처음 값 ${formatter(defaultValue)}로 원상복귀`;
+    };
+    const syncDisplay = (next, { preserveDraft = false } = {}) => {
+      committed = normalizeNumericValue(next, min, max, step, committed);
+      if (!preserveDraft) number.value = String(committed);
       range.value = String(committed);
+      updateNumericRangeVisual(range);
       readout.textContent = formatter(committed);
+      updateReset();
       return committed;
     };
-    const preview = (next) => {
-      const fixed = normalize(next);
-      range.value = String(fixed);
-      readout.textContent = formatter(fixed);
+    const preview = (next, { preserveDraft = false } = {}) => {
+      const fixed = syncDisplay(next, { preserveDraft });
       onInput(fixed);
       queueRender();
       return fixed;
     };
+    const commitAtomic = (next) => {
+      preview(next);
+      markHistoryDirty(true);
+    };
     syncDisplay(committed);
 
-    minus.addEventListener("click", () => {
-      const fixed = syncDisplay(committed - step);
-      onInput(fixed);
-      queueRender();
-      markHistoryDirty(true);
+    minus.addEventListener("click", () => commitAtomic(committed - step));
+    plus.addEventListener("click", () => commitAtomic(committed + step));
+    reset.addEventListener("click", () => commitAtomic(currentDefault()));
+
+    number.addEventListener("focus", () => {
+      numberEditing = true;
+      numberCancelled = false;
+      editingStart = committed;
+      beginHistoryInteraction();
+      number.select();
     });
-    plus.addEventListener("click", () => {
-      const fixed = syncDisplay(committed + step);
-      onInput(fixed);
-      queueRender();
-      markHistoryDirty(true);
-    });
-    number.addEventListener("focus", () => { editingStart = committed; });
     number.addEventListener("input", () => {
-      const raw = number.value.trim();
-      if (raw === "" || raw === "-" || raw === "." || raw === "-.") return;
-      if (!Number.isFinite(Number(raw))) return;
-      preview(Number(raw));
+      const parsed = parseNumericDraft(number.value);
+      number.classList.toggle("is-draft-invalid", parsed === null && !isNumericDraftIntermediate(number.value));
+      if (parsed === null) return;
+      preview(parsed, { preserveDraft: true });
     });
-    number.addEventListener("change", () => {
-      const raw = number.value.trim();
-      const fixed = syncDisplay(raw === "" ? committed : Number(raw));
-      onInput(fixed);
-      queueRender();
-      markHistoryDirty(true);
+    number.addEventListener("blur", () => {
+      if (!numberEditing) return;
+      const parsed = parseNumericDraft(number.value);
+      if (numberCancelled) {
+        syncDisplay(editingStart);
+        endHistoryInteraction({ commit: false });
+      } else {
+        preview(parsed === null ? committed : parsed);
+        endHistoryInteraction({ commit: true });
+      }
+      numberEditing = false;
+      numberCancelled = false;
+      number.classList.remove("is-draft-invalid");
     });
     number.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") { event.preventDefault(); number.blur(); }
-      if (event.key === "Escape") {
+      if (event.key === "Enter") {
         event.preventDefault();
-        const fixed = syncDisplay(editingStart);
-        onInput(fixed);
-        queueRender();
+        number.blur();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        numberCancelled = true;
+        preview(editingStart);
         number.blur();
       }
     });
-    range.addEventListener("input", () => {
-      const fixed = syncDisplay(Number(range.value));
-      onInput(fixed);
-      queueRender();
+
+    range.addEventListener("pointerdown", () => {
+      if (rangeInteraction) return;
+      rangeInteraction = true;
+      beginHistoryInteraction();
     });
-    range.addEventListener("pointerup", () => markHistoryDirty(true));
-    range.addEventListener("change", () => markHistoryDirty(true));
+    range.addEventListener("input", () => preview(Number(range.value)));
+    const finishRange = () => {
+      if (!rangeInteraction) return;
+      rangeInteraction = false;
+      endHistoryInteraction({ commit: true });
+    };
+    range.addEventListener("pointerup", finishRange);
+    range.addEventListener("pointercancel", finishRange);
+    range.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(event.key)) return;
+      if (!keyboardInteraction) {
+        keyboardInteraction = true;
+        beginHistoryInteraction();
+      }
+    });
+    range.addEventListener("keyup", () => {
+      if (!keyboardInteraction) return;
+      keyboardInteraction = false;
+      endHistoryInteraction({ commit: true });
+    });
+    range.addEventListener("blur", () => {
+      if (!keyboardInteraction) return;
+      keyboardInteraction = false;
+      endHistoryInteraction({ commit: true });
+    });
 
     wrap.append(head, body, range);
     return wrap;
+  }
+
+  function rangeControl(labelText, value, min, max, step, formatter, onInput, options = {}) {
+    return numericFieldControl(labelText, value, min, max, step, formatter, onInput, options);
+  }
+
+  function numericStepperControl(labelText, value, min, max, step, formatter, onInput, options = {}) {
+    return numericFieldControl(labelText, value, min, max, step, formatter, onInput, options);
+  }
+
+  function ensureItemNumericDefaults(kind, item) {
+    if (!item) return null;
+    const key = `${kind}:${item.id}`;
+    if (itemNumericDefaults.has(key)) return itemNumericDefaults.get(key);
+    const values = kind === "region"
+      ? {
+          x: Number(item.x) || 0,
+          y: Number(item.y) || 0,
+          w: Number(item.w) || 20,
+          h: Number(item.h) || 20,
+          radius: Number(item.radius) || 0,
+          padding: Number(item.padding) || 0,
+          strokeWidth: Number(item.strokeWidth) || 0,
+          rotation: Number(item.rotation) || 0,
+          effectSize: Number(item.effectSize) || 0
+        }
+      : {
+          x: Number(item.x) || 0,
+          y: Number(item.y) || 0,
+          w: Number(item.w) || 20,
+          h: Number(item.h) || 20,
+          strokeWidth: Number(item.strokeWidth) || 0,
+          radius: Number(item.radius) || 0,
+          rotation: Number(item.rotation) || 0,
+          flowMargin: Number(item.flowMargin) || 0,
+          effectSize: Number(item.effectSize) || 0,
+          labelSize: Number(item.labelSize) || 12,
+          bandPosition: Math.round(clamp(Number.isFinite(Number(item.bandPosition)) ? Number(item.bandPosition) : .5, 0, 1) * 100)
+        };
+    itemNumericDefaults.set(key, values);
+    return values;
+  }
+
+  function itemNumericDefault(kind, prop, fallback) {
+    const item = kind === "region" ? selectedRegion() : selectedElement();
+    return ensureItemNumericDefaults(kind, item)?.[prop] ?? fallback;
+  }
+
+  function captureTextNumericDefaults(text, force = false) {
+    if (!text || (!force && textNumericDefaults.has(text.id))) return;
+    textNumericDefaults.set(text.id, {
+      fontSize: Number(text.fontSize) || 54,
+      lineHeight: Number(text.lineHeight) || 1.08,
+      scaleX: Number(text.scaleX) || 1,
+      letterSpacing: Number(text.letterSpacing) || 0,
+      prefixGap: Number(text.prefixGap) || 0,
+      outlineWidth: Number(text.outlineWidth) || 0,
+      gap: Number(text.gap) || 0
+    });
+  }
+
+  function textNumericDefault(text, prop, fallback) {
+    return textNumericDefaults.get(text.id)?.[prop] ?? fallback;
+  }
+
+  const STATIC_NUMERIC_SPECS = {
+    bleedMm: { min: 0, max: 20, step: 1, reset: () => globalNumericDefaults.bleedMm },
+    regionX: { min: -1600, max: 3200, step: 1, reset: () => itemNumericDefault("region", "x", 0) },
+    regionY: { min: -1600, max: 3200, step: 1, reset: () => itemNumericDefault("region", "y", 0) },
+    regionW: { min: 20, max: 3200, step: 1, reset: () => itemNumericDefault("region", "w", 720) },
+    regionH: { min: 20, max: 3200, step: 1, reset: () => itemNumericDefault("region", "h", 320) },
+    regionRadius: { min: 0, max: 240, step: 1, reset: () => itemNumericDefault("region", "radius", 0) },
+    regionPadding: { min: 0, max: 180, step: 1, reset: () => itemNumericDefault("region", "padding", 24) },
+    regionStrokeWidth: { min: 0, max: 80, step: 1, reset: () => itemNumericDefault("region", "strokeWidth", 0) },
+    regionRotation: { min: -180, max: 180, step: 1, reset: () => itemNumericDefault("region", "rotation", 0) },
+    regionEffectSize: { min: 0, max: 100, step: 1, reset: () => itemNumericDefault("region", "effectSize", 18) },
+    elementX: { min: -1600, max: 3200, step: 1, reset: () => itemNumericDefault("element", "x", 0) },
+    elementY: { min: -1600, max: 3200, step: 1, reset: () => itemNumericDefault("element", "y", 0) },
+    elementW: { min: 20, max: 3200, step: 1, reset: () => itemNumericDefault("element", "w", 360) },
+    elementH: { min: 20, max: 3200, step: 1, reset: () => itemNumericDefault("element", "h", 240) },
+    bandPosition: { min: 0, max: 100, step: 1, reset: () => itemNumericDefault("element", "bandPosition", 50) },
+    elementStrokeWidth: { min: 0, max: 80, step: 1, reset: () => itemNumericDefault("element", "strokeWidth", 0) },
+    elementRadius: { min: 0, max: 240, step: 1, reset: () => itemNumericDefault("element", "radius", 0) },
+    elementRotation: { min: -180, max: 180, step: 1, reset: () => itemNumericDefault("element", "rotation", 0) },
+    flowMargin: { min: -160, max: 240, step: 1, reset: () => itemNumericDefault("element", "flowMargin", 0) },
+    elementEffectSize: { min: 0, max: 100, step: 1, reset: () => itemNumericDefault("element", "effectSize", 20) },
+    elementLabelSize: { min: 12, max: 280, step: 1, reset: () => itemNumericDefault("element", "labelSize", 72) },
+    gradientAngle: { min: 0, max: 360, step: 1, reset: () => globalNumericDefaults.gradientAngle },
+    patternScale: { min: 12, max: 180, step: 1, reset: () => globalNumericDefaults.patternScale },
+    posterBorderWidth: { min: 0, max: 100, step: 1, reset: () => globalNumericDefaults.posterBorderWidth },
+    posterBorderRadius: { min: 0, max: 240, step: 1, reset: () => globalNumericDefaults.posterBorderRadius },
+    jpgQuality: { min: 50, max: 100, step: 1, reset: () => globalNumericDefaults.jpgQuality }
+  };
+
+  function enhanceStaticNumericField(bridge) {
+    if (!bridge?.id || bridge.dataset.numericEnhanced === "true") return;
+    const sourceMin = Number(bridge.min);
+    const sourceMax = Number(bridge.max);
+    const sourceStep = Number(bridge.step);
+    const spec = STATIC_NUMERIC_SPECS[bridge.id] || {
+      min: Number.isFinite(sourceMin) ? sourceMin : 0,
+      max: Number.isFinite(sourceMax) ? sourceMax : 100,
+      step: Number.isFinite(sourceStep) && sourceStep > 0 ? sourceStep : 1,
+      reset: () => Number(bridge.defaultValue || bridge.value || 0)
+    };
+    const min = Number.isFinite(spec.min) ? spec.min : 0;
+    const max = Number.isFinite(spec.max) ? spec.max : 100;
+    const step = Number.isFinite(spec.step) && spec.step > 0 ? spec.step : 1;
+    bridge.min = String(min);
+    bridge.max = String(max);
+    bridge.step = String(step);
+    bridge.dataset.numericEnhanced = "true";
+    bridge.classList.add("numeric-bridge-input");
+    bridge.tabIndex = -1;
+    bridge.setAttribute("aria-hidden", "true");
+
+    const shell = document.createElement("div");
+    shell.className = "static-numeric-field";
+    const row = document.createElement("div");
+    row.className = "numeric-control-row static-numeric-row";
+    const minus = document.createElement("button");
+    minus.type = "button";
+    minus.className = "step-button";
+    minus.textContent = "−";
+    minus.setAttribute("aria-label", "값 줄이기");
+    const number = document.createElement("input");
+    number.type = "text";
+    number.inputMode = "decimal";
+    number.autocomplete = "off";
+    number.spellcheck = false;
+    number.className = "numeric-direct-input";
+    number.dataset.min = String(min);
+    number.dataset.max = String(max);
+    number.dataset.step = String(step);
+    number.setAttribute("aria-label", "수치 직접 입력");
+    const plus = document.createElement("button");
+    plus.type = "button";
+    plus.className = "step-button";
+    plus.textContent = "+";
+    plus.setAttribute("aria-label", "값 늘리기");
+    const reset = document.createElement("button");
+    reset.type = "button";
+    reset.className = "numeric-reset-button numeric-reset-compact";
+    reset.textContent = "↺ 복귀";
+    reset.setAttribute("aria-label", "이 항목을 원상복귀");
+    row.append(minus, number, plus, reset);
+
+    const range = document.createElement("input");
+    range.type = "range";
+    range.min = String(min);
+    range.max = String(max);
+    range.step = String(step);
+    range.className = "numeric-range-input";
+    range.setAttribute("aria-label", "수치 슬라이더");
+    shell.append(row, range);
+    bridge.insertAdjacentElement("afterend", shell);
+
+    let committed = normalizeNumericValue(bridge.value, min, max, step, spec.reset());
+    let editing = false;
+    let editingStart = committed;
+    let cancelled = false;
+    let rangeInteraction = false;
+    let keyboardInteraction = false;
+
+    const currentDefault = () => normalizeNumericValue(spec.reset(), min, max, step, committed);
+    const isContextDisabled = () => bridge.disabled || Boolean(bridge.closest(".editor-card.is-disabled"));
+    const updateReset = () => {
+      const defaultValue = currentDefault();
+      reset.disabled = isContextDisabled() || Math.abs(committed - defaultValue) < Math.max(1e-8, step / 1000);
+      reset.title = `처음 값 ${defaultValue}로 원상복귀`;
+    };
+    const sync = ({ preserveDraft = false } = {}) => {
+      committed = normalizeNumericValue(bridge.value, min, max, step, committed);
+      if (!preserveDraft && !editing) number.value = String(committed);
+      range.value = String(committed);
+      updateNumericRangeVisual(range);
+      const disabled = isContextDisabled();
+      number.disabled = disabled;
+      range.disabled = disabled;
+      minus.disabled = disabled;
+      plus.disabled = disabled;
+      updateReset();
+    };
+    const emitBridge = (next, { commit = false, preserveDraft = false } = {}) => {
+      committed = normalizeNumericValue(next, min, max, step, committed);
+      bridge.value = String(committed);
+      if (!preserveDraft) number.value = String(committed);
+      range.value = String(committed);
+      updateNumericRangeVisual(range);
+      bridge.dispatchEvent(new Event("input", { bubbles: true }));
+      if (commit) bridge.dispatchEvent(new Event("change", { bubbles: true }));
+      updateReset();
+      if (commit) markHistoryDirty(true);
+      return committed;
+    };
+
+    minus.addEventListener("click", () => emitBridge(committed - step, { commit: true }));
+    plus.addEventListener("click", () => emitBridge(committed + step, { commit: true }));
+    reset.addEventListener("click", () => emitBridge(currentDefault(), { commit: true }));
+
+    number.addEventListener("focus", () => {
+      editing = true;
+      cancelled = false;
+      editingStart = committed;
+      beginHistoryInteraction();
+      number.select();
+    });
+    number.addEventListener("input", () => {
+      const parsed = parseNumericDraft(number.value);
+      number.classList.toggle("is-draft-invalid", parsed === null && !isNumericDraftIntermediate(number.value));
+      if (parsed === null) return;
+      emitBridge(parsed, { preserveDraft: true });
+    });
+    number.addEventListener("blur", () => {
+      if (!editing) return;
+      const parsed = parseNumericDraft(number.value);
+      if (cancelled) {
+        emitBridge(editingStart);
+        endHistoryInteraction({ commit: false });
+      } else {
+        emitBridge(parsed === null ? committed : parsed, { commit: true });
+        endHistoryInteraction({ commit: true });
+      }
+      editing = false;
+      cancelled = false;
+      number.classList.remove("is-draft-invalid");
+      sync();
+    });
+    number.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        number.blur();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        cancelled = true;
+        emitBridge(editingStart);
+        number.blur();
+      }
+    });
+
+    range.addEventListener("pointerdown", () => {
+      if (rangeInteraction) return;
+      rangeInteraction = true;
+      beginHistoryInteraction();
+    });
+    range.addEventListener("input", () => emitBridge(Number(range.value)));
+    const finishRange = () => {
+      if (!rangeInteraction) return;
+      rangeInteraction = false;
+      bridge.dispatchEvent(new Event("change", { bubbles: true }));
+      endHistoryInteraction({ commit: true });
+    };
+    range.addEventListener("pointerup", finishRange);
+    range.addEventListener("pointercancel", finishRange);
+    range.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(event.key)) return;
+      if (!keyboardInteraction) {
+        keyboardInteraction = true;
+        beginHistoryInteraction();
+      }
+    });
+    range.addEventListener("keyup", () => {
+      if (!keyboardInteraction) return;
+      keyboardInteraction = false;
+      bridge.dispatchEvent(new Event("change", { bubbles: true }));
+      endHistoryInteraction({ commit: true });
+    });
+    range.addEventListener("blur", () => {
+      if (!keyboardInteraction) return;
+      keyboardInteraction = false;
+      endHistoryInteraction({ commit: true });
+    });
+
+    const controller = { bridge, shell, number, range, reset, sync };
+    staticNumericControllers.set(bridge.id, controller);
+    sync();
+  }
+
+  function enhanceStaticNumericFields() {
+    document.querySelectorAll('input[type="number"], input[type="range"]').forEach(enhanceStaticNumericField);
+  }
+
+  function syncStaticNumericFields(ids = null) {
+    const targets = ids || [...staticNumericControllers.keys()];
+    targets.forEach((id) => staticNumericControllers.get(id)?.sync());
   }
 
   function makeSegmentedControl(options, value, onChange, className = "") {
@@ -1395,7 +1797,7 @@
   }
 
   function effectLabel(value) {
-    return ({ none: "효과 없음", outline: "외곽선", shadow: "그림자", hollow: "빈 그림자", extrude: "입체" })[value] || "효과 없음";
+    return ({ none: "효과 없음", outline: "외곽선", shadow: "딱 떨어지는 그림자", hollow: "빈 그림자", extrude: "단색 입체" })[value] || "효과 없음";
   }
 
   function renderTextList() {
@@ -1432,7 +1834,9 @@
         scheduleAutoArrange({ reassign: !text.regionLocked, refreshControls: false });
         queueRender();
       });
-      textarea.addEventListener("blur", () => {
+      textarea.addEventListener("blur", (event) => {
+        const nextTarget = event.relatedTarget;
+        if (textarea.dataset.keepOwnControls === "true" || (nextTarget instanceof Node && card.contains(nextTarget))) return;
         if (text.styleMode !== "manual") {
           autoArrangeTexts({ reassign: !text.regionLocked, forceStyle: false });
           renderTextList();
@@ -1468,6 +1872,14 @@
 
       const controls = document.createElement("div");
       controls.className = "inline-text-controls";
+      controls.addEventListener("pointerdown", () => {
+        if (autoArrangeTimer) {
+          clearTimeout(autoArrangeTimer);
+          autoArrangeTimer = null;
+        }
+        textarea.dataset.keepOwnControls = "true";
+        setTimeout(() => { delete textarea.dataset.keepOwnControls; }, 0);
+      }, true);
       const titleRow = document.createElement("div");
       titleRow.className = "text-style-heading";
       const title = document.createElement("p");
@@ -1476,6 +1888,7 @@
       const mode = makeSegmentedControl([["auto", "자동 맞춤"], ["manual", "직접 꾸미기"]], text.styleMode, (value) => {
         text.styleMode = value;
         if (value === "auto") {
+          textNumericDefaults.delete(text.id);
           autoStyleAssignedTexts({ force: false });
           toast("이 문장의 크기와 효과를 영역에 맞췄습니다.");
         }
@@ -1504,6 +1917,7 @@
       controls.append(settingsDetails);
 
       const manual = (action) => {
+        if (text.styleMode !== "manual") captureTextNumericDefaults(text, true);
         markTextManual(text);
         action();
         card.dataset.auto = "false";
@@ -1516,7 +1930,9 @@
       const row1 = document.createElement("div"); row1.className = "field-grid three";
       const fontSelect = makeSelect([["dotum", "KoPub 돋움"], ["batang", "KoPub 바탕"], ["gulim", "굴림체"]], text.fontFamily);
       fontSelect.addEventListener("change", () => manual(() => { text.fontFamily = fontSelect.value; }));
-      const fontSize = numericStepperControl("크기", text.fontSize, 12, 300, 1, (value) => `${Math.round(value)}px`, (value) => manual(() => { text.fontSize = clamp(Number(value), 12, 300); }));
+      const fontSize = numericStepperControl("크기", text.fontSize, 12, 300, 1, (value) => `${Math.round(value)}px`, (value) => manual(() => { text.fontSize = clamp(Number(value), 12, 300); }), {
+        defaultValue: text.fontSize
+      });
       const regionSelect = document.createElement("select");
       accepting.forEach((region) => {
         const option = document.createElement("option");
@@ -1544,7 +1960,9 @@
       align.addEventListener("change", () => manual(() => { text.align = align.value; }));
       const unicode = makeSelect(UNICODE_PRESETS, text.unicodeStyle);
       unicode.addEventListener("change", () => manual(() => { text.unicodeStyle = unicode.value; renderTextList(); }));
-      const lineHeight = rangeControl("줄 간격", text.lineHeight, .8, 1.8, .02, (value) => `${value.toFixed(2)}배`, (value) => manual(() => { text.lineHeight = value; }));
+      const lineHeight = rangeControl("줄 간격", text.lineHeight, .8, 1.8, .02, (value) => `${value.toFixed(2)}배`, (value) => manual(() => { text.lineHeight = value; }), {
+        defaultValue: text.lineHeight
+      });
       row2.append(labeledControl("정렬", align), labeledControl("유니코드 연출", unicode), lineHeight);
       settingsBody.append(row2);
 
@@ -1584,20 +2002,28 @@
 
       const row3 = document.createElement("div"); row3.className = "field-grid three";
       row3.append(
-        rangeControl("글자 폭", text.scaleX * 100, 50, 180, 1, (value) => `${Math.round(value)}%`, (value) => manual(() => { text.scaleX = value / 100; })),
-        rangeControl("자간", text.letterSpacing, -12, 36, 1, (value) => String(value), (value) => manual(() => { text.letterSpacing = value; })),
-        rangeControl("줄 앞 간격", text.prefixGap, 0, 60, 1, (value) => String(value), (value) => manual(() => { text.prefixGap = value; }))
+        rangeControl("글자 폭", text.scaleX * 100, 50, 180, 1, (value) => `${Math.round(value)}%`, (value) => manual(() => { text.scaleX = value / 100; }), {
+          defaultValue: text.scaleX * 100
+        }),
+        rangeControl("자간", text.letterSpacing, -12, 36, 1, (value) => String(value), (value) => manual(() => { text.letterSpacing = value; }), {
+          defaultValue: text.letterSpacing
+        }),
+        rangeControl("줄 앞 간격", text.prefixGap, 0, 60, 1, (value) => String(value), (value) => manual(() => { text.prefixGap = value; }), {
+          defaultValue: text.prefixGap
+        })
       );
       settingsBody.append(row3);
 
       const row4 = document.createElement("div"); row4.className = "field-grid three";
-      const effect = makeSelect([["none", "없음"], ["outline", "외곽선"], ["shadow", "그림자"], ["hollow", "빈 그림자"], ["extrude", "입체"]], text.effect);
+      const effect = makeSelect([["none", "없음"], ["outline", "외곽선"], ["shadow", "딱 떨어지는 그림자"], ["hollow", "빈 그림자"], ["extrude", "단색 입체"]], text.effect);
       effect.addEventListener("change", () => manual(() => { text.effect = effect.value; }));
-      const outline = document.createElement("input"); outline.type = "number"; outline.min = 0; outline.max = 48; outline.value = text.outlineWidth;
-      outline.addEventListener("input", () => manual(() => { text.outlineWidth = Number(outline.value); }));
-      const gap = document.createElement("input"); gap.type = "number"; gap.min = 0; gap.max = 120; gap.value = text.gap;
-      gap.addEventListener("input", () => manual(() => { text.gap = Number(gap.value); }));
-      row4.append(labeledControl("효과", effect), labeledControl("효과 두께", outline), labeledControl("문장 아래 여백", gap));
+      const outline = numericFieldControl("효과 두께", text.outlineWidth, 0, 48, 1, (value) => `${Math.round(value)}px`, (value) => manual(() => { text.outlineWidth = value; }), {
+        defaultValue: text.outlineWidth
+      });
+      const gap = numericFieldControl("문장 아래 여백", text.gap, 0, 120, 1, (value) => `${Math.round(value)}px`, (value) => manual(() => { text.gap = value; }), {
+        defaultValue: text.gap
+      });
+      row4.append(labeledControl("효과", effect), outline, gap);
       settingsBody.append(row4);
 
       const row5 = document.createElement("div"); row5.className = "field-grid three";
@@ -1672,9 +2098,11 @@
       $("selectedRegionName").textContent = "선택된 영역 없음";
       $("selectedRegionBadge").textContent = "미리보기에서 선택";
       $("toggleRegionTransformBtn").textContent = "핸들 열기";
+      syncStaticNumericFields(["regionX", "regionY", "regionW", "regionH", "regionRadius", "regionPadding", "regionStrokeWidth", "regionRotation", "regionEffectSize"]);
       colorFields.forEach((field) => field.update());
       return;
     }
+    ensureItemNumericDefaults("region", region);
     const active = transformTarget?.kind === "region" && transformTarget.id === region.id;
     $("selectedRegionName").textContent = region.name;
     $("selectedRegionBadge").textContent = active ? "캔버스 조작 중" : (region.acceptText ? "문장 영역" : "장식 영역");
@@ -1688,6 +2116,7 @@
     $("regionRotation").value = region.rotation; $("regionRotationValue").textContent = `${round(region.rotation)}°`;
     syncSegmented("regionAcceptText", region.acceptText ? "yes" : "no");
     $("regionEffect").value = region.effect; $("regionEffectSize").value = region.effectSize;
+    syncStaticNumericFields(["regionX", "regionY", "regionW", "regionH", "regionRadius", "regionPadding", "regionStrokeWidth", "regionRotation", "regionEffectSize"]);
     colorFields.forEach((field) => field.update());
   }
 
@@ -1701,10 +2130,12 @@
       $("selectedElementBadge").textContent = "미리보기에서 선택";
       $("toggleElementTransformBtn").textContent = "핸들 열기";
       $("bandControls").classList.add("hidden");
+      syncStaticNumericFields(["elementX", "elementY", "elementW", "elementH", "bandPosition", "elementStrokeWidth", "elementRadius", "elementRotation", "flowMargin", "elementEffectSize", "elementLabelSize"]);
       colorFields.forEach((field) => field.update());
       return;
     }
     const labels = { rect:"사각형", band:"띠", circle:"원형", heart:"하트", burst:"뾰족 말풍선", image:"사진" };
+    ensureItemNumericDefaults("element", element);
     const active = transformTarget?.kind === "element" && transformTarget.id === element.id;
     const geometry = elementGeometry(element);
     $("selectedElementName").textContent = labels[element.type] || "요소";
@@ -1746,12 +2177,14 @@
       $("bandPosition").value = Math.round(clamp(Number(element.bandPosition) || .5, 0, 1) * 100);
       $("bandPositionValue").textContent = `${$("bandPosition").value}%`;
     }
+    syncStaticNumericFields(["elementX", "elementY", "elementW", "elementH", "bandPosition", "elementStrokeWidth", "elementRadius", "elementRotation", "flowMargin", "elementEffectSize", "elementLabelSize"]);
     colorFields.forEach((field) => field.update());
   }
 
   function syncBackgroundControls() {
     syncSegmented("orientation", state.orientation);
     $("bleedMm").value = String(state.bleedMm);
+    if ($("bleedMmValue")) $("bleedMmValue").textContent = Number(state.bleedMm) > 0 ? `${Number(state.bleedMm)} mm` : "없음";
     $("backgroundMode").value = state.background.mode;
     $("gradientAngle").value = state.background.angle; $("gradientAngleValue").textContent = `${round(state.background.angle)}°`;
     $("patternType").value = state.background.pattern;
@@ -1760,6 +2193,7 @@
     $("posterBorderWidth").value = state.posterBorder.width; $("posterBorderWidthValue").textContent = round(state.posterBorder.width);
     $("posterBorderRadius").value = state.posterBorder.radius; $("posterBorderRadiusValue").textContent = round(state.posterBorder.radius);
     $("jpgQuality").value = Math.round(state.jpgQuality * 100); $("jpgQualityValue").textContent = `${Math.round(state.jpgQuality * 100)}%`;
+    syncStaticNumericFields(["gradientAngle", "patternScale", "posterBorderWidth", "posterBorderRadius", "jpgQuality"]);
   }
 
   function bindValue(id, getter, setter, event = "input", after = null) {
@@ -1788,6 +2222,7 @@
     $("autoArrangeBtn").addEventListener("click", () => {
       state.texts.forEach((text) => {
         text.styleMode = "auto";
+        textNumericDefaults.delete(text.id);
         text.regionLocked = false;
         text.manualX = null;
         text.manualY = null;
@@ -2033,7 +2468,12 @@
     });
 
     bindSegmented("orientation", (value) => changeOrientation(value));
-    $("bleedMm").addEventListener("change", () => { state.bleedMm = Number($("bleedMm").value); updateCanvasMeta(); queueRender(); });
+    $("bleedMm").addEventListener("input", () => {
+      state.bleedMm = Number($("bleedMm").value);
+      if ($("bleedMmValue")) $("bleedMmValue").textContent = state.bleedMm > 0 ? `${state.bleedMm} mm` : "없음";
+      updateCanvasMeta();
+      queueRender();
+    });
     bindValue("backgroundMode", () => "solid", (value) => state.background.mode = value, "change");
     bindValue("gradientAngle", () => 0, (value) => state.background.angle = value, "input", () => $("gradientAngleValue").textContent = `${$("gradientAngle").value}°`);
     bindValue("patternType", () => "dots", (value) => state.background.pattern = value, "change");
@@ -2046,6 +2486,8 @@
 
     $("resetBtn").addEventListener("click", () => {
       state = deepClone(initialState);
+      itemNumericDefaults.clear();
+      textNumericDefaults.clear();
       transformTarget = null;
       applyTemplate("label-market", { preserveTexts: false });
       initializeHistory();
@@ -2218,13 +2660,26 @@
     c.restore();
   }
 
+  function drawFlatShapeShadow(c, item) {
+    if (item.effect !== "shadow") return;
+    const offset = clamp(Number(item.effectSize) || 0, 0, 100) * .55;
+    const shadowColor = item.effectColor || "#111111";
+    c.save();
+    c.translate(offset, offset);
+    shapePath(c, item);
+    if (item.fillNone && item.type !== "image") {
+      c.strokeStyle = shadowColor;
+      c.lineWidth = Math.max(3, Number(item.strokeWidth) || Number(item.effectSize) * .28 || 3);
+      c.stroke();
+    } else {
+      c.fillStyle = shadowColor;
+      c.fill();
+    }
+    c.restore();
+  }
+
   function applyShapeEffect(c, item) {
-    if (item.effect === "shadow") {
-      c.shadowColor = item.effectColor || "#111111";
-      c.shadowBlur = Math.max(0, item.effectSize * .35);
-      c.shadowOffsetX = item.effectSize * .55;
-      c.shadowOffsetY = item.effectSize * .55;
-    } else if (item.effect === "glow") {
+    if (item.effect === "glow") {
       c.shadowColor = item.effectColor || "#ffffff";
       c.shadowBlur = item.effectSize;
       c.shadowOffsetX = 0;
@@ -2235,28 +2690,20 @@
   function drawShapeExtrusion(c, item) {
     if (item.effect !== "extrude") return;
     const depth = clamp(Number(item.effectSize) || 16, 3, 70);
-    const step = depth > 34 ? 2 : 1;
-    const base = item.effectColor || "#111111";
-    c.save();
-    c.shadowColor = "rgba(0,0,0,.42)";
-    c.shadowBlur = Math.max(4, depth * .42);
-    c.shadowOffsetX = depth * .74;
-    c.shadowOffsetY = depth * .78;
-    c.translate(depth * .62, depth * .62);
-    shapePath(c, item);
-    c.fillStyle = mix(base, "#000000", .30);
-    c.fill();
-    c.restore();
+    const step = 1;
+    const sideColor = item.effectColor || "#111111";
+
+    // Build a solid, flat-color extrusion only. No drop shadow, blur, or
+    // depth-dependent color mixing, so the side face stays crisp and uniform.
     for (let offset = depth; offset >= 1; offset -= step) {
-      const ratio = offset / depth;
       c.save();
       c.translate(offset * .58, offset * .58);
       shapePath(c, item);
-      c.fillStyle = mix(base, "#000000", .10 + ratio * .22);
+      c.fillStyle = sideColor;
       c.fill();
       if (!item.strokeNone && item.strokeWidth > 0) {
         shapePath(c, item);
-        c.strokeStyle = mix(base, "#000000", .32);
+        c.strokeStyle = sideColor;
         c.lineWidth = Math.max(1, item.strokeWidth * .45);
         c.stroke();
       }
@@ -2268,6 +2715,7 @@
     withItemTransform(c, region, () => {
       c.save();
       if (region.effect === "extrude") drawShapeExtrusion(c, region);
+      drawFlatShapeShadow(c, region);
       applyShapeEffect(c, region);
       if (region.shape === "line") {
         if (!region.fillNone) {
@@ -2311,6 +2759,7 @@
     withItemTransform(c, item, () => {
       c.save();
       if (item.effect === "extrude") drawShapeExtrusion(c, item);
+      drawFlatShapeShadow(c, item);
       applyShapeEffect(c, item);
       if (item.effect === "hollow") {
         c.save();
@@ -2646,26 +3095,15 @@
     const thickness=clamp(Number(text.outlineWidth)||0,0,48);
     if(effect==="extrude"){
       const depth=clamp(thickness||8,3,38);
-      c.save();
-      c.shadowColor="rgba(0,0,0,.48)";
-      c.shadowBlur=Math.max(3,depth*.65);
-      c.shadowOffsetX=depth*.84;
-      c.shadowOffsetY=depth*.9;
-      drawGlyphs(depth*.62,depth*.62,mix(text.effectColor||"#111111","#000000",.28));
-      c.restore();
-      const step=depth>24?2:1;
+      const sideColor=text.effectColor||"#111111";
+      const step=1;
+      // Flat-color 3D side face only: no shadow, blur, or gradient shading.
       for(let offset=depth;offset>=1;offset-=step){
-        const ratio=offset/depth;
-        drawGlyphs(offset*.58,offset*.58,mix(text.effectColor||"#111111","#000000",.08+ratio*.22));
+        drawGlyphs(offset*.58,offset*.58,sideColor);
       }
     }else if(effect==="shadow"){
-      c.save();
-      c.shadowColor=text.effectColor;
-      c.shadowBlur=Math.max(0,thickness*.9);
-      c.shadowOffsetX=thickness*1.4;
-      c.shadowOffsetY=thickness*1.4;
-      drawGlyphs();
-      c.restore();
+      const offset=thickness*1.4;
+      drawGlyphs(offset,offset,text.effectColor||"#111111");
     }else if(effect==="hollow"){
       drawGlyphs(thickness*1.35,thickness*1.35,text.effectColor,true,Math.max(2,thickness));
     }
@@ -2863,6 +3301,7 @@
     const geometry=transformGeometry(kind,id);
     if(!source||!geometry)return false;
     const center={x:geometry.x+geometry.w/2,y:geometry.y+geometry.h/2};
+    beginHistoryInteraction();
     dragState={
       type:"transform",kind,id,handle,start:point,
       orig:deepClone(source),geometry:{x:geometry.x,y:geometry.y,w:geometry.w,h:geometry.h,rotation:geometry.rotation||0},
@@ -2923,6 +3362,7 @@
       const text=state.texts.find((item)=>item.id===textHit.id);if(!text)return;
       transformTarget=null;
       state.selectedTextId=text.id;state.selectedElementId=null;state.selectedRegionId=null;
+      beginHistoryInteraction();
       dragState={type:"text",id:text.id,start:point,orig:{regionId:text.regionId,order:text.order,manualX:text.manualX,manualY:text.manualY,regionLocked:text.regionLocked},baseX:text.manualX??textHit.x,baseY:text.manualY??textHit.y,moved:false};
       canvas.setPointerCapture(event.pointerId);
       renderTextList();updateElementControls();updateRegionControls();queueRender();return;
@@ -3030,7 +3470,7 @@
       normalizeTextOrders();renderTextList();
     }
     try{canvas.releasePointerCapture(event.pointerId);}catch{}
-    dragState=null;renderRegionList();updateRegionControls();updateElementControls();queueRender();markHistoryDirty(true);
+    dragState=null;renderRegionList();updateRegionControls();updateElementControls();queueRender();endHistoryInteraction({commit:true});
   }
 
   canvas.addEventListener("pointerup",finishPointer);
@@ -3104,6 +3544,7 @@
     createColorField("posterBorderColorField",()=>state.posterBorder.color,(v)=>state.posterBorder.color=v,{allowNone:false});
   }
 
+  enhanceStaticNumericFields();
   bindControls();
   setupColorFields();
   applyTemplate("label-market",{preserveTexts:false});
