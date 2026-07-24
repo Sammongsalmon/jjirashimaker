@@ -12,10 +12,17 @@
   const round = (n) => Math.round(Number(n) || 0);
 
   const fontFamilies = {
-    pretendard: '"PretendardVariable", "Pretendard", "Malgun Gothic", sans-serif',
-    dotum: '"KoPubDotum", "Malgun Gothic", sans-serif',
-    batang: '"KoPubBatang", "Batang", serif',
-    gulim: '"Gulim", "Malgun Gothic", sans-serif'
+    pretendard: '"PretendardVariable", "Pretendard", sans-serif',
+    dotum: '"KoPubDotum", sans-serif',
+    batang: '"KoPubBatang", serif',
+    chosunSm: '"ChosunSm", serif',
+    chosunKm: '"ChosunKm", serif',
+    chosunKg: '"ChosunKg", sans-serif',
+    chosunSg: '"ChosunSg", sans-serif',
+    chosunBg: '"ChosunBg", sans-serif',
+    chosunGu: '"ChosunGu", sans-serif',
+    chosunLo: '"ChosunLo", sans-serif',
+    chosunGs: '"ChosunGs", serif'
   };
   const PX_PER_MM = 8;
   const EFFECT_TYPES = ["shadow", "hollow", "extrude", "outline"];
@@ -2326,7 +2333,7 @@
       };
 
       const row1 = document.createElement("div"); row1.className = "field-grid three";
-      const fontSelect = makeSelect([["dotum", "KoPub 돋움"], ["batang", "KoPub 바탕"], ["gulim", "굴림체"]], text.fontFamily);
+      const fontSelect = makeSelect([["pretendard","프리텐다드 Variable"],["dotum","KoPub 돋움"],["batang","KoPub 바탕"],["chosunSm","조선신명조"],["chosunKm","조선굵은명조"],["chosunKg","조선굵은고딕"],["chosunSg","조선가는고딕"],["chosunBg","조선견고딕"],["chosunGu","조선굴림체"],["chosunLo","조선로고체"],["chosunGs","조선궁서체"]], text.fontFamily);
       fontSelect.addEventListener("change", () => manual(() => { text.fontFamily = fontSelect.value; }));
       const fontSize = numericStepperControl("크기", text.fontSize, 12, 300, 1, (value) => `${Math.round(value)}px`, (value) => manual(() => { text.fontSize = clamp(Number(value), 12, 300); }), {
         defaultValue: () => textNumericDefault(text, "fontSize", ROLE_STYLE_DEFAULTS[text.role]?.fontSize ?? 54)
@@ -5430,7 +5437,7 @@
       const layoutGrid=document.createElement("div");layoutGrid.className="field-grid three text-control-grid";
       const regionSelect=document.createElement("select");accepting.forEach((region)=>{const option=document.createElement("option");option.value=region.id;option.textContent=region.name;option.selected=text.regionId===region.id;regionSelect.append(option);});regionSelect.disabled=!accepting.length;
       regionSelect.addEventListener("change",()=>{text.regionId=regionSelect.value;text.regionLocked=true;text.manualX=null;text.manualY=null;normalizeTextOrders();autoStyleAssignedTexts({force:false});queueRender();});
-      const fontSelect=makeSelect([["pretendard","프리텐다드 Variable"],["dotum","KoPub 돋움"],["batang","KoPub 바탕"],["gulim","굴림체"]],text.fontFamily);
+      const fontSelect=makeSelect([["pretendard","프리텐다드 Variable"],["dotum","KoPub 돋움"],["batang","KoPub 바탕"],["chosunSm","조선신명조"],["chosunKm","조선굵은명조"],["chosunKg","조선굵은고딕"],["chosunSg","조선가는고딕"],["chosunBg","조선견고딕"],["chosunGu","조선굴림체"],["chosunLo","조선로고체"],["chosunGs","조선궁서체"]],text.fontFamily);
       fontSelect.addEventListener("change",()=>manual(()=>{text.fontFamily=fontSelect.value;if(text.fontFamily==="pretendard"&&!text.fontWeight)text.fontWeight=760;},{refresh:true}));
       const align=makeSelect([["left","왼쪽"],["center","가운데"],["right","오른쪽"]],text.align);align.addEventListener("change",()=>manual(()=>{text.align=align.value;}));
       layoutGrid.append(labeledControl("글자 영역",regionSelect),labeledControl("폰트",fontSelect),labeledControl("좌우 정렬",align));layoutSection.append(layoutGrid);
