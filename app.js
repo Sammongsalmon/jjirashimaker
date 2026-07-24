@@ -73,6 +73,26 @@
   }
   const contrastText = (color) => luminance(color) > 0.45 ? "#111111" : "#ffffff";
 
+  function paletteColor(role, palette) {
+    const p = palette || state.palette || { primary: "#ffd400", secondary: "#111111", tertiary: "#0057ff" };
+    if (!role) return "#111111";
+    if (p[role]) return p[role];
+    if (role === "ink") return p.secondary || "#111111";
+    if (role === "paper") return luminance(p.primary) > 0.72 ? mix(p.primary, "#ffffff", 0.58) : mix(p.primary, "#ffffff", 0.86);
+    if (role === "paperHard") return luminance(p.primary) > 0.72 ? mix(p.primary, "#ffffff", 0.42) : mix(p.primary, "#ffffff", 0.76);
+    if (role === "primarySoft") return mix(p.primary, "#ffffff", 0.34);
+    if (role === "primaryDeep") return mix(p.primary, "#000000", 0.18);
+    if (role === "secondarySoft") return mix(p.secondary, "#ffffff", 0.18);
+    if (role === "secondaryPaper") return mix(p.secondary, "#ffffff", 0.74);
+    if (role === "tertiarySoft") return mix(p.tertiary, "#ffffff", 0.22);
+    if (role === "tertiaryPaper") return mix(p.tertiary, "#ffffff", 0.66);
+    if (role === "tertiaryDeep") return mix(p.tertiary, "#000000", 0.16);
+    if (role === "white") return "#ffffff";
+    if (role === "black") return "#111111";
+    if (role === "cream") return "#fff4d2";
+    return role;
+  }
+
   function R(name, x, y, w, h, options = {}) {
     const region = {
       id: uid(), name, x, y, w, h,
@@ -90,235 +110,232 @@
 
   const templateSpecs = [
     {
-      id: "headline-rule",
-      name: "호외 한 줄",
-      caption: "헤드라인 · 기사 · 콜아웃",
-      palette: ["#f3ecdf", "#111111", "#ff3b30"],
-      bg: { mode: "solid", c1: "#f3ecdf", c2: "#ffffff", pattern: "grid", patternColor: "#111111", angle: 0, scale: 54 },
-      border: { enabled: true, color: "#111111", width: 12, radius: 0 },
+      id: "label-market",
+      name: "시장 속보형",
+      caption: "풀폭 검은띠 · 큰 제목 · 우측 도장",
+      bg: { mode:"solid", role:"primary", c1:"#ffd400", c2:"#ffd400", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("대제목", .045, .045, .91, .22, { fillNone: true, padding: 18 }),
-        R("검은 가로선", .035, .285, .93, .025, { shape: "line", fillRole: "secondary", acceptText: false, padding: 0 }),
-        R("기사 본문", .045, .345, .595, .60, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 34 }),
-        R("원형 특보", .675, .345, .28, .275, { shape: "ellipse", fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, padding: 34 }),
-        R("검은 연락처", .675, .665, .28, .28, { fillRole: "secondary", radius: 18, padding: 28 })
+        R("상단 검은띠", 0, .040, 1, .115, { fillRole:"secondary", radius:0, padding:18 }),
+        R("대제목", .035, .185, .665, .245, { fillNone:true, padding:4 }),
+        R("오른쪽 도장", .725, .150, .235, .255, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:28, effect:"shadow", effectColor:"#111111", effectSize:12 }),
+        R("본문 종이", .050, .455, .575, .345, { fillRole:"paper", strokeNone:true, radius:30, padding:28 }),
+        R("우측 검정 상담", .665, .455, .295, .345, { fillRole:"secondary", strokeNone:true, radius:22, padding:26 }),
+        R("하단 전화띠", 0, .835, 1, .125, { fillRole:"secondary", radius:0, padding:20 })
       ],
-      textSlots: [0, 1, 2, 1, 3]
+      textSlots:[1,3,2,3,5]
     },
     {
-      id: "label-market",
-      name: "노랑 상점 전단",
-      caption: "상단 띠 · 큰 카드 · 2단 배지",
-      palette: ["#ffd400", "#111111", "#0057ff"],
-      bg: { mode: "solid", c1: "#ffd400", c2: "#ffffff", pattern: "dots", patternColor: "#111111", angle: 0, scale: 48 },
-      border: { enabled: true, color: "#111111", width: 10, radius: 0 },
+      id: "apothecary-band",
+      name: "약장수 긴급띠",
+      caption: "상하 띠 · 중앙 흰 안내판",
+      bg: { mode:"solid", role:"primary", c1:"#ff3b30", c2:"#ff3b30", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("검은 상호", .04, .045, .92, .18, { fillRole: "secondary", radius: 12, padding: 22 }),
-        R("흰 안내판", .04, .265, .60, .69, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 7, radius: 28, padding: 38 }),
-        R("파랑 배지", .675, .265, .285, .285, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 7, radius: 24, padding: 28 }),
-        R("빨강 접수판", .675, .59, .285, .365, { fill: "#ff3158", strokeRole: "secondary", strokeWidth: 7, radius: 24, padding: 28 })
+        R("대제목", .035, .035, .930, .210, { fillNone:true, padding:4 }),
+        R("검은 중간띠", 0, .275, 1, .125, { fillRole:"secondary", radius:0, padding:20 }),
+        R("흰 본문판", .050, .440, .605, .330, { fillRole:"paper", strokeNone:true, radius:18, padding:28 }),
+        R("원형 특보", .690, .425, .270, .270, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:34 }),
+        R("검은 하단띠", 0, .810, 1, .130, { fillRole:"secondary", radius:0, padding:20 })
       ],
-      textSlots: [0, 1, 2, 1, 3]
+      textSlots:[0,2,3,2,4]
     },
     {
       id: "blue-bulletin",
-      name: "파랑 속보판",
-      caption: "백색 제목 · 본문 · 원형 특보",
-      palette: ["#0757c9", "#ffffff", "#ffe000"],
-      bg: { mode: "solid", c1: "#0757c9", c2: "#ffffff", pattern: "grid", patternColor: "#ffffff", angle: 0, scale: 58 },
-      border: { enabled: true, color: "#111111", width: 10, radius: 0 },
+      name: "파랑 게시판형",
+      caption: "흰 종이 큰판 · 우측 원/검정판",
+      bg: { mode:"solid", role:"primary", c1:"#0757c9", c2:"#0757c9", pattern:"none", patternColor:"#ffffff", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("백색 제목", .04, .045, .92, .215, { fillRole: "secondary", stroke: "#111111", strokeWidth: 6, radius: 16, padding: 26 }),
-        R("백색 기사", .04, .30, .585, .655, { fillRole: "secondary", stroke: "#111111", strokeWidth: 6, radius: 22, padding: 38 }),
-        R("노랑 특보", .66, .30, .30, .30, { shape: "ellipse", fillRole: "tertiary", stroke: "#111111", strokeWidth: 6, padding: 38 }),
-        R("검은 결론", .66, .655, .30, .30, { fill: "#111111", radius: 22, padding: 30 })
+        R("큰 흰 제목판", .045, .055, .620, .225, { fillRole:"paper", strokeNone:true, radius:32, padding:24, effect:"shadow", effectColor:"#111111", effectSize:10 }),
+        R("큰 흰 본문판", .045, .305, .620, .455, { fillRole:"paper", strokeNone:true, radius:28, padding:30 }),
+        R("우상 원형", .705, .070, .245, .245, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:30 }),
+        R("우측 검정판", .700, .355, .255, .405, { fillRole:"secondary", strokeNone:true, radius:18, padding:26 }),
+        R("하단 자막띠", 0, .815, 1, .120, { fillRole:"secondary", radius:0, padding:18 })
       ],
-      textSlots: [0, 1, 2, 1, 3]
+      textSlots:[0,1,2,1,4]
     },
     {
-      id: "red-directory",
-      name: "빨강 전화번호부",
-      caption: "대제목 · 속보 띠 · 3열 기사",
-      palette: ["#ee3027", "#111111", "#ffe23b"],
-      bg: { mode: "solid", c1: "#ee3027", c2: "#ffffff", pattern: "stripes", patternColor: "#111111", angle: 0, scale: 50 },
-      border: { enabled: true, color: "#111111", width: 12, radius: 0 },
+      id: "phonebook-dense",
+      name: "전화번호부 압축",
+      caption: "검은 헤더 · 3열 정보 · 큰 번호띠",
+      bg: { mode:"solid", role:"primary", c1:"#22d45f", c2:"#22d45f", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("크림 대제목", .04, .045, .92, .205, { fill: "#fff5dc", strokeRole: "secondary", strokeWidth: 6, padding: 24 }),
-        R("검은 속보", .04, .285, .92, .105, { fillRole: "secondary", padding: 16 }),
-        R("기사 왼쪽", .04, .43, .285, .525, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 14, padding: 26 }),
-        R("기사 가운데", .3575, .43, .285, .525, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, radius: 14, padding: 26 }),
-        R("기사 오른쪽", .675, .43, .285, .525, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 14, padding: 26 })
+        R("검은 헤더", 0, .035, 1, .125, { fillRole:"secondary", radius:0, padding:18 }),
+        R("왼쪽 문구", .040, .210, .295, .435, { fillRole:"paper", strokeNone:true, radius:8, padding:22 }),
+        R("가운데 강조", .355, .210, .290, .435, { fillRole:"tertiary", strokeNone:true, radius:8, padding:22 }),
+        R("오른쪽 문구", .665, .210, .295, .435, { fillRole:"paper", strokeNone:true, radius:8, padding:22 }),
+        R("하단 전화번호", 0, .705, 1, .210, { fillRole:"secondary", radius:0, padding:28 })
       ],
-      textSlots: [0, 2, 3, 4, 1]
+      textSlots:[0,1,2,3,4]
     },
     {
-      id: "pink-tickets",
-      name: "분홍 접수표",
-      caption: "상호 띠 · 티켓 3장 · 하단 번호",
-      palette: ["#ff4f9a", "#111111", "#36d8ff"],
-      bg: { mode: "solid", c1: "#ff4f9a", c2: "#ffffff", pattern: "dots", patternColor: "#111111", angle: 0, scale: 42 },
-      border: { enabled: true, color: "#111111", width: 10, radius: 0 },
+      id: "coupon-strip",
+      name: "접수표 줄광고",
+      caption: "둥근 행카드 · 검정 접수띠",
+      bg: { mode:"solid", role:"primary", c1:"#ff4f9a", c2:"#ff4f9a", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("검은 상단", .04, .045, .92, .17, { fillRole: "secondary", radius: 16, padding: 20 }),
-        R("흰 티켓", .04, .255, .92, .16, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 22 }),
-        R("하늘 티켓", .04, .45, .92, .16, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 22 }),
-        R("노랑 티켓", .04, .645, .92, .16, { fill: "#ffe33b", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 22 }),
-        R("검은 번호", .04, .84, .92, .115, { fillRole: "secondary", radius: 16, padding: 16 })
+        R("상단 제목띠", 0, .045, 1, .150, { fillRole:"secondary", radius:0, padding:22 }),
+        R("첫 번째 쿠폰", .055, .255, .890, .130, { fillRole:"paper", strokeNone:true, radius:20, padding:16 }),
+        R("두 번째 쿠폰", .055, .430, .890, .130, { fillRole:"tertiary", strokeNone:true, radius:20, padding:16 }),
+        R("세 번째 쿠폰", .055, .605, .890, .130, { fillRole:"paper", strokeNone:true, radius:20, padding:16 }),
+        R("하단 번호띠", 0, .795, 1, .140, { fillRole:"secondary", radius:0, padding:22 })
       ],
-      textSlots: [0, 1, 2, 3, 4]
+      textSlots:[0,1,2,3,4]
     },
     {
-      id: "mint-notice",
-      name: "민트 공지판",
-      caption: "검은 제목 · 백색 본문 · 우측 메모",
-      palette: ["#67e5c4", "#111111", "#2357d7"],
-      bg: { mode: "solid", c1: "#67e5c4", c2: "#ffffff", pattern: "grid", patternColor: "#111111", angle: 0, scale: 56 },
-      border: { enabled: true, color: "#111111", width: 10, radius: 0 },
+      id: "five-elements",
+      name: "음양오행 스티커",
+      caption: "왼쪽 세로판 · 우측 타원 배지",
+      bg: { mode:"solid", role:"primary", c1:"#7e35d9", c2:"#7e35d9", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("검은 공지", .05, .05, .90, .19, { fillRole: "secondary", radius: 10, padding: 22 }),
-        R("흰 본문", .05, .285, .56, .665, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 24, padding: 36 }),
-        R("파랑 메모", .645, .285, .305, .285, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, radius: 24, padding: 30 }),
-        R("크림 메모", .645, .61, .305, .34, { fill: "#fff3ca", strokeRole: "secondary", strokeWidth: 6, radius: 24, padding: 30 })
+        R("왼쪽 검정 세로판", .030, .045, .210, .875, { fillRole:"secondary", strokeNone:true, radius:0, padding:24 }),
+        R("상단 큰 제목", .270, .055, .690, .215, { fillRole:"paper", strokeNone:true, radius:24, padding:24 }),
+        R("중앙 검정띠", .240, .305, .760, .120, { fillRole:"secondary", radius:0, padding:18 }),
+        R("본문 흰판", .270, .465, .455, .300, { fillRole:"paper", strokeNone:true, radius:22, padding:28 }),
+        R("오른쪽 타원", .755, .470, .220, .285, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:28 }),
+        R("하단 띠", 0, .815, 1, .110, { fillRole:"secondary", radius:0, padding:18 })
       ],
-      textSlots: [0, 1, 2, 1, 3]
+      textSlots:[1,3,2,4,5]
     },
     {
-      id: "orange-counter",
-      name: "주황 안내창구",
-      caption: "세로 표찰 · 3단 안내 카드",
-      palette: ["#ff7a00", "#111111", "#fff0c7"],
-      bg: { mode: "solid", c1: "#ff7a00", c2: "#ffffff", pattern: "stripes", patternColor: "#111111", angle: 0, scale: 54 },
-      border: { enabled: true, color: "#111111", width: 12, radius: 0 },
+      id: "earth-shock",
+      name: "지구충격형",
+      caption: "중앙 뾰족말풍선 · 좌우 대사",
+      bg: { mode:"solid", role:"primary", c1:"#00a6d7", c2:"#00a6d7", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("검은 세로판", .04, .05, .275, .90, { fillRole: "secondary", radius: 16, padding: 28 }),
-        R("크림 제목", .35, .05, .61, .28, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, radius: 22, padding: 28 }),
-        R("흰 안내", .35, .37, .61, .34, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 22, padding: 30 }),
-        R("빨강 마감", .35, .75, .61, .20, { fill: "#f02d3a", strokeRole: "secondary", strokeWidth: 6, radius: 22, padding: 22 })
+        R("상단 대제목", .035, .040, .930, .225, { fillNone:true, padding:4 }),
+        R("좌측 설명", .045, .315, .275, .315, { fillNone:true, padding:6 }),
+        R("중앙 충격", .340, .285, .330, .365, { shape:"burst", fillRole:"paper", strokeRole:"secondary", strokeWidth:5, strokeNone:false, padding:44, effect:"shadow", effectColor:"#111111", effectSize:12 }),
+        R("우측 설명", .695, .315, .260, .315, { fillNone:true, padding:6 }),
+        R("하단 큰띠", 0, .745, 1, .165, { fillRole:"secondary", radius:0, padding:26 })
       ],
-      textSlots: [1, 0, 2, 2, 3]
+      textSlots:[0,1,2,3,4]
     },
     {
-      id: "violet-call",
-      name: "보라 콜센터",
-      caption: "백색 헤드 · 검은 본문 · 컬러 배지",
-      palette: ["#7e35d9", "#111111", "#ff59a6"],
-      bg: { mode: "solid", c1: "#7e35d9", c2: "#ffffff", pattern: "dots", patternColor: "#111111", angle: 0, scale: 44 },
-      border: { enabled: true, color: "#111111", width: 10, radius: 0 },
+      id: "plain-rule",
+      name: "기본 검은 가로선",
+      caption: "단색 바탕 · 선 하나 · 원형 강조",
+      bg: { mode:"solid", role:"primary", c1:"#fff2cc", c2:"#fff2cc", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("백색 헤드", .05, .05, .90, .205, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 26, padding: 26 }),
-        R("검은 상담", .05, .30, .555, .65, { fillRole: "secondary", radius: 26, padding: 36 }),
-        R("분홍 원", .645, .30, .305, .27, { shape: "ellipse", fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, padding: 34 }),
-        R("하늘 배지", .645, .61, .305, .15, { fill: "#45def2", strokeRole: "secondary", strokeWidth: 6, radius: 60, padding: 18 }),
-        R("노랑 번호", .645, .80, .305, .15, { fill: "#ffe13b", strokeRole: "secondary", strokeWidth: 6, radius: 16, padding: 18 })
+        R("대제목", .045, .060, .910, .250, { fillNone:true, padding:4 }),
+        R("검은 선", 0, .350, 1, .035, { shape:"line", fillRole:"secondary", acceptText:false, radius:0, padding:0 }),
+        R("본문", .055, .430, .565, .330, { fillNone:true, padding:8 }),
+        R("강조 원", .675, .415, .270, .290, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:34 }),
+        R("하단 문의띠", 0, .820, 1, .105, { fillRole:"secondary", radius:0, padding:18 })
       ],
-      textSlots: [0, 1, 2, 1, 4]
+      textSlots:[0,2,3,2,4]
     },
     {
-      id: "lime-lab-clean",
-      name: "형광 연구소",
-      caption: "검은 헤드 · 백색 연구 · 결론 2칸",
-      palette: ["#b8ff00", "#111111", "#21d8ff"],
-      bg: { mode: "solid", c1: "#b8ff00", c2: "#ffffff", pattern: "grid", patternColor: "#111111", angle: 0, scale: 58 },
-      border: { enabled: true, color: "#111111", width: 12, radius: 0 },
+      id: "round-card",
+      name: "둥근 종이 한 장",
+      caption: "흰 큰카드 · 우측 스탬프 · 하단띠",
+      bg: { mode:"solid", role:"primary", c1:"#1356c5", c2:"#1356c5", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("검은 연구명", .04, .045, .92, .19, { fillRole: "secondary", padding: 22 }),
-        R("백색 연구", .04, .275, .92, .43, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 7, radius: 20, padding: 34 }),
-        R("하늘 결론", .04, .75, .585, .205, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 7, radius: 20, padding: 24 }),
-        R("검은 확인", .665, .75, .295, .205, { fillRole: "secondary", radius: 20, padding: 24 })
+        R("큰 종이", .060, .070, .610, .700, { fillRole:"paper", strokeNone:true, radius:40, padding:34, effect:"shadow", effectColor:"#111111", effectSize:12 }),
+        R("상단 전폭띠", 0, .095, 1, .115, { fillRole:"tertiary", radius:0, padding:18 }),
+        R("우측 검정판", .710, .275, .245, .280, { fillRole:"secondary", strokeNone:true, radius:26, padding:26 }),
+        R("우측 원형", .725, .600, .220, .220, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:26 }),
+        R("하단 문의", 0, .845, 1, .095, { fillRole:"secondary", radius:0, padding:16 })
       ],
-      textSlots: [0, 1, 2, 1, 3]
+      textSlots:[1,0,2,0,4]
     },
     {
-      id: "cyan-archive",
-      name: "하늘 기록보관소",
-      caption: "대형 기사 · 우측 정보 3칸",
-      palette: ["#3bd2f0", "#123c85", "#ffe235"],
-      bg: { mode: "solid", c1: "#3bd2f0", c2: "#ffffff", pattern: "grid", patternColor: "#123c85", angle: 0, scale: 58 },
-      border: { enabled: true, color: "#123c85", width: 10, radius: 0 },
+      id: "sticker-chaos",
+      name: "스티커 겹침형",
+      caption: "오프캔버스 원 · 카드 2장",
+      bg: { mode:"solid", role:"primary", c1:"#ff6a00", c2:"#ff6a00", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("백색 대문", .04, .05, .65, .90, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 7, radius: 24, padding: 40 }),
-        R("남색 요약", .725, .05, .235, .42, { fillRole: "secondary", radius: 22, padding: 28 }),
-        R("노랑 표찰", .725, .515, .235, .19, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 20 }),
-        R("백색 번호", .725, .75, .235, .20, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 20 })
+        R("배경 큰 원", -.070, .065, .290, .330, { shape:"ellipse", fillRole:"tertiary", acceptText:false, strokeNone:true, padding:0 }),
+        R("상단 제목", .105, .055, .745, .230, { fillNone:true, padding:6 }),
+        R("작은 흰 원", .790, .050, .200, .210, { shape:"ellipse", fillRole:"paper", strokeNone:true, padding:24 }),
+        R("왼쪽 카드", .055, .345, .560, .335, { fillRole:"paper", strokeNone:true, radius:18, padding:28 }),
+        R("오른쪽 카드", .650, .345, .300, .335, { fillRole:"tertiary", strokeNone:true, radius:18, padding:26 }),
+        R("하단 띠", 0, .760, 1, .150, { fillRole:"secondary", radius:0, padding:24 })
       ],
-      textSlots: [0, 1, 2, 0, 3]
+      textSlots:[1,3,2,3,5]
     },
     {
-      id: "black-sticker",
+      id: "shop-window",
+      name: "상점 창구형",
+      caption: "명패 · 큰 창구 · 우측 딱지",
+      bg: { mode:"solid", role:"primary", c1:"#f23b35", c2:"#f23b35", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
+      regions: [
+        R("상단 명패", 0, .040, 1, .150, { fillRole:"secondary", radius:0, padding:24 }),
+        R("큰 창구", .060, .250, .580, .500, { fillRole:"paper", strokeNone:true, radius:6, padding:34 }),
+        R("우측 딱지", .680, .250, .275, .225, { fillRole:"tertiary", strokeNone:true, radius:16, padding:26 }),
+        R("우측 검정", .680, .525, .275, .225, { fillRole:"secondary", strokeNone:true, radius:16, padding:26 }),
+        R("하단 전폭", 0, .815, 1, .110, { fillRole:"secondary", radius:0, padding:20 })
+      ],
+      textSlots:[0,1,2,1,4]
+    },
+    {
+      id: "notice-split",
+      name: "생활정보 쪼개기",
+      caption: "넓은 제목 · 보조칸 · 결론띠",
+      bg: { mode:"solid", role:"primary", c1:"#67e5c4", c2:"#67e5c4", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
+      regions: [
+        R("대제목", .040, .050, .700, .240, { fillNone:true, padding:6 }),
+        R("상단 검정표", .765, .050, .195, .240, { fillRole:"secondary", strokeNone:true, radius:16, padding:20 }),
+        R("중앙 기사", .055, .345, .630, .360, { fillRole:"paper", strokeNone:true, radius:22, padding:30 }),
+        R("우측 목록", .725, .345, .235, .360, { fillRole:"tertiary", strokeNone:true, radius:22, padding:24 }),
+        R("하단 결론띠", 0, .770, 1, .145, { fillRole:"secondary", radius:0, padding:24 })
+      ],
+      textSlots:[0,2,1,2,4]
+    },
+    {
+      id: "memo-badge",
+      name: "메모 배지형",
+      caption: "좌측 메모 · 우측 큰 배지",
+      bg: { mode:"solid", role:"primary", c1:"#3bd2f0", c2:"#3bd2f0", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
+      regions: [
+        R("상단 제목", .045, .045, .575, .240, { fillNone:true, padding:6 }),
+        R("우측 큰 배지", .660, .045, .300, .300, { shape:"ellipse", fillRole:"secondary", strokeNone:true, padding:38 }),
+        R("좌측 메모", .060, .340, .550, .385, { fillRole:"paper", strokeNone:true, radius:20, padding:30 }),
+        R("우측 작은 메모", .660, .390, .300, .335, { fillRole:"tertiary", strokeNone:true, radius:20, padding:28 }),
+        R("하단 전폭", 0, .790, 1, .130, { fillRole:"secondary", radius:0, padding:22 })
+      ],
+      textSlots:[0,2,1,2,4]
+    },
+    {
+      id: "black-zine",
       name: "검정 스티커판",
-      caption: "백색 제목 · 좌우 카드 · 노랑 결론",
-      palette: ["#111111", "#ff55a5", "#26d9ef"],
-      bg: { mode: "solid", c1: "#111111", c2: "#ffffff", pattern: "dots", patternColor: "#ffffff", angle: 0, scale: 46 },
-      border: { enabled: true, color: "#ffffff", width: 8, radius: 0 },
+      caption: "검은 배경 · 밝은 카드 · 강한 띠",
+      bg: { mode:"solid", role:"primary", c1:"#111111", c2:"#111111", pattern:"none", patternColor:"#ffffff", angle:0, scale:48 },
+      border: { enabled:false, color:"#ffffff", width:0, radius:0 },
       regions: [
-        R("백색 제목", .04, .05, .92, .20, { fill: "#ffffff", radius: 18, padding: 26 }),
-        R("분홍 카드", .04, .30, .44, .395, { fillRole: "secondary", stroke: "#ffffff", strokeWidth: 6, radius: 22, padding: 30 }),
-        R("하늘 카드", .52, .30, .44, .395, { fillRole: "tertiary", stroke: "#ffffff", strokeWidth: 6, radius: 22, padding: 30 }),
-        R("노랑 결론", .04, .74, .92, .21, { fill: "#ffe000", radius: 18, padding: 24 })
+        R("대제목 카드", .040, .045, .920, .230, { fillRole:"paper", strokeNone:true, radius:18, padding:26 }),
+        R("중앙 띠", 0, .335, 1, .125, { fillRole:"secondary", radius:0, padding:22 }),
+        R("왼쪽 기사", .050, .505, .405, .250, { fillRole:"tertiary", strokeNone:true, radius:14, padding:24 }),
+        R("오른쪽 기사", .500, .505, .450, .250, { fillRole:"paper", strokeNone:true, radius:14, padding:24 }),
+        R("하단 띠", 0, .805, 1, .110, { fillRole:"secondary", radius:0, padding:18 })
       ],
-      textSlots: [0, 1, 2, 1, 3]
+      textSlots:[0,2,1,3,4]
     },
     {
-      id: "cream-classified",
-      name: "크림 생활정보",
-      caption: "적색 헤드 · 2×2 분류광고",
-      palette: ["#f3ead5", "#111111", "#f23b35"],
-      bg: { mode: "solid", c1: "#f3ead5", c2: "#ffffff", pattern: "grid", patternColor: "#111111", angle: 0, scale: 64 },
-      border: { enabled: true, color: "#111111", width: 12, radius: 0 },
+      id: "stamp-bottom",
+      name: "하단 왕도장형",
+      caption: "넓은 제목 · 중간띠 · 큰 도장",
+      bg: { mode:"solid", role:"primary", c1:"#ffea00", c2:"#ffea00", pattern:"none", patternColor:"#111111", angle:0, scale:48 },
+      border: { enabled:false, color:"#111111", width:0, radius:0 },
       regions: [
-        R("적색 헤드", .035, .04, .93, .18, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, padding: 20 }),
-        R("분류 1", .04, .26, .44, .30, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, padding: 28 }),
-        R("분류 2", .52, .26, .44, .30, { fillRole: "secondary", padding: 28 }),
-        R("분류 3", .04, .60, .44, .35, { fill: "#ffe03b", strokeRole: "secondary", strokeWidth: 6, padding: 28 }),
-        R("분류 4", .52, .60, .44, .35, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, padding: 28 })
+        R("대제목", .035, .045, .930, .230, { fillNone:true, padding:4 }),
+        R("검은 중간띠", 0, .315, 1, .110, { fillRole:"secondary", radius:0, padding:16 }),
+        R("본문", .055, .475, .540, .260, { fillRole:"paper", strokeNone:true, radius:24, padding:26 }),
+        R("빨강 도장", .635, .450, .320, .320, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:34 }),
+        R("하단 대문장", .035, .795, .930, .150, { fillNone:true, padding:0 })
       ],
-      textSlots: [0, 1, 2, 3, 4]
-    },
-    {
-      id: "white-urgent",
-      name: "백색 긴급공고",
-      caption: "적색 헤드 · 큰 기사 · 특보 2칸",
-      palette: ["#ffffff", "#111111", "#ff2e3f"],
-      bg: { mode: "solid", c1: "#ffffff", c2: "#ffffff", pattern: "grid", patternColor: "#111111", angle: 0, scale: 56 },
-      border: { enabled: true, color: "#111111", width: 14, radius: 0 },
-      regions: [
-        R("적색 긴급", .04, .05, .92, .18, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, padding: 20 }),
-        R("백색 기사", .04, .275, .64, .675, { fillNone: true, strokeRole: "secondary", strokeWidth: 7, padding: 36 }),
-        R("노랑 원형", .72, .275, .24, .28, { shape: "ellipse", fill: "#ffe13b", strokeRole: "secondary", strokeWidth: 6, padding: 30 }),
-        R("검은 속보", .72, .60, .24, .35, { fillRole: "secondary", radius: 18, padding: 28 })
-      ],
-      textSlots: [0, 1, 2, 1, 3]
-    },
-    {
-      id: "green-phonebook",
-      name: "초록 연락망",
-      caption: "제목 · 안내 2줄 · 하단 배지",
-      palette: ["#22d45f", "#111111", "#ffe13b"],
-      bg: { mode: "solid", c1: "#22d45f", c2: "#ffffff", pattern: "grid", patternColor: "#111111", angle: 0, scale: 54 },
-      border: { enabled: true, color: "#111111", width: 10, radius: 0 },
-      regions: [
-        R("검은 제목", .04, .045, .92, .19, { fillRole: "secondary", radius: 14, padding: 22 }),
-        R("흰 안내 1", .04, .285, .92, .17, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 16, padding: 20 }),
-        R("흰 안내 2", .04, .495, .92, .17, { fill: "#ffffff", strokeRole: "secondary", strokeWidth: 6, radius: 16, padding: 20 }),
-        R("노랑 접수", .04, .705, .585, .25, { fillRole: "tertiary", strokeRole: "secondary", strokeWidth: 6, radius: 18, padding: 26 }),
-        R("빨강 전화", .665, .705, .295, .25, { shape: "ellipse", fill: "#ff3158", strokeRole: "secondary", strokeWidth: 6, padding: 30 })
-      ],
-      textSlots: [0, 1, 2, 3, 4]
-    },
-    {
-      id: "navy-broadcast",
-      name: "남색 방송국",
-      caption: "노랑 헤드 · 백색 본문 · 우측 2단",
-      palette: ["#112f78", "#ffe13b", "#34d7ef"],
-      bg: { mode: "solid", c1: "#112f78", c2: "#ffffff", pattern: "grid", patternColor: "#ffffff", angle: 0, scale: 60 },
-      border: { enabled: true, color: "#ffffff", width: 8, radius: 0 },
-      regions: [
-        R("노랑 방송명", .04, .05, .92, .20, { fillRole: "secondary", stroke: "#111111", strokeWidth: 6, radius: 18, padding: 24 }),
-        R("백색 사연", .04, .295, .60, .655, { fill: "#ffffff", stroke: "#111111", strokeWidth: 6, radius: 22, padding: 36 }),
-        R("하늘 주파수", .68, .295, .28, .28, { fillRole: "tertiary", stroke: "#111111", strokeWidth: 6, radius: 22, padding: 28 }),
-        R("분홍 신청곡", .68, .62, .28, .33, { fill: "#ff4fa0", stroke: "#111111", strokeWidth: 6, radius: 22, padding: 28 })
-      ],
-      textSlots: [0, 1, 2, 1, 3]
+      textSlots:[0,2,1,2,4]
     }
   ];
 
@@ -338,7 +355,7 @@
   }
 
   function makeElement(type, x, y, options = {}) {
-    const defaults = type === "band" ? { w: 520, h: 120 } : type === "circle" ? { w: 260, h: 260 } : { w: 360, h: 240 };
+    const defaults = type === "band" ? { w: 1320, h: 120 } : type === "circle" ? { w: 260, h: 260 } : { w: 360, h: 240 };
     return {
       id: uid(), type, x, y, w: defaults.w, h: defaults.h,
       fill: "#f4e900", fillNone: false, stroke: "#111111", strokeNone: false, strokeWidth: 4,
@@ -388,7 +405,7 @@
 
   function resolveColor(item, prop) {
     const role = item[`${prop}Role`];
-    return role ? state.palette[role] : item[prop];
+    return role ? paletteColor(role, state.palette) : item[prop];
   }
 
   function selectedText() { return state.texts.find((x) => x.id === state.selectedTextId) || null; }
@@ -655,11 +672,11 @@
   }
 
   const ROLE_STYLE_DEFAULTS = {
-    headline: { fontFamily:"dotum", fontSize:72, align:"left", bold:true, italic:false, lineHeight:1.05, scaleX:.97, letterSpacing:-2, effect:"outline", outlineWidth:2, colorMode:"auto", gap:12 },
-    bullet: { fontFamily:"dotum", fontSize:44, align:"left", bold:true, italic:false, lineHeight:1.15, scaleX:1, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:10 },
-    callout: { fontFamily:"dotum", fontSize:38, align:"center", bold:true, italic:false, lineHeight:1.08, scaleX:.99, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:8 },
-    body: { fontFamily:"dotum", fontSize:48, align:"left", bold:true, italic:false, lineHeight:1.10, scaleX:1, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:10 },
-    footer: { fontFamily:"batang", fontSize:38, align:"center", bold:true, italic:false, lineHeight:1.06, scaleX:.99, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:8 },
+    headline: { fontFamily:"dotum", fontSize:78, align:"left", bold:true, italic:false, lineHeight:1.02, scaleX:.95, letterSpacing:-3, effect:"outline", outlineWidth:2, colorMode:"auto", gap:8 },
+    bullet: { fontFamily:"dotum", fontSize:44, align:"left", bold:true, italic:false, lineHeight:1.12, scaleX:1, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:8 },
+    callout: { fontFamily:"dotum", fontSize:42, align:"center", bold:true, italic:false, lineHeight:1.04, scaleX:.98, letterSpacing:-1, effect:"outline", outlineWidth:1, colorMode:"auto", gap:6 },
+    body: { fontFamily:"dotum", fontSize:50, align:"left", bold:true, italic:false, lineHeight:1.06, scaleX:.98, letterSpacing:-2, effect:"none", outlineWidth:2, colorMode:"auto", gap:8 },
+    footer: { fontFamily:"batang", fontSize:40, align:"center", bold:true, italic:false, lineHeight:1.04, scaleX:.98, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:6 },
     tag: { fontFamily:"dotum", fontSize:30, align:"center", bold:true, italic:false, lineHeight:1.04, scaleX:1, letterSpacing:0, effect:"none", outlineWidth:2, colorMode:"auto", gap:6 }
   };
 
@@ -700,16 +717,16 @@
   function applyTemplate(templateId, { preserveTexts = true } = {}) {
     const spec = templateSpecs.find((t) => t.id === templateId) || templateSpecs[0];
     const { trimW: W, trimH: H } = dimensions();
+    const keepPalette = { ...state.palette };
     state.templateId = spec.id;
-    state.palette = { primary: spec.palette[0], secondary: spec.palette[1], tertiary: spec.palette[2] };
-    state.background = deepClone(spec.bg);
-    state.background.mode = "solid";
-    state.background.c2 = state.background.c1;
-    state.background.pattern = "none";
+    state.palette = keepPalette;
+    const bgRole = spec.bg?.role || "primary";
+    const bgColor = paletteColor(bgRole, state.palette);
+    state.background = { mode: "solid", c1: bgColor, c2: bgColor, pattern: "none", patternColor: state.palette.tertiary, angle: 0, scale: spec.bg?.scale || 48 };
     state.regions = spec.regions.map((r) => cloneTemplateRegion(r, W, H));
     state.posterBorder = spec.border
-      ? { enabled:Boolean(spec.border.enabled), color:spec.border.color || "#111111", width:Number(spec.border.width) || 0, radius:Number(spec.border.radius) || 0 }
-      : { enabled:false, color:"#111111", width:0, radius:0 };
+      ? { enabled:Boolean(spec.border.enabled), color:spec.border.color || state.palette.secondary || "#111111", width:Number(spec.border.width) || 0, radius:Number(spec.border.radius) || 0 }
+      : { enabled:false, color:state.palette.secondary || "#111111", width:0, radius:0 };
     state.selectedRegionId = null;
     state.selectedElementId = null;
 
@@ -737,8 +754,7 @@
 
   function thumbColor(spec, region, prop) {
     const role = region[`${prop}Role`];
-    const map = { primary: spec.palette[0], secondary: spec.palette[1], tertiary: spec.palette[2] };
-    return role ? map[role] : region[prop];
+    return role ? paletteColor(role, state.palette) : region[prop];
   }
 
   function drawTemplateThumbnail(target, spec) {
@@ -746,7 +762,8 @@
     const W = target.width = 320;
     const H = target.height = 180;
     c.clearRect(0, 0, W, H);
-    c.fillStyle = spec.bg.c1;
+    const bgColor = paletteColor(spec.bg?.role || "primary", state.palette);
+    c.fillStyle = bgColor;
     c.fillRect(0, 0, W, H);
 
     const pathFor = (r) => {
@@ -764,7 +781,7 @@
         pathFor(r); c.strokeStyle = thumbColor(spec,r,"stroke"); c.lineWidth = Math.max(1,r.strokeWidth*.35); c.stroke();
       }
       if (r.acceptText && r.shape !== "line") {
-        const fill = r.fillNone ? spec.bg.c1 : thumbColor(spec,r,"fill");
+        const fill = r.fillNone ? bgColor : thumbColor(spec,r,"fill");
         c.fillStyle = contrastText(fill);
         c.globalAlpha = .72;
         const inset = Math.max(4, Math.min(box.w,box.h)*.12);
@@ -1152,7 +1169,21 @@
     document.querySelectorAll("[data-add-shape]").forEach((button) => button.addEventListener("click", () => {
       const { trimW: W, trimH: H } = dimensions();
       const type = button.dataset.addShape;
-      const element = makeElement(type, Math.round(W*.34), Math.round(H*.34), type === "heart" ? { fill:"#ff4f9a" } : {});
+      let element;
+      if (type === "band") {
+        element = makeElement("band", Math.round(-W * .07), Math.round(H * .44), {
+          w: Math.round(W * 1.14), h: Math.round(H * .125), radius: 0,
+          fill: state.palette.secondary, strokeNone: true, strokeWidth: 0, flowMargin: -12,
+          label: "", labelColor: contrastText(state.palette.secondary)
+        });
+      } else {
+        const presets = type === "heart"
+          ? { fill: state.palette.tertiary, strokeNone: true, strokeWidth: 0 }
+          : type === "burst"
+            ? { fill: paletteColor("paper", state.palette), stroke: state.palette.secondary, strokeNone: false, strokeWidth: 4, effect: "shadow", effectSize: 12 }
+            : { fill: state.palette.tertiary, strokeNone: true, strokeWidth: 0 };
+        element = makeElement(type, Math.round(W*.34), Math.round(H*.34), presets);
+      }
       state.elements.push(element); state.selectedElementId = element.id; state.selectedRegionId = null;
       updateElementControls(); updateRegionControls(); queueRender();
     }));
@@ -1673,10 +1704,11 @@
     const {bleed}=dimensions();
     c.save();c.translate(bleed,bleed);
     state.regions.forEach((r)=>{
-      if(!state.showRegions&&r.id!==state.selectedRegionId)return;
-      c.save();c.setLineDash([10,8]);c.lineWidth=3;c.strokeStyle=r.id===state.selectedRegionId?"#f4e900":"rgba(255,255,255,.64)";
+      const selected = r.id===state.selectedRegionId;
+      if(!state.showRegions&&!selected)return;
+      c.save();c.setLineDash(selected?[10,7]:[6,8]);c.lineWidth=selected?2.5:1.25;c.strokeStyle=selected?"#f4e900":"rgba(255,255,255,.22)";
       shapePath(c,r);c.stroke();
-      if(r.acceptText){const b=regionContentBox(r);c.strokeStyle="rgba(91,240,255,.75)";c.lineWidth=2;c.strokeRect(b.x,b.y,b.w,b.h);}
+      if(selected&&r.acceptText){const b=regionContentBox(r);c.strokeStyle="rgba(91,240,255,.55)";c.lineWidth=1.5;c.strokeRect(b.x,b.y,b.w,b.h);}
       c.restore();
     });
     state.elements.forEach((e)=>{
@@ -1860,9 +1892,9 @@
   }
 
   function setupColorFields(){
-    createColorField("palettePrimaryField",()=>state.palette.primary,(v)=>{state.palette.primary=v;state.background.c1=v;},{allowNone:false,onCommit:()=>{renderRegionList();}});
-    createColorField("paletteSecondaryField",()=>state.palette.secondary,(v)=>{state.palette.secondary=v;state.background.c2=v;},{allowNone:false,onCommit:()=>{renderRegionList();}});
-    createColorField("paletteTertiaryField",()=>state.palette.tertiary,(v)=>{state.palette.tertiary=v;state.background.patternColor=v;},{allowNone:false,onCommit:()=>{renderRegionList();}});
+    createColorField("palettePrimaryField",()=>state.palette.primary,(v)=>{state.palette.primary=v;if(state.background.mode==="solid"){state.background.c1=v;state.background.c2=v;}},{allowNone:false,onCommit:()=>{renderRegionList();renderTemplateGrid();}});
+    createColorField("paletteSecondaryField",()=>state.palette.secondary,(v)=>{state.palette.secondary=v;},{allowNone:false,onCommit:()=>{renderRegionList();renderTemplateGrid();}});
+    createColorField("paletteTertiaryField",()=>state.palette.tertiary,(v)=>{state.palette.tertiary=v;state.background.patternColor=v;},{allowNone:false,onCommit:()=>{renderRegionList();renderTemplateGrid();}});
     createColorField("regionFillField",()=>{const r=selectedRegion();return !r||r.fillNone?"none":resolveColor(r,"fill");},(v)=>{const r=selectedRegion();if(!r)return;if(v==="none")r.fillNone=true;else{r.fillNone=false;r.fill=v;r.fillRole=null;}renderRegionList();});
     createColorField("regionStrokeField",()=>{const r=selectedRegion();return !r||r.strokeNone?"none":resolveColor(r,"stroke");},(v)=>{const r=selectedRegion();if(!r)return;if(v==="none")r.strokeNone=true;else{r.strokeNone=false;r.stroke=v;r.strokeRole=null;}});
     createColorField("regionEffectColorField",()=>selectedRegion()?.effectColor||"#111111",(v)=>{const r=selectedRegion();if(r)r.effectColor=v;},{allowNone:false});
