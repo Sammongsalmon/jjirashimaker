@@ -1,27 +1,20 @@
-@font-face {
-  font-family: "KoPubDotum";
-  src: url("assets/fonts/KoPub Dotum_Pro Medium.otf") format("opentype");
-  font-style: normal;
-  font-weight: 500;
-}
-@font-face {
-  font-family: "KoPubDotum";
-  src: url("assets/fonts/KoPub Dotum_Pro Bold.otf") format("opentype");
-  font-style: normal;
-  font-weight: 700;
-}
-@font-face {
-  font-family: "KoPubBatang";
-  src: url("assets/fonts/KoPub Batang_Pro Medium.otf") format("opentype");
-  font-style: normal;
-  font-weight: 500;
-}
-@font-face {
-  font-family: "KoPubBatang";
-  src: url("assets/fonts/KoPub Batang_Pro Bold.otf") format("opentype");
-  font-style: normal;
-  font-weight: 700;
-}
+/* V17_LOCAL_FONTS_START */
+@font-face { font-family:"PretendardVariable"; src:url("assets/fonts/PretendardVariable.woff2") format("woff2"); font-style:normal; font-weight:100 900; font-display:swap; }
+@font-face { font-family:"KoPubBatang"; src:url("assets/fonts/KoPubBatang-Light.otf") format("opentype"), url("assets/fonts/KoPubBatang-Light.ttf") format("truetype"); font-style:normal; font-weight:300; font-display:swap; }
+@font-face { font-family:"KoPubBatang"; src:url("assets/fonts/KoPubBatang-Medium.otf") format("opentype"), url("assets/fonts/KoPubBatang-Medium.ttf") format("truetype"); font-style:normal; font-weight:500; font-display:swap; }
+@font-face { font-family:"KoPubBatang"; src:url("assets/fonts/KoPubBatang-Bold.otf") format("opentype"), url("assets/fonts/KoPubBatang-Bold.ttf") format("truetype"); font-style:normal; font-weight:700; font-display:swap; }
+@font-face { font-family:"KoPubDotum"; src:url("assets/fonts/KoPubDotum-Light.otf") format("opentype"), url("assets/fonts/KoPubDotum-Light.ttf") format("truetype"); font-style:normal; font-weight:300; font-display:swap; }
+@font-face { font-family:"KoPubDotum"; src:url("assets/fonts/KoPubDotum-Medium.otf") format("opentype"), url("assets/fonts/KoPubDotum-Medium.ttf") format("truetype"); font-style:normal; font-weight:500; font-display:swap; }
+@font-face { font-family:"KoPubDotum"; src:url("assets/fonts/KoPubDotum-Bold.otf") format("opentype"), url("assets/fonts/KoPubDotum-Bold.ttf") format("truetype"); font-style:normal; font-weight:700; font-display:swap; }
+@font-face { font-family:"ChosunSm"; src:url("assets/fonts/ChosunSm.ttf") format("truetype"), url("assets/fonts/ChosunSm.otf") format("opentype"); font-display:swap; }
+@font-face { font-family:"ChosunKm"; src:url("assets/fonts/ChosunKm.ttf") format("truetype"), url("assets/fonts/ChosunKm.otf") format("opentype"); font-display:swap; }
+@font-face { font-family:"ChosunKg"; src:url("assets/fonts/ChosunKg.ttf") format("truetype"), url("assets/fonts/ChosunKg.otf") format("opentype"); font-display:swap; }
+@font-face { font-family:"ChosunSg"; src:url("assets/fonts/ChosunSg.ttf") format("truetype"), url("assets/fonts/ChosunSg.otf") format("opentype"); font-display:swap; }
+@font-face { font-family:"ChosunBg"; src:url("assets/fonts/ChosunBg.ttf") format("truetype"), url("assets/fonts/ChosunBg.otf") format("opentype"); font-display:swap; }
+@font-face { font-family:"ChosunGu"; src:url("assets/fonts/ChosunGu.ttf") format("truetype"), url("assets/fonts/ChosunGu.otf") format("opentype"); font-display:swap; }
+@font-face { font-family:"ChosunLo"; src:url("assets/fonts/ChosunLo.ttf") format("truetype"), url("assets/fonts/ChosunLo.otf") format("opentype"); font-display:swap; }
+@font-face { font-family:"ChosunGs"; src:url("assets/fonts/ChosunGs.ttf") format("truetype"), url("assets/fonts/ChosunGs.otf") format("opentype"); font-display:swap; }
+/* V17_LOCAL_FONTS_END */
 
 :root {
   color-scheme: dark;
@@ -1424,14 +1417,7 @@ select:disabled {
 }
 
 /* v16 reference-led editor refresh */
-@font-face {
-  font-family: "PretendardVariable";
-  src: url("assets/fonts/PretendardVariable.woff2") format("woff2-variations"),
-       url("assets/fonts/PretendardVariable.ttf") format("truetype-variations");
-  font-style: normal;
-  font-weight: 45 920;
-  font-display: swap;
-}
+
 
 :root {
   --surface-input: #0b0d11;
@@ -1714,124 +1700,34 @@ body[data-theme="light"] .canvas-stage { background-color: #1b1f25; }
 .text-settings-section-head strong { font-size: 11px; letter-spacing: -.01em; }
 .text-settings-section-head small { color: var(--muted); font-size: 8px; }
 
-/* ALL_LOCAL_FONTS_START */
-@font-face {
-  font-family: "PretendardVariable";
-  src: url("assets/fonts/PretendardVariable.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-}
 
-@font-face {
-  font-family: "KoPubBatang";
-  src: url("assets/fonts/KoPubBatang-Light.otf") format("opentype");
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
+/* v17 stable text layout */
+.text-mode-tools {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  min-width: 0;
 }
-
-@font-face {
-  font-family: "KoPubBatang";
-  src: url("assets/fonts/KoPubBatang-Medium.otf") format("opentype");
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
+.text-manual-reset {
+  min-height: 38px;
+  padding: 7px 10px;
+  white-space: nowrap;
+  font-size: 10px;
 }
-
-@font-face {
-  font-family: "KoPubBatang";
-  src: url("assets/fonts/KoPubBatang-Bold.otf") format("opentype");
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
+.text-manual-reset:disabled { display: none; }
+.text-card[data-auto="false"] { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.text-card[data-auto="false"] .text-style-heading::after {
+  content: "수동 고정됨";
+  justify-self: start;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-size: 8px;
+  font-weight: 800;
 }
-
-@font-face {
-  font-family: "KoPubDotum";
-  src: url("assets/fonts/KoPubDotum-Light.otf") format("opentype");
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
+@media (max-width: 760px) {
+  .text-mode-tools { grid-template-columns: 1fr; }
+  .text-manual-reset { width: 100%; }
 }
-
-@font-face {
-  font-family: "KoPubDotum";
-  src: url("assets/fonts/KoPubDotum-Medium.otf") format("opentype");
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "KoPubDotum";
-  src: url("assets/fonts/KoPubDotum-Bold.otf") format("opentype");
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ChosunSm";
-  src: url("assets/fonts/ChosunSm.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ChosunKm";
-  src: url("assets/fonts/ChosunKm.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ChosunKg";
-  src: url("assets/fonts/ChosunKg.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ChosunSg";
-  src: url("assets/fonts/ChosunSg.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ChosunBg";
-  src: url("assets/fonts/ChosunBg.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ChosunGu";
-  src: url("assets/fonts/ChosunGu.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ChosunLo";
-  src: url("assets/fonts/ChosunLo.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ChosunGs";
-  src: url("assets/fonts/ChosunGs.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-/* ALL_LOCAL_FONTS_END */

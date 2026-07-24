@@ -24,6 +24,19 @@
     chosunLo: '"ChosunLo", sans-serif',
     chosunGs: '"ChosunGs", serif'
   };
+  const FONT_OPTIONS = [
+    ["pretendard", "프리텐다드 Variable"],
+    ["dotum", "KoPub 돋움"],
+    ["batang", "KoPub 바탕"],
+    ["chosunSm", "조선신명조"],
+    ["chosunKm", "조선굵은명조"],
+    ["chosunKg", "조선굵은고딕"],
+    ["chosunSg", "조선가는고딕"],
+    ["chosunBg", "조선견고딕"],
+    ["chosunGu", "조선굴림체"],
+    ["chosunLo", "조선로고체"],
+    ["chosunGs", "조선궁서체"]
+  ];
   const PX_PER_MM = 8;
   const EFFECT_TYPES = ["shadow", "hollow", "extrude", "outline"];
 
@@ -518,7 +531,7 @@
   function makeText(text, overrides = {}) {
     return {
       id: uid(), text, regionId: null, order: 0, role: "body", roleHint: null, sample: false,
-      styleMode: "auto", regionLocked: false,
+      styleMode: "auto", regionLocked: false, manualProtected: false,
       fontFamily: "pretendard", fontWeight: 780, fontSize: 54, align: "left",
       bold: true, italic: false, underline: false, strike: false,
       scaleX: 1, letterSpacing: -1, lineHeight: 1.08,
@@ -547,7 +560,7 @@
   }
 
   const initialState = {
-    schemaVersion: 16,
+    schemaVersion: 17,
     theme: "dark",
     orientation: "landscape",
     artboard: { preset: "flyer", widthMm: 180, heightMm: 100 },
@@ -587,6 +600,7 @@
   let autoArrangeTimer = null;
   let activeTextarea = null;
   let renderQueued = false;
+  let fontsReady = false;
   let toastTimer = null;
   let unicodeTarget = null;
   const imageCache = new Map();
@@ -2197,8 +2211,58 @@
     });
   }
 
+function isTextManualProtected(text) {
+    if (!text) return false;
+    return Boolean(
+      text.manualProtected ||
+      text.styleMode === "manual" ||
+      text.regionLocked ||
+      text.manualX != null ||
+      text.manualY != null ||
+      Math.abs((Number(text.manualScale) || 1) - 1) > .001
+    );
+  }
+
   function markTextManual(text) {
+    if (!text) return;
     text.styleMode = "manual";
+    text.manualProtected = true;
+  }
+
+  function resetTextManualAdjustments(text, { restyle = true } = {}) {
+    if (!text) return;
+    text.styleMode = "auto";
+    text.manualProtected = false;
+    text.regionLocked = false;
+    text.manualX = null;
+    text.manualY = null;
+    text.manualScale = 1;
+    text.rangeColors = [];
+    text.rangeBackgrounds = [];
+    text.effects = [];
+    text.effect = "none";
+    text.unicodeStyle = "none";
+    text.customUnicode = "★";
+    text.prefixEnabled = false;
+    text.prefixSymbol = "•";
+    text.prefixGap = 8;
+    textNumericDefaults.delete(text.id);
+    if (!restyle) return;
+    const region = state.regions.find((item) => item.id === text.regionId);
+    const index = Math.max(0, state.texts.indexOf(text));
+    const role = inferTextRole(text, index);
+    text.role = role;
+    text.autoRole = role;
+    text.fontWeight = ROLE_STYLE_DEFAULTS[role]?.fontWeight ?? (ROLE_STYLE_DEFAULTS[role]?.bold ? 760 : 520);
+    applyRoleStyle(text, role);
+    if (region) {
+      autoDecoration(text, role, region);
+      const box = regionContentBox(region);
+      const facts = textFacts(text);
+      const emphasis = (Number(region.emphasis) || 1) * (facts.compact <= 14 ? 1.18 : 1);
+      text.fontSize = fitTextFontSize(sceneCtx, text, box, box.h, role, emphasis);
+    }
+    normalizeEffects(text);
   }
 
   function openUnicodeBrowser(target, hint) {
@@ -2333,7 +2397,7 @@
       };
 
       const row1 = document.createElement("div"); row1.className = "field-grid three";
-      const fontSelect = makeSelect([["pretendard","프리텐다드 Variable"],["dotum","KoPub 돋움"],["batang","KoPub 바탕"],["chosunSm","조선신명조"],["chosunKm","조선굵은명조"],["chosunKg","조선굵은고딕"],["chosunSg","조선가는고딕"],["chosunBg","조선견고딕"],["chosunGu","조선굴림체"],["chosunLo","조선로고체"],["chosunGs","조선궁서체"]], text.fontFamily);
+      const fontSelect = makeSelect([["dotum", "KoPub 돋움"], ["batang", "KoPub 바탕"], ["gulim", "굴림체"]], text.fontFamily);
       fontSelect.addEventListener("change", () => manual(() => { text.fontFamily = fontSelect.value; }));
       const fontSize = numericStepperControl("크기", text.fontSize, 12, 300, 1, (value) => `${Math.round(value)}px`, (value) => manual(() => { text.fontSize = clamp(Number(value), 12, 300); }), {
         defaultValue: () => textNumericDefault(text, "fontSize", ROLE_STYLE_DEFAULTS[text.role]?.fontSize ?? 54)
@@ -2481,11 +2545,18 @@
     });
   }
 
-  function moveTextInList(id, direction) {
+function moveTextInList(id, direction) {
     const index = state.texts.findIndex((x) => x.id === id);
     const next = clamp(index + direction, 0, state.texts.length - 1);
     if (next === index) return;
-    [state.texts[index], state.texts[next]] = [state.texts[next], state.texts[index]];
+    const current = state.texts[index];
+    const other = state.texts[next];
+    [state.texts[index], state.texts[next]] = [other, current];
+    [current, other].forEach((text) => {
+      if (!text) return;
+      text.regionLocked = true;
+      text.manualProtected = true;
+    });
     normalizeTextOrders(); renderTextList(); queueRender();
   }
 
@@ -2634,23 +2705,32 @@
     });
 
     $("autoArrangeBtn").addEventListener("click", () => {
-      state.texts.forEach((text) => {
-        text.styleMode = "auto";
-        textNumericDefaults.delete(text.id);
-        text.regionLocked = false;
-        text.manualX = null;
-        text.manualY = null;
-      });
       autoArrangeTexts({ reassign: true, forceStyle: true, announce: true });
       renderTextList();
       queueRender();
+      markHistoryDirty(true);
     });
 
     $("addTextBtn").addEventListener("click", () => {
-      const text = makeText("새로운 수달 소식\n여기에 문장을 입력하세요", { role: "body", styleMode: "auto" });
+      const text = makeText("새로운 수달 소식\n여기에 문장을 입력하세요", { role: "body", styleMode: "auto", manualProtected:false });
+      const regions=state.regions.filter((region)=>region.acceptText&&region.shape!=="line");
+      const occupancy=new Map(regions.map((region)=>[region.id,state.texts.filter((item)=>item.regionId===region.id).length]));
+      let best=regions[0],bestScore=-Infinity;
+      const facts=textFacts(text);
+      regions.forEach((region)=>{
+        const score=regionTextScore(region,"body",facts,occupancy.get(region.id)||0);
+        if(score>bestScore){best=region;bestScore=score;}
+      });
+      text.regionId=best?.id||null;
+      text.order=best?(occupancy.get(best.id)||0):0;
       state.texts.push(text);
-      state.selectedTextId = text.id;
-      autoArrangeTexts({ reassign: true, forceStyle: false });
+      state.selectedTextId=text.id;
+      if(best){
+        autoDecoration(text,"body",best);
+        const box=regionContentBox(best);
+        text.fontSize=fitTextFontSize(sceneCtx,text,box,box.h,"body",Number(best.emphasis)||1);
+      }
+      normalizeTextOrders();
       renderTextList();
       queueRender();
     });
@@ -3689,7 +3769,7 @@
       layoutFragments=layout.fragments.map((f)=>({id:f.text.id,regionId:f.region.id,x:f.x,y:f.y,w:f.w,h:f.h}));
       regionHitBoxes=state.regions.map((r)=>({id:r.id,x:r.x,y:r.y,w:r.w,h:r.h}));
       elementHitBoxes=state.elements.map((e)=>{const g=elementGeometry(e);return {id:e.id,x:g.x,y:g.y,w:g.w,h:g.h};});
-      $("layoutStatus").textContent=layout.overflow?"일부 문장 축소 배치":"영역 안 자동 배치";
+      $("layoutStatus").textContent=layout.overflow?"영역 안에서 최소 크기로 맞춤":"배치 고정 · 자동 배치 버튼을 누를 때만 재계산";
       $("layoutStatus").style.color=layout.overflow?"#ffd49a":"#9ef0b5";
     }
   }
@@ -4062,8 +4142,8 @@
     item.effect = item.effects[0] || "none";
   }
 
-  function ensureStateCompatibility() {
-    state.schemaVersion = 16;
+function ensureStateCompatibility() {
+    state.schemaVersion = 17;
     state.theme ||= "dark";
     state.artboard ||= { preset: "flyer", widthMm: 180, heightMm: 100 };
     state.artboard.widthMm = clamp(Number(state.artboard.widthMm) || 180, 50, 420);
@@ -4111,12 +4191,15 @@
     });
     state.texts.forEach((text) => {
       normalizeEffects(text);
-      text.fontFamily ||= "pretendard";
+      if (text.fontFamily === "gulim" || !fontFamilies[text.fontFamily]) text.fontFamily = "pretendard";
       text.fontWeight = clamp(Number(text.fontWeight) || (text.bold ? 760 : 520), 100, 900);
       text.rangeColors ||= [];
       text.rangeBackgrounds ||= [];
       text.manualScale = clamp(Number(text.manualScale) || 1, .35, 3);
       if (!text.styleMode) text.styleMode = "auto";
+      if (typeof text.manualProtected !== "boolean") {
+        text.manualProtected = Boolean(text.styleMode === "manual" || text.regionLocked || text.manualX != null || text.manualY != null || Math.abs(text.manualScale - 1) > .001);
+      }
       if (!Number.isFinite(Number(text.gap))) text.gap = 4;
     });
   }
@@ -4537,31 +4620,72 @@
     autoStyleAssignedTexts({ force:false, skipAdapt:true });
   }
 
-  function adaptRegionsToText() {
+function adaptRegionsToText() {
     const { trimW:W, trimH:H } = dimensions();
-    state.regions.filter((region) => region.acceptText && region.shape !== "line").forEach((region) => {
+    const regions = state.regions.filter((region) => region.acceptText && region.shape !== "line");
+    const tolerance = Math.max(5, Math.min(W, H) * .008);
+    const overlapArea = (a, b) => {
+      const w = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
+      const h = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+      return w * h;
+    };
+    const sharesHorizontalEdges = (region, base) => regions.some((other) => {
+      if (other.id === region.id) return false;
+      const otherBase = other.layoutBase || regionBaseTarget(other);
+      return Math.abs(otherBase.y - base.y) <= tolerance && Math.abs((otherBase.y + otherBase.h) - (base.y + base.h)) <= tolerance;
+    });
+    const sharesVerticalEdges = (region, base) => regions.some((other) => {
+      if (other.id === region.id) return false;
+      const otherBase = other.layoutBase || regionBaseTarget(other);
+      return Math.abs(otherBase.x - base.x) <= tolerance && Math.abs((otherBase.x + otherBase.w) - (base.x + base.w)) <= tolerance;
+    });
+
+    regions.forEach((region) => {
       const texts = state.texts.filter((text) => text.regionId === region.id);
-      if (!texts.length || region.layoutDetached) return;
-      const chars = texts.reduce((sum,text) => sum + textFacts(text).compact + textFacts(text).lines.length * 4, 0);
-      const area = Math.max(1, region.w * region.h);
-      const target = area / 4100;
-      const pressure = clamp((chars - target) / Math.max(12,target), -1, 1);
-      const maxGrowX = W * .018;
-      const maxGrowY = H * .028;
-      const growX = clamp(pressure * maxGrowX, -W*.008, maxGrowX);
-      const growY = clamp(pressure * maxGrowY, -H*.010, maxGrowY);
-      if (region.overflowAllowance) {
-        region.x -= growX * .35;
-        region.w += growX * .70;
-      } else {
-        region.y -= growY * .34;
-        region.h += growY * .68;
-      }
+      if (!texts.length || region.layoutDetached || texts.some(isTextManualProtected)) return;
+      const base = region.layoutBase || regionBaseTarget(region);
+      const chars = texts.reduce((sum, text) => {
+        const facts = textFacts(text);
+        return sum + facts.compact + facts.lines.length * 4;
+      }, 0);
+      const target = Math.max(10, (base.w * base.h) / 4300);
+      const pressure = clamp((chars - target) / target, -1, 1);
+      if (Math.abs(pressure) < .22) return;
+
+      const aspect = base.w / Math.max(1, base.h);
+      let dw = clamp(pressure * W * .006, -W * .003, W * .006);
+      let dh = clamp(pressure * H * .010, -H * .004, H * .010);
+      if (aspect > 2.2) dw *= .18;
+      else if (aspect < .78) dh *= .20;
+      else { dw *= .55; dh *= .55; }
+      if (sharesVerticalEdges(region, base)) dw = 0;
+      if (sharesHorizontalEdges(region, base)) dh = 0;
+
       const margin = Math.max(0, Number(state.pageMargin) || 0);
-      region.x = clamp(region.x, -W*.05, W - margin - 20);
-      region.y = clamp(region.y, -H*.05, H - margin - 20);
-      region.w = clamp(region.w, 20, W * 1.05 - region.x);
-      region.h = clamp(region.h, 20, H * 1.05 - region.y);
+      const rightAnchored = Math.abs((base.x + base.w) - (W - margin)) <= tolerance;
+      const leftAnchored = Math.abs(base.x - margin) <= tolerance;
+      const bottomAnchored = Math.abs((base.y + base.h) - (H - margin)) <= tolerance;
+      const topAnchored = Math.abs(base.y - margin) <= tolerance;
+      const candidate = {
+        x: leftAnchored ? base.x : rightAnchored ? base.x - dw : base.x - dw / 2,
+        y: topAnchored ? base.y : bottomAnchored ? base.y - dh : base.y - dh / 2,
+        w: Math.max(20, base.w + dw),
+        h: Math.max(20, base.h + dh)
+      };
+      candidate.x = clamp(candidate.x, -W * .05, W - 20);
+      candidate.y = clamp(candidate.y, -H * .05, H - 20);
+      candidate.w = clamp(candidate.w, 20, W * 1.05 - candidate.x);
+      candidate.h = clamp(candidate.h, 20, H * 1.05 - candidate.y);
+
+      const violates = state.regions.some((other) => {
+        if (other.id === region.id || other.shape === "line") return false;
+        const otherRect = { x:other.x, y:other.y, w:other.w, h:other.h };
+        const baseOverlap = overlapArea(base, otherRect);
+        const nextOverlap = overlapArea(candidate, otherRect);
+        const allowed = Math.max(baseOverlap, Math.min(candidate.w * candidate.h, otherRect.w * otherRect.h) * .05);
+        return nextOverlap > allowed + 1;
+      });
+      if (!violates) Object.assign(region, candidate);
     });
   }
 
@@ -4604,6 +4728,7 @@
       text.role = inferTextRole(text,index);
       text.autoRole = text.role;
       text.regionLocked = false;
+      text.manualProtected = false;
       text.manualX = null;
       text.manualY = null;
       text.manualScale = 1;
@@ -4852,12 +4977,12 @@
     return Math.max(11,Math.floor(low));
   }
 
-  function autoStyleAssignedTexts({ force = false, skipAdapt = false } = {}) {
+function autoStyleAssignedTexts({ force = false, skipAdapt = false } = {}) {
     if (!skipAdapt) adaptRegionsToText();
     const groups = new Map();
     state.texts.forEach((text,index) => {
       text.autoRole = inferTextRole(text,index);
-      text.role = text.autoRole;
+      if (!isTextManualProtected(text)) text.role = text.autoRole;
       if (!groups.has(text.regionId)) groups.set(text.regionId,[]);
       groups.get(text.regionId).push(text);
     });
@@ -4866,7 +4991,7 @@
       if(!region)return;
       region.textVAlign="center";
       const box=regionContentBox(region);
-      const styled=texts.filter((text)=>force||text.styleMode!=="manual");
+      const styled=texts.filter((text)=>!isTextManualProtected(text) && (force || text.styleMode!=="manual"));
       if(!styled.length)return;
       const weights=styled.map((text)=>{
         const facts=textFacts(text),role=text.autoRole||"body";
@@ -4888,15 +5013,20 @@
     });
   }
 
-  function autoArrangeTexts({ reassign = true, forceStyle = false, announce = false } = {}) {
+function autoArrangeTexts({ reassign = true, forceStyle = false, announce = false } = {}) {
     const regions=state.regions.filter((region)=>region.acceptText&&region.shape!=="line");
     if(!regions.length)return;
+    const validIds=new Set(regions.map((region)=>region.id));
+    const protectedTexts=state.texts.filter((text)=>isTextManualProtected(text)&&validIds.has(text.regionId));
     if(reassign){
-      const validIds=new Set(regions.map((region)=>region.id));
       const occupancy=new Map(regions.map((region)=>[region.id,0]));
-      const locked=state.texts.filter((text)=>text.regionLocked&&validIds.has(text.regionId));
-      locked.forEach((text)=>{text.order=occupancy.get(text.regionId)||0;occupancy.set(text.regionId,text.order+1);});
-      const ranked=state.texts.filter((text)=>!locked.includes(text)).map((text,index)=>{
+      protectedTexts
+        .sort((a,b)=>(a.order||0)-(b.order||0))
+        .forEach((text)=>{
+          text.order=occupancy.get(text.regionId)||0;
+          occupancy.set(text.regionId,text.order+1);
+        });
+      const ranked=state.texts.filter((text)=>!protectedTexts.includes(text)).map((text,index)=>{
         const role=inferTextRole(text,state.texts.indexOf(text));
         const facts=textFacts(text);
         const priority=({headline:210,footer:180,bullet:150,callout:140,tag:130,body:120,micro:85}[role]||100)+Math.min(facts.compact,60);
@@ -4910,14 +5040,23 @@
         });
         text.regionId=best.id;
         text.order=occupancy.get(best.id)||0;
-        text.manualX=null;text.manualY=null;text.manualScale=1;text.autoRole=role;
+        text.manualX=null;
+        text.manualY=null;
+        text.manualScale=1;
+        text.autoRole=role;
+        text.regionLocked=false;
+        text.manualProtected=false;
+        text.styleMode="auto";
         occupancy.set(best.id,text.order+1);
       });
       normalizeTextOrders();
     }
     adaptRegionsToText();
     autoStyleAssignedTexts({force:forceStyle,skipAdapt:true});
-    if(announce)toast("문장 길이·줄바꿈·영역 밀도를 다시 계산했습니다.");
+    if(announce){
+      const count=protectedTexts.length;
+      toast(count?`자동 배치를 다시 계산했습니다. 수동 고정 ${count}개는 유지했습니다.`:"문장 길이·줄바꿈·영역 밀도를 다시 계산했습니다.");
+    }
   }
 
   function effectLabel(value) {
@@ -5150,9 +5289,10 @@
     c.restore();
   }
 
-  function setTextFont(c,text,fontSize){
-    const weight=text.fontFamily==="pretendard" ? clamp(Number(text.fontWeight)||(text.bold?760:520),100,900) : (text.bold?700:500);
-    c.font=`${text.italic?"italic ":""}${weight} ${fontSize}px ${fontFamilies[text.fontFamily]||fontFamilies.pretendard}`;
+function setTextFont(c,text,fontSize){
+    const familyKey=fontFamilies[text.fontFamily]?text.fontFamily:"pretendard";
+    const weight=familyKey==="pretendard" ? clamp(Number(text.fontWeight)||(text.bold?760:520),100,900) : (text.bold?700:400);
+    c.font=`${text.italic?"italic ":""}${weight} ${fontSize}px ${fontFamilies[familyKey]}`;
   }
 
   function regionContentBox(region){
@@ -5169,37 +5309,27 @@
     }).filter((rect)=>rect.w>0&&rect.h>0);
   }
 
-  function buildLayout(c){
-    const fragments=[],obstacles=obstacleRects();let overflow=false;
-    state.regions.filter((region)=>region.acceptText&&region.shape!=="line").forEach((region)=>{
-      region.textVAlign="center";
+function buildLayout(c){
+    const fragments=[];
+    const obstacles=obstacleRects();
+    let overflow=false;
+    const regions=state.regions.filter((region)=>region.acceptText&&region.shape!=="line");
+
+    const layoutRegion=(region,scale,startY)=>{
       const box=regionContentBox(region);
       const texts=state.texts.filter((text)=>text.regionId===region.id).sort((a,b)=>a.order-b.order);
-      if(!texts.length)return;
-      let commonScale=1,estimated=[];
-      for(let pass=0;pass<5;pass++){
-        estimated=texts.map((text)=>{
-          const fontSize=Math.max(10,text.fontSize*commonScale*(Number(text.manualScale)||1));
-          const lines=layoutTextLines(c,text,fontSize,box.w);
-          const lineH=fontSize*text.lineHeight;
-          return {text,fontSize,lines,lineH,h:Math.max(lineH,lines.length*lineH)};
-        });
-        const total=estimated.reduce((sum,item)=>sum+item.h+item.text.gap*commonScale,0)-texts.at(-1).gap*commonScale;
-        if(total<=box.h+1)break;
-        commonScale*=clamp(box.h/Math.max(1,total),.55,.985);
-      }
-      commonScale=Math.max(.25,commonScale);
-      estimated=texts.map((text)=>{
-        const fontSize=Math.max(10,text.fontSize*commonScale*(Number(text.manualScale)||1));
-        const lines=layoutTextLines(c,text,fontSize,box.w);
-        const lineH=fontSize*text.lineHeight;
-        return {text,fontSize,lines,lineH,h:Math.max(lineH,lines.length*lineH)};
-      });
-      const groupHeight=estimated.reduce((sum,item)=>sum+item.h+item.text.gap*commonScale,0)-texts.at(-1).gap*commonScale;
-      let cursorY=box.y+Math.max(0,(box.h-groupHeight)/2);
-      estimated.forEach((estimate)=>{
-        const {text,fontSize,lineH}=estimate;
-        let lines=estimate.lines,blockH=estimate.h,desiredW=Math.max(1,...lines.map((line)=>line.width*text.scaleX)),place;
+      const out=[];
+      let cursorY=startY==null?box.y:startY;
+      let regionOverflow=false;
+      for(const text of texts){
+        const protectedText=isTextManualProtected(text);
+        const autoScale=protectedText?1:scale;
+        const fontSize=Math.max(protectedText?8:5,text.fontSize*autoScale*(Number(text.manualScale)||1));
+        const lineH=Math.max(7,fontSize*clamp(Number(text.lineHeight)||1,.65,2));
+        let lines=layoutTextLines(c,text,fontSize,box.w);
+        let blockH=Math.max(lineH,lines.length*lineH);
+        let desiredW=Math.max(1,...lines.map((line)=>line.width*text.scaleX));
+        let place;
         if(text.manualX!=null&&text.manualY!=null){
           const y=clamp(text.manualY,box.y,Math.max(box.y,box.y+box.h-blockH));
           const intervals=availableIntervals(box,y,blockH,obstacles);
@@ -5207,17 +5337,55 @@
           const interval=intervals.find(([a,b])=>preferred>=a&&preferred<=b)||intervals[0]||[box.x,box.x+box.w];
           const placedX=clamp(preferred,interval[0],Math.max(interval[0],interval[1]-20));
           const availableW=Math.max(20,interval[1]-placedX);
-          lines=layoutTextLines(c,text,fontSize,availableW);blockH=Math.max(lineH,lines.length*lineH);desiredW=Math.max(1,...lines.map((line)=>line.width*text.scaleX));
+          lines=layoutTextLines(c,text,fontSize,availableW);
+          blockH=Math.max(lineH,lines.length*lineH);
+          desiredW=Math.max(1,...lines.map((line)=>line.width*text.scaleX));
           place={x:placedX,y:clamp(y,box.y,Math.max(box.y,box.y+box.h-blockH)),w:availableW,fit:Math.min(1,availableW/desiredW)};
         }else{
-          place=findPlacement(box,cursorY,blockH,desiredW,obstacles);
-          lines=layoutTextLines(c,text,fontSize,place.w);blockH=Math.max(lineH,lines.length*lineH);desiredW=Math.max(1,...lines.map((line)=>line.width*text.scaleX));
-          place=findPlacement(box,place.y,blockH,desiredW,obstacles);cursorY=place.y+blockH+text.gap*commonScale;
+          const requestedY=cursorY;
+          place=findPlacement(box,requestedY,blockH,desiredW,obstacles);
+          lines=layoutTextLines(c,text,fontSize,place.w);
+          blockH=Math.max(lineH,lines.length*lineH);
+          desiredW=Math.max(1,...lines.map((line)=>line.width*text.scaleX));
+          place=findPlacement(box,place.y,blockH,desiredW,obstacles);
+          if(requestedY>box.y&&requestedY+blockH>box.y+box.h){
+            place={...place,y:requestedY};
+          }
+          cursorY=place.y+blockH+Math.max(0,Number(text.gap)||0)*autoScale;
         }
-        if(place.y+blockH>box.y+box.h+1)overflow=true;
-        fragments.push({text,region,lines,fontSize,lineH,x:place.x,y:place.y,w:place.w,h:blockH,fit:Math.max(.50,place.fit),box});
-      });
-    });
+        if(place.y+blockH>box.y+box.h+1)regionOverflow=true;
+        out.push({text,region,lines,fontSize,lineH,x:place.x,y:place.y,w:place.w,h:blockH,fit:Math.max(.50,place.fit),box});
+      }
+      return {fragments:out,overflow:regionOverflow,box};
+    };
+
+    for(const region of regions){
+      const regionTexts=state.texts.filter((text)=>text.regionId===region.id);
+      if(!regionTexts.length)continue;
+      let chosenScale=1;
+      let chosen=layoutRegion(region,chosenScale,null);
+      if(chosen.overflow&&regionTexts.some((text)=>!isTextManualProtected(text))){
+        let low=.06,high=1;
+        chosenScale=low;
+        chosen=layoutRegion(region,chosenScale,null);
+        for(let i=0;i<15;i++){
+          const mid=(low+high)/2;
+          const test=layoutRegion(region,mid,null);
+          if(test.overflow)high=mid;
+          else{low=mid;chosenScale=mid;chosen=test;}
+        }
+      }
+      if(chosen.fragments.length&&chosen.fragments.every((fragment)=>fragment.text.manualY==null)){
+        const top=Math.min(...chosen.fragments.map((fragment)=>fragment.y));
+        const bottom=Math.max(...chosen.fragments.map((fragment)=>fragment.y+fragment.h));
+        const used=Math.max(0,bottom-top);
+        const centeredStart=chosen.box.y+Math.max(0,(chosen.box.h-used)/2);
+        const centered=layoutRegion(region,chosenScale,centeredStart);
+        if(!centered.overflow)chosen=centered;
+      }
+      overflow=overflow||chosen.overflow;
+      fragments.push(...chosen.fragments);
+    }
     return {fragments,overflow};
   }
 
@@ -5406,38 +5574,71 @@
     state.texts.forEach((text,index)=>{
       normalizeEffects(text);
       const selected=state.selectedTextId===text.id;
-      const card=document.createElement("article");card.className=`text-card${selected?" active":""}`;card.dataset.textId=text.id;card.dataset.auto=String(text.styleMode!=="manual");
+      const card=document.createElement("article");card.className=`text-card${selected?" active":""}`;card.dataset.textId=text.id;card.dataset.auto=String(!isTextManualProtected(text));
       const head=document.createElement("div");head.className="text-card-head";
-      const grip=document.createElement("div");grip.className="drag-grip";grip.innerHTML=`<b>${String(index+1).padStart(2,"0")}</b><small>${text.styleMode==="manual"?"EDIT":"AUTO"}</small>`;
+      const grip=document.createElement("div");grip.className="drag-grip";grip.innerHTML=`<b>${String(index+1).padStart(2,"0")}</b><small>${isTextManualProtected(text)?"LOCK":"AUTO"}</small>`;
       const textarea=document.createElement("textarea");textarea.className="text-input";textarea.value=text.text;textarea.rows=Math.max(2,Math.min(7,text.text.split("\n").length+1));
       const selectCard=()=>{state.selectedTextId=text.id;activeTextarea=textarea;list.querySelectorAll(".text-card").forEach((node)=>node.classList.toggle("active",node.dataset.textId===text.id));queueRender();};
       textarea.addEventListener("focus",selectCard);textarea.addEventListener("click",selectCard);textarea.addEventListener("select",()=>{activeTextarea=textarea;});
-      textarea.addEventListener("input",()=>{text.text=textarea.value;text.roleHint=null;text.sample=false;textarea.rows=Math.max(2,Math.min(7,textarea.value.split("\n").length+1));scheduleAutoArrange({reassign:!text.regionLocked,refreshControls:false});queueRender();});
-      textarea.addEventListener("blur",()=>{if(text.styleMode!=="manual"){autoArrangeTexts({reassign:!text.regionLocked,forceStyle:false});renderTextList();queueRender();}});
+      textarea.addEventListener("input",()=>{
+        text.text=textarea.value;
+        text.roleHint=null;
+        text.sample=false;
+        textarea.rows=Math.max(2,Math.min(7,textarea.value.split("\n").length+1));
+        queueRender();
+      });
+      textarea.addEventListener("blur",()=>{
+        markHistoryDirty(true);
+        queueRender();
+      });
       const actions=document.createElement("div");actions.className="text-card-actions";
-      [["↑","위로",()=>moveTextInList(text.id,-1)],["↓","아래로",()=>moveTextInList(text.id,1)],["×","삭제",()=>{if(state.texts.length===1)return toast("문장은 하나 이상 필요합니다.");state.texts=state.texts.filter((item)=>item.id!==text.id);state.selectedTextId=state.texts[Math.max(0,index-1)]?.id||null;autoArrangeTexts({reassign:true,forceStyle:false});renderTextList();queueRender();}]].forEach(([label,title,handler])=>{const button=document.createElement("button");button.className="small-button";button.type="button";button.textContent=label;button.title=title;button.addEventListener("click",handler);actions.append(button);});
+      [["↑","위로",()=>moveTextInList(text.id,-1)],["↓","아래로",()=>moveTextInList(text.id,1)],["×","삭제",()=>{if(state.texts.length===1)return toast("문장은 하나 이상 필요합니다.");state.texts=state.texts.filter((item)=>item.id!==text.id);state.selectedTextId=state.texts[Math.max(0,index-1)]?.id||null;normalizeTextOrders();renderTextList();queueRender();}]].forEach(([label,title,handler])=>{const button=document.createElement("button");button.className="small-button";button.type="button";button.textContent=label;button.title=title;button.addEventListener("click",handler);actions.append(button);});
       head.append(grip,textarea,actions);head.addEventListener("pointerdown",(event)=>{if(event.target.closest("textarea,button,input,select"))return;selectCard();});card.append(head);
 
       const controls=document.createElement("div");controls.className="inline-text-controls";
       const top=document.createElement("div");top.className="text-style-heading";
       const title=document.createElement("div");title.innerHTML='<p class="control-title">선택 문장 꾸미기</p><small>자동 배치를 유지하거나, 이 문장만 직접 조절합니다.</small>';
-      const mode=makeSegmentedControl([["auto","자동 맞춤"],["manual","직접 꾸미기"]],text.styleMode,(value)=>{
-        text.styleMode=value;
-        if(value==="auto"){textNumericDefaults.delete(text.id);text.manualScale=1;autoStyleAssignedTexts({force:false});toast("문장을 영역에 다시 맞췄습니다.");}
+      const mode=makeSegmentedControl([["auto","자동 상태"],["manual","수동 고정"]],isTextManualProtected(text)?"manual":"auto",(value)=>{
+        if(value==="auto"){
+          resetTextManualAdjustments(text,{restyle:true});
+          toast("수동 조정을 초기화했습니다. 다음 자동 배치부터 다시 계산됩니다.");
+        }else markTextManual(text);
         renderTextList();queueRender();
-      },"compact");top.append(title,mode);controls.append(top);
+      },"compact");
+      const resetManual=document.createElement("button");
+      resetManual.type="button";
+      resetManual.className="button button-ghost text-manual-reset";
+      resetManual.textContent="↺ 수동 조정 초기화";
+      resetManual.disabled=!isTextManualProtected(text);
+      resetManual.addEventListener("click",()=>{
+        resetTextManualAdjustments(text,{restyle:true});
+        renderTextList();queueRender();markHistoryDirty(true);
+        toast("이 문장의 수동 위치·크기·꾸미기를 초기화했습니다.");
+      });
+      const modeTools=document.createElement("div");modeTools.className="text-mode-tools";modeTools.append(mode,resetManual);
+      top.append(title,modeTools);controls.append(top);
 
       const manual=(action,{refresh=false}={})=>{
         if(text.styleMode!=="manual")captureTextNumericDefaults(text,true);
         markTextManual(text);action();normalizeEffects(text);card.dataset.auto="false";mode.querySelectorAll("button[data-value]").forEach((button)=>button.classList.toggle("active",button.dataset.value==="manual"));
+        resetManual.disabled=false;
         if(refresh)renderTextList();queueRender();
       };
 
       const layoutSection=textSettingsSection("배치 · 글꼴","문장 영역과 글꼴 크기를 먼저 정합니다.");
       const layoutGrid=document.createElement("div");layoutGrid.className="field-grid three text-control-grid";
       const regionSelect=document.createElement("select");accepting.forEach((region)=>{const option=document.createElement("option");option.value=region.id;option.textContent=region.name;option.selected=text.regionId===region.id;regionSelect.append(option);});regionSelect.disabled=!accepting.length;
-      regionSelect.addEventListener("change",()=>{text.regionId=regionSelect.value;text.regionLocked=true;text.manualX=null;text.manualY=null;normalizeTextOrders();autoStyleAssignedTexts({force:false});queueRender();});
-      const fontSelect=makeSelect([["pretendard","프리텐다드 Variable"],["dotum","KoPub 돋움"],["batang","KoPub 바탕"],["chosunSm","조선신명조"],["chosunKm","조선굵은명조"],["chosunKg","조선굵은고딕"],["chosunSg","조선가는고딕"],["chosunBg","조선견고딕"],["chosunGu","조선굴림체"],["chosunLo","조선로고체"],["chosunGs","조선궁서체"]],text.fontFamily);
+      regionSelect.addEventListener("change",()=>{
+        markTextManual(text);
+        text.regionId=regionSelect.value;
+        text.regionLocked=true;
+        text.manualX=null;
+        text.manualY=null;
+        normalizeTextOrders();
+        renderTextList();
+        queueRender();
+      });
+      const fontSelect=makeSelect(FONT_OPTIONS,text.fontFamily);
       fontSelect.addEventListener("change",()=>manual(()=>{text.fontFamily=fontSelect.value;if(text.fontFamily==="pretendard"&&!text.fontWeight)text.fontWeight=760;},{refresh:true}));
       const align=makeSelect([["left","왼쪽"],["center","가운데"],["right","오른쪽"]],text.align);align.addEventListener("change",()=>manual(()=>{text.align=align.value;}));
       layoutGrid.append(labeledControl("글자 영역",regionSelect),labeledControl("폰트",fontSelect),labeledControl("좌우 정렬",align));layoutSection.append(layoutGrid);
@@ -5984,7 +6185,7 @@
       const newW=Math.max(20,Math.abs(point.x-opposite.x)),newH=Math.max(12,Math.abs(point.y-opposite.y));
       const ratio=clamp(Math.min(newW/Math.max(1,drag.geometry.w),newH/Math.max(1,drag.geometry.h)),.35,3);
       source.manualScale=clamp((Number(drag.orig.manualScale)||1)*ratio,.35,3);
-      source.styleMode="manual";source.regionLocked=true;return;
+      source.styleMode="manual";source.regionLocked=true;source.manualProtected=true;return;
     }
     const dx=point.x-drag.start.x,dy=point.y-drag.start.y;
     if(drag.kind==="element"&&source.type==="band"){
@@ -6003,13 +6204,17 @@
     source.x=clamp(x,-w*.05,W-w*.05);source.y=clamp(y,-h*.05,H-h*.05);source.w=w;source.h=h;
   }
 
-  function swapRegionTextBundles(sourceRegionId,targetRegionId){
+function swapRegionTextBundles(sourceRegionId,targetRegionId){
     if(!sourceRegionId||!targetRegionId||sourceRegionId===targetRegionId)return false;
     const sourceTexts=state.texts.filter((text)=>text.regionId===sourceRegionId).sort((a,b)=>a.order-b.order);
     const targetTexts=state.texts.filter((text)=>text.regionId===targetRegionId).sort((a,b)=>a.order-b.order);
-    sourceTexts.forEach((text,index)=>{text.regionId=targetRegionId;text.order=index;text.manualX=null;text.manualY=null;text.manualScale=1;text.regionLocked=false;});
-    targetTexts.forEach((text,index)=>{text.regionId=sourceRegionId;text.order=index;text.manualX=null;text.manualY=null;text.manualScale=1;text.regionLocked=false;});
-    autoStyleAssignedTexts({force:false});normalizeTextOrders();return true;
+    sourceTexts.forEach((text,index)=>{
+      text.regionId=targetRegionId;text.order=index;text.manualX=null;text.manualY=null;text.manualScale=1;text.regionLocked=true;text.manualProtected=true;
+    });
+    targetTexts.forEach((text,index)=>{
+      text.regionId=sourceRegionId;text.order=index;text.manualX=null;text.manualY=null;text.manualScale=1;text.regionLocked=true;text.manualProtected=true;
+    });
+    normalizeTextOrders();return true;
   }
 
   function v16PointerDown(event){
@@ -6070,7 +6275,7 @@
         const region=state.regions.find((item)=>item.id===source.regionId),box=region?regionContentBox(region):{x:0,y:0,w:W,h:H};
         const baseX=drag.orig.manualX??drag.geometry.x,baseY=drag.orig.manualY??drag.geometry.y;
         source.manualX=clamp(baseX+dx,box.x,Math.max(box.x,box.x+box.w-drag.geometry.w));
-        source.manualY=clamp(baseY+dy,box.y,Math.max(box.y,box.y+box.h-drag.geometry.h));source.regionLocked=true;source.styleMode="manual";
+        source.manualY=clamp(baseY+dy,box.y,Math.max(box.y,box.y+box.h-drag.geometry.h));source.regionLocked=true;source.styleMode="manual";source.manualProtected=true;
       }else if(drag.kind==="element"&&source.type==="band"){
         if(source.bandScope==="region"){
           const region=state.regions.find((item)=>item.id===source.bandRegionId);if(region)source.bandPosition=clamp((drag.geometry.y+drag.geometry.h/2+dy-region.y)/Math.max(1,region.h),0,1);
@@ -6196,14 +6401,23 @@
     return intervals;
   }
 
-  prepareV16();
-  enhanceStaticNumericFields();
-  bindControls();
-  setupColorFields();
-  bindV16Controls();
-  applyTemplate("dense-left-rail",{preserveTexts:false});
-  initializeHistory();
-  $("showRegions").checked=state.showRegions;
-  renderUnicodeGrid("전체","");
-  queueRender();
+  async function initializeV17(){
+    prepareV16();
+    enhanceStaticNumericFields();
+    bindControls();
+    setupColorFields();
+    bindV16Controls();
+    if(document.fonts){
+      const fontLoad=Promise.allSettled(Object.values(fontFamilies).map((family)=>document.fonts.load(`16px ${family}`)));
+      const timeout=new Promise((resolve)=>setTimeout(resolve,2200));
+      await Promise.race([fontLoad,timeout]);
+    }
+    fontsReady=true;
+    applyTemplate("dense-left-rail",{preserveTexts:false});
+    initializeHistory();
+    $("showRegions").checked=state.showRegions;
+    renderUnicodeGrid("전체","");
+    queueRender();
+  }
+  initializeV17();
 })();
