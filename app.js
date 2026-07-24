@@ -72,9 +72,22 @@
     return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
   }
   const contrastText = (color) => luminance(color) > 0.45 ? "#111111" : "#ffffff";
+  function contrastRatio(a, b) {
+    const A = luminance(a) + .05;
+    const B = luminance(b) + .05;
+    return Math.max(A, B) / Math.min(A, B);
+  }
+  function bestAccentColor(background, baseColor) {
+    const candidates = [state?.palette?.tertiary, state?.palette?.primary, state?.palette?.secondary, "#ffffff", "#111111"].filter(Boolean);
+    const ranked = candidates
+      .filter((color) => color.toLowerCase() !== String(baseColor || "").toLowerCase())
+      .map((color) => ({ color, score: contrastRatio(color, background) + (color === state?.palette?.tertiary ? .18 : 0) }))
+      .sort((a, b) => b.score - a.score);
+    return ranked.find((item) => item.score >= 3.2)?.color || ranked[0]?.color || baseColor;
+  }
 
   function paletteColor(role, palette) {
-    const p = palette || state.palette || { primary: "#ffd400", secondary: "#111111", tertiary: "#0057ff" };
+    const p = palette || state.palette || { primary: "#ffd400", secondary: "#111111", tertiary: "#e62d20" };
     if (!role) return "#111111";
     if (p[role]) return p[role];
     if (role === "ink") return p.secondary || "#111111";
@@ -108,238 +121,373 @@
     return region;
   }
 
+  const REGION_TEXT_PRESETS = {
+    hero: {
+      fontFamily:"dotum", align:"left", bold:true, italic:false,
+      lineHeight:.86, scaleX:.91, letterSpacing:-5,
+      unicodeStyle:"none", effect:"none", outlineWidth:0,
+      fontCap:226, fontScale:1.20, gapScale:.48, accentWords:true
+    },
+    heroShadow: {
+      fontFamily:"dotum", align:"left", bold:true, italic:false,
+      lineHeight:.86, scaleX:.91, letterSpacing:-5,
+      unicodeStyle:"none", effect:"shadow", effectColorRole:"secondary", outlineWidth:3,
+      fontCap:220, fontScale:1.16, gapScale:.48, accentWords:false
+    },
+    heroOutline: {
+      fontFamily:"dotum", align:"left", bold:true, italic:false,
+      lineHeight:.86, scaleX:.91, letterSpacing:-5,
+      unicodeStyle:"none", effect:"outline", effectColorRole:"paper", outlineWidth:2,
+      fontCap:220, fontScale:1.17, gapScale:.48, accentWords:true
+    },
+    strap: {
+      fontFamily:"dotum", align:"center", bold:true, italic:false,
+      lineHeight:.88, scaleX:.93, letterSpacing:-3,
+      unicodeStyle:"none", effect:"none", outlineWidth:0,
+      fontCap:112, fontScale:1.10, gapScale:.42, accentWords:false
+    },
+    badge: {
+      fontFamily:"dotum", align:"center", bold:true, italic:false,
+      lineHeight:.84, scaleX:.94, letterSpacing:-2,
+      unicodeStyle:"none", effect:"none", outlineWidth:0,
+      fontCap:132, fontScale:1.10, gapScale:.40, accentWords:false
+    },
+    badgeOutline: {
+      fontFamily:"dotum", align:"center", bold:true, italic:false,
+      lineHeight:.84, scaleX:.94, letterSpacing:-2,
+      unicodeStyle:"none", effect:"outline", effectColorRole:"paper", outlineWidth:2,
+      fontCap:128, fontScale:1.08, gapScale:.40, accentWords:false
+    },
+    bulletDense: {
+      fontFamily:"dotum", align:"left", bold:true, italic:false,
+      lineHeight:.96, scaleX:.93, letterSpacing:-2,
+      unicodeStyle:"none", effect:"none", outlineWidth:0,
+      fontCap:92, fontScale:1.02, gapScale:.44, accentWords:false
+    },
+    bodyDense: {
+      fontFamily:"dotum", align:"left", bold:true, italic:false,
+      lineHeight:.98, scaleX:.91, letterSpacing:-2,
+      unicodeStyle:"none", effect:"none", outlineWidth:0,
+      fontCap:94, fontScale:1.02, gapScale:.44, accentWords:true
+    },
+    bodyDisplay: {
+      fontFamily:"dotum", align:"left", bold:true, italic:false,
+      lineHeight:.90, scaleX:.92, letterSpacing:-3,
+      unicodeStyle:"none", effect:"none", outlineWidth:0,
+      fontCap:130, fontScale:1.10, gapScale:.40, accentWords:true
+    },
+    micro: {
+      fontFamily:"dotum", align:"left", bold:false, italic:false,
+      lineHeight:1.05, scaleX:.89, letterSpacing:-1,
+      unicodeStyle:"none", effect:"none", outlineWidth:0,
+      fontCap:48, fontScale:.94, gapScale:.30, accentWords:false
+    },
+    microCenter: {
+      fontFamily:"dotum", align:"center", bold:false, italic:false,
+      lineHeight:1.02, scaleX:.89, letterSpacing:-1,
+      unicodeStyle:"none", effect:"none", outlineWidth:0,
+      fontCap:48, fontScale:.94, gapScale:.30, accentWords:false
+    },
+    hotline: {
+      fontFamily:"dotum", align:"center", bold:true, italic:false,
+      lineHeight:.82, scaleX:.88, letterSpacing:-3,
+      unicodeStyle:"none", effect:"none", outlineWidth:0,
+      fontCap:176, fontScale:1.20, gapScale:.30, accentWords:true
+    },
+    hotlineOutline: {
+      fontFamily:"dotum", align:"center", bold:true, italic:false,
+      lineHeight:.82, scaleX:.88, letterSpacing:-3,
+      unicodeStyle:"none", effect:"outline", effectColorRole:"paper", outlineWidth:2,
+      fontCap:174, fontScale:1.18, gapScale:.30, accentWords:true
+    },
+    note: {
+      fontFamily:"batang", align:"center", bold:true, italic:false,
+      lineHeight:.90, scaleX:.94, letterSpacing:-2,
+      unicodeStyle:"none", effect:"none", outlineWidth:0,
+      fontCap:108, fontScale:1.06, gapScale:.40, accentWords:false
+    }
+  };
+
   const templateSpecs = [
     {
-      id: "label-market",
-      name: "큰 제목 · 본문 2칸",
-      caption: "제목과 원형 강조, 아래 비대칭 2칸",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("큰 제목", .035, .045, .660, .300, { fillNone:true, padding:2, textRoles:["headline"] }),
-        R("원형 강조", .735, .055, .220, .250, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:28, effect:"shadow", effectColor:"#111111", effectSize:10, textRoles:["callout","tag"] }),
-        R("큰 본문", .050, .405, .565, .390, { fillRole:"paper", strokeNone:true, radius:30, padding:30, textRoles:["body","bullet"] }),
-        R("짧은 강조", .660, .440, .300, .320, { fillRole:"secondary", strokeNone:true, radius:22, padding:28, textRoles:["callout","body"] }),
-        R("아래 문구", .055, .840, .885, .105, { fillNone:true, padding:2, textRoles:["footer","tag"] })
+      id:"street-alert",
+      name:"원형 속보형",
+      caption:"원형 배지·큰 제목·두 정보칸·하단 연락처",
+      bg:{ mode:"solid", role:"primary", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#111111", width:0, radius:0 },
+      regions:[
+        R("속보 배지", .025, .035, .135, .225, { shape:"ellipse", fillRole:"tertiary", padding:18, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("큰 제목", .175, .025, .800, .245, { fillNone:true, padding:2, emphasis:1.52, textVAlign:"top", textPreset:"hero", textRoles:["headline"] }),
+        R("기관 발표", 0, .295, 1, .075, { fillRole:"secondary", radius:0, padding:10, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("핵심 목록", .025, .405, .515, .315, { fillRole:"paper", padding:20, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet","body"] }),
+        R("짧은 강조", .565, .405, .410, .185, { fillRole:"tertiary", padding:18, emphasis:1.05, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("수치 배지", .565, .620, .230, .100, { fillRole:"secondary", padding:10, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("전화 문구", .025, .780, .950, .125, { fillRole:"tertiary", padding:12, emphasis:1.20, textVAlign:"center", textPreset:"hotline", textRoles:["footer"] }),
+        R("주의 문구", .025, .930, .950, .045, { fillNone:true, padding:0, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] })
       ],
-      textSlots:[0,2,1,3,4]
+      textSlots:[0,1,2,3,4,5,6,7]
     },
     {
-      id: "apothecary-band",
-      name: "중앙 띠 · 본문 + 원형",
-      caption: "큰 제목 아래 전폭 띠, 본문과 원형 강조",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("큰 제목", .040, .040, .920, .220, { fillNone:true, padding:2, textRoles:["headline"] }),
-        R("중앙 띠", 0, .295, 1, .125, { fillRole:"secondary", radius:0, padding:20, textRoles:["callout","tag"] }),
-        R("본문 카드", .055, .475, .600, .310, { fillRole:"paper", strokeNone:true, radius:20, padding:30, textRoles:["body","bullet"] }),
-        R("원형 강조", .700, .455, .250, .280, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:34, textRoles:["callout","tag"] }),
-        R("아래 문구", .055, .835, .890, .105, { fillNone:true, padding:2, textRoles:["footer"] })
+      id:"black-red-split",
+      name:"검정·빨강 분할형",
+      caption:"밝은 제목판과 빨강 정보판을 검정 바탕에 결합",
+      bg:{ mode:"solid", role:"secondary", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#111111", width:0, radius:0 },
+      regions:[
+        R("제목판", .025, .030, .950, .270, { fillRole:"paperHard", acceptText:false, padding:0 }),
+        R("속보 배지", .030, .045, .135, .220, { shape:"ellipse", fillRole:"tertiary", padding:18, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("큰 제목", .180, .040, .770, .235, { fillNone:true, padding:2, emphasis:1.40, textVAlign:"center", textPreset:"hero", textRoles:["headline"] }),
+        R("기관 발표", .025, .325, .950, .060, { fillNone:true, padding:1, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("빨강 판", .025, .420, .950, .440, { fillRole:"tertiary", acceptText:false, padding:0 }),
+        R("핵심 목록", .050, .445, .525, .235, { fillNone:true, padding:4, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("짧은 강조", .610, .445, .335, .235, { fillRole:"secondary", padding:18, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("수치 배지", .050, .715, .250, .105, { fillRole:"paper", padding:10, textVAlign:"center", textPreset:"badge", textRoles:["tag"] }),
+        R("전화 문구", .330, .705, .615, .120, { fillNone:true, padding:2, textVAlign:"center", textPreset:"hotlineOutline", textRoles:["footer"] }),
+        R("주의 문구", .045, .885, .910, .060, { fillNone:true, padding:1, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] })
       ],
-      textSlots:[0,2,3,2,4]
+      textSlots:[1,2,3,5,6,7,8,9]
     },
     {
-      id: "blue-bulletin",
-      name: "큰 카드 · 우측 2칸",
-      caption: "왼쪽 큰 카드와 오른쪽 원형·세로 카드",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("제목 카드", .045, .055, .615, .225, { fillRole:"paper", strokeNone:true, radius:32, padding:26, effect:"shadow", effectColor:"#111111", effectSize:9, textRoles:["headline"] }),
-        R("본문 카드", .045, .320, .615, .465, { fillRole:"paper", strokeNone:true, radius:28, padding:32, textRoles:["body","bullet"] }),
-        R("원형 강조", .705, .065, .245, .255, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:30, textRoles:["callout","tag"] }),
-        R("세로 카드", .700, .370, .255, .415, { fillRole:"secondary", strokeNone:true, radius:18, padding:28, textRoles:["body","callout"] }),
-        R("아래 문구", .055, .835, .890, .105, { fillNone:true, padding:2, textRoles:["footer"] })
+      id:"hotline-bottom",
+      name:"전화번호 하단형",
+      caption:"검은 바탕·폭발 배지·하단 전화번호를 크게 강조",
+      bg:{ mode:"solid", role:"secondary", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#ffffff", width:0, radius:0 },
+      regions:[
+        R("상단 안내", 0, .020, 1, .070, { fillRole:"primary", padding:9, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("큰 제목", .030, .120, .675, .300, { fillNone:true, padding:2, emphasis:1.46, textVAlign:"top", textPreset:"heroOutline", textRoles:["headline"] }),
+        R("폭발 배지", .745, .120, .225, .290, { shape:"burst", fillRole:"tertiary", strokeRole:"paper", strokeWidth:3, strokeNone:false, padding:36, textVAlign:"center", textPreset:"badge", textRoles:["tag","callout"] }),
+        R("핵심 목록", .030, .470, .540, .235, { fillRole:"paper", padding:20, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("짧은 강조", .600, .470, .370, .155, { fillRole:"primary", padding:16, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("수치 배지", .600, .650, .230, .080, { fillRole:"tertiary", padding:8, textVAlign:"center", textPreset:"badge", textRoles:["tag"] }),
+        R("전화 문구", 0, .770, 1, .170, { fillRole:"primary", padding:14, emphasis:1.42, textVAlign:"center", textPreset:"hotline", textRoles:["footer"] }),
+        R("주의 문구", .030, .945, .940, .030, { fillNone:true, padding:0, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] })
       ],
-      textSlots:[0,1,2,1,4]
+      textSlots:[2,1,0,3,4,5,6,7]
     },
     {
-      id: "phonebook-dense",
-      name: "상단 제목 · 3단 정보",
-      caption: "전폭 머리말 아래 3단 카드와 하단 문구",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("상단 띠", 0, .040, 1, .125, { fillRole:"secondary", radius:0, padding:20, textRoles:["headline","callout"] }),
-        R("왼쪽 정보", .040, .225, .290, .430, { fillRole:"paper", strokeNone:true, radius:10, padding:24, textRoles:["body","bullet"] }),
-        R("가운데 강조", .355, .225, .290, .430, { fillRole:"tertiary", strokeNone:true, radius:10, padding:24, textRoles:["callout","body"] }),
-        R("오른쪽 정보", .670, .225, .290, .430, { fillRole:"paper", strokeNone:true, radius:10, padding:24, textRoles:["body","bullet"] }),
-        R("하단 문구", .055, .770, .890, .150, { fillNone:true, padding:2, textRoles:["footer","tag"] })
+      id:"giant-headline",
+      name:"초대형 제목형",
+      caption:"띠 없이 제목을 크게 두고 우측에 배지와 목록 배치",
+      bg:{ mode:"solid", role:"primary", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#111111", width:0, radius:0 },
+      regions:[
+        R("큰 제목", .025, .030, .625, .500, { fillNone:true, padding:2, emphasis:1.70, textVAlign:"top", textPreset:"hero", textRoles:["headline"] }),
+        R("속보 배지", .690, .040, .275, .285, { shape:"ellipse", fillRole:"tertiary", padding:30, textVAlign:"center", textPreset:"badge", textRoles:["tag","callout"] }),
+        R("기관 발표", .690, .350, .275, .120, { fillNone:true, padding:3, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("핵심 목록", .685, .500, .285, .260, { fillRole:"secondary", padding:20, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("짧은 강조", .030, .585, .585, .180, { fillRole:"paper", padding:18, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("수치 배지", .030, .800, .230, .090, { fillRole:"tertiary", padding:9, textVAlign:"center", textPreset:"badge", textRoles:["tag"] }),
+        R("전화 문구", .290, .785, .680, .120, { fillNone:true, padding:2, textVAlign:"center", textPreset:"hotline", textRoles:["footer"] }),
+        R("주의 문구", .030, .930, .940, .045, { fillNone:true, padding:0, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] })
       ],
-      textSlots:[0,1,2,3,4]
+      textSlots:[1,0,2,3,4,5,6,7]
     },
     {
-      id: "coupon-strip",
-      name: "제목 · 가로 카드 3줄",
-      caption: "큰 제목 아래 서로 다른 길이의 카드 3개",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("큰 제목", .045, .045, .900, .190, { fillNone:true, padding:2, textRoles:["headline"] }),
-        R("첫 카드", .055, .285, .730, .130, { fillRole:"paper", strokeNone:true, radius:20, padding:18, textRoles:["body","callout"] }),
-        R("둘째 카드", .180, .465, .765, .130, { fillRole:"tertiary", strokeNone:true, radius:20, padding:18, textRoles:["callout","bullet"] }),
-        R("셋째 카드", .055, .645, .625, .130, { fillRole:"paper", strokeNone:true, radius:20, padding:18, textRoles:["body","tag"] }),
-        R("아래 문구", .560, .820, .390, .110, { fillNone:true, padding:2, textRoles:["footer","tag"] })
+      id:"round-badge-grid",
+      name:"원형 배지+정보칸",
+      caption:"띠 없이 원형 배지와 크기가 다른 네모칸 조합",
+      bg:{ mode:"solid", role:"tertiary", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#111111", width:0, radius:0 },
+      regions:[
+        R("큰 제목", .030, .035, .585, .235, { fillRole:"paper", padding:18, textVAlign:"center", textPreset:"hero", textRoles:["headline"] }),
+        R("큰 원", .670, .025, .295, .310, { shape:"ellipse", fillRole:"primary", padding:32, textVAlign:"center", textPreset:"badge", textRoles:["tag","callout"] }),
+        R("기관 발표", .030, .300, .585, .075, { fillNone:true, padding:1, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("왼쪽 목록", .030, .405, .455, .345, { fillRole:"secondary", padding:22, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("오른쪽 강조", .520, .405, .445, .205, { fillRole:"paper", padding:20, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("작은 타원", .625, .645, .320, .135, { shape:"ellipse", fillRole:"primary", padding:18, textVAlign:"center", textPreset:"badge", textRoles:["tag"] }),
+        R("전화 문구", .035, .805, .530, .115, { fillNone:true, padding:2, textVAlign:"center", textPreset:"hotlineOutline", textRoles:["footer"] }),
+        R("주의 문구", .595, .820, .370, .080, { fillNone:true, padding:1, textVAlign:"left", textPreset:"micro", textRoles:["micro"] })
       ],
-      textSlots:[0,1,2,3,4]
+      textSlots:[1,0,2,3,4,5,6,7]
     },
     {
-      id: "five-elements",
-      name: "세로 제목 · 카드 + 타원",
-      caption: "왼쪽 세로판, 오른쪽 제목·본문·타원",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("세로 제목", .030, .045, .205, .875, { fillRole:"secondary", strokeNone:true, radius:0, padding:24, textRoles:["headline","tag"] }),
-        R("상단 제목", .275, .055, .680, .220, { fillRole:"paper", strokeNone:true, radius:24, padding:26, textRoles:["headline"] }),
-        R("본문 카드", .275, .335, .445, .390, { fillRole:"paper", strokeNone:true, radius:22, padding:30, textRoles:["body","bullet"] }),
-        R("타원 강조", .755, .350, .215, .280, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:28, textRoles:["callout","tag"] }),
-        R("아래 문구", .300, .795, .650, .120, { fillNone:true, padding:2, textRoles:["footer"] })
+      id:"three-columns",
+      name:"3단 정보형",
+      caption:"상단 제목과 서로 다른 색의 촘촘한 세 정보칸",
+      bg:{ mode:"solid", role:"primary", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#111111", width:0, radius:0 },
+      regions:[
+        R("속보 배지", .020, .030, .110, .160, { shape:"ellipse", fillRole:"tertiary", padding:14, textVAlign:"center", textPreset:"badge", textRoles:["tag"] }),
+        R("큰 제목", .145, .025, .830, .175, { fillRole:"secondary", padding:14, textVAlign:"center", textPreset:"heroOutline", textRoles:["headline"] }),
+        R("기관 발표", .025, .220, .950, .060, { fillNone:true, padding:1, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("왼쪽 정보", .025, .315, .300, .405, { fillRole:"paper", padding:18, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("가운데 정보", .350, .315, .300, .405, { fillRole:"tertiary", padding:18, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("오른쪽 정보", .675, .315, .300, .405, { fillRole:"secondary", padding:18, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("전화 문구", 0, .770, 1, .150, { fillRole:"tertiary", padding:13, textVAlign:"center", textPreset:"hotline", textRoles:["footer"] }),
+        R("주의 문구", .025, .940, .950, .035, { fillNone:true, padding:0, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] })
       ],
-      textSlots:[1,2,3,0,4]
+      textSlots:[0,1,2,3,4,5,6,7]
     },
     {
-      id: "earth-shock",
-      name: "중앙 폭발 · 좌우 설명",
-      caption: "뾰족 말풍선 중심의 3열 충격 구성",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("상단 제목", .035, .040, .930, .225, { fillNone:true, padding:2, textRoles:["headline"] }),
-        R("왼쪽 설명", .045, .330, .270, .330, { fillNone:true, padding:6, textRoles:["body","bullet"] }),
-        R("중앙 폭발", .340, .300, .330, .370, { shape:"burst", fillRole:"paper", strokeRole:"secondary", strokeWidth:5, strokeNone:false, padding:44, effect:"shadow", effectColor:"#111111", effectSize:12, textRoles:["callout","tag"] }),
-        R("오른쪽 설명", .695, .330, .260, .330, { fillNone:true, padding:6, textRoles:["body","bullet"] }),
-        R("아래 큰 문구", .055, .760, .890, .170, { fillNone:true, padding:2, textRoles:["footer","callout"] })
+      id:"vertical-label",
+      name:"세로 라벨형",
+      caption:"왼쪽의 긴 색면과 오른쪽의 큰 제목·정보칸",
+      bg:{ mode:"solid", role:"primary", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#111111", width:0, radius:0 },
+      regions:[
+        R("세로 색면", .020, .025, .205, .950, { fillRole:"secondary", acceptText:false, padding:0 }),
+        R("속보 배지", .035, .060, .175, .185, { fillRole:"tertiary", padding:14, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("큰 제목", .255, .030, .715, .260, { fillNone:true, padding:2, emphasis:1.45, textVAlign:"top", textPreset:"hero", textRoles:["headline"] }),
+        R("기관 발표", .255, .310, .715, .065, { fillRole:"tertiary", padding:8, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("핵심 목록", .255, .415, .405, .345, { fillRole:"paper", padding:20, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("짧은 강조", .690, .415, .280, .205, { fillRole:"tertiary", padding:18, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("수치 배지", .690, .650, .280, .110, { fillRole:"secondary", padding:10, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("전화 문구", .255, .805, .715, .115, { fillRole:"tertiary", padding:12, textVAlign:"center", textPreset:"hotline", textRoles:["footer"] }),
+        R("주의 문구", .035, .735, .175, .200, { fillNone:true, padding:4, textVAlign:"bottom", textPreset:"microCenter", textRoles:["micro"] })
       ],
-      textSlots:[0,1,2,3,4]
+      textSlots:[1,2,3,4,5,6,7,8]
     },
     {
-      id: "plain-rule",
-      name: "한 줄 구분 · 본문 + 원형",
-      caption: "얇은 선 하나로 제목과 내용을 나눈 기본형",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("큰 제목", .045, .055, .910, .245, { fillNone:true, padding:2, textRoles:["headline"] }),
-        R("구분선", .040, .345, .920, .025, { shape:"line", fillRole:"secondary", acceptText:false, radius:0, padding:0 }),
-        R("본문", .055, .425, .560, .350, { fillNone:true, padding:8, textRoles:["body","bullet"] }),
-        R("원형 강조", .680, .410, .265, .300, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:34, textRoles:["callout","tag"] }),
-        R("짧은 보조", .620, .760, .330, .105, { fillRole:"secondary", strokeNone:true, radius:0, padding:18, textRoles:["tag","footer"] }),
-        R("아래 문구", .055, .835, .480, .090, { fillNone:true, padding:2, textRoles:["footer"] })
+      id:"center-burst",
+      name:"중앙 폭발형",
+      caption:"중앙 뾰족 말풍선과 좌우의 작은 정보 묶음",
+      bg:{ mode:"solid", role:"tertiary", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#ffffff", width:0, radius:0 },
+      regions:[
+        R("큰 제목", .025, .030, .950, .205, { fillRole:"paper", padding:16, textVAlign:"center", textPreset:"hero", textRoles:["headline"] }),
+        R("속보 배지", .035, .260, .165, .120, { fillRole:"secondary", padding:12, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("기관 발표", .225, .270, .750, .090, { fillNone:true, padding:2, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("왼쪽 목록", .030, .420, .265, .310, { fillNone:true, padding:4, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("중앙 폭발", .325, .380, .350, .390, { shape:"burst", fillRole:"primary", strokeRole:"secondary", strokeWidth:4, strokeNone:false, padding:44, textVAlign:"center", textPreset:"badge", textRoles:["callout"] }),
+        R("오른쪽 수치", .705, .420, .265, .200, { fillRole:"secondary", padding:18, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("전화 문구", .300, .805, .670, .115, { fillRole:"secondary", padding:12, textVAlign:"center", textPreset:"hotlineOutline", textRoles:["footer"] }),
+        R("주의 문구", .030, .825, .235, .085, { fillNone:true, padding:1, textVAlign:"left", textPreset:"micro", textRoles:["micro"] })
       ],
-      textSlots:[0,1,2,1,4]
+      textSlots:[1,0,2,3,4,5,6,7]
     },
     {
-      id: "round-card",
-      name: "큰 카드 · 우측 배지",
-      caption: "한 장짜리 큰 카드와 오른쪽 강조 2칸",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("큰 카드 제목", .060, .070, .610, .220, { fillRole:"paper", strokeNone:true, radius:40, padding:32, effect:"shadow", effectColor:"#111111", effectSize:11, textRoles:["headline"] }),
-        R("큰 카드 본문", .060, .275, .610, .500, { fillRole:"paper", strokeNone:true, radius:40, padding:36, textRoles:["body","bullet"] }),
-        R("우측 어두운 카드", .710, .160, .245, .285, { fillRole:"secondary", strokeNone:true, radius:26, padding:28, textRoles:["callout","body"] }),
-        R("우측 원형", .725, .530, .220, .245, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:28, textRoles:["tag","callout"] }),
-        R("아래 문구", .080, .845, .860, .095, { fillNone:true, padding:2, textRoles:["footer"] })
+      id:"coupon-rows",
+      name:"쿠폰 행형",
+      caption:"길이가 다른 색상 행을 계단처럼 쌓은 구성",
+      bg:{ mode:"solid", role:"primary", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#111111", width:0, radius:0 },
+      regions:[
+        R("큰 제목", .025, .030, .815, .185, { fillRole:"secondary", padding:14, textVAlign:"center", textPreset:"heroOutline", textRoles:["headline"] }),
+        R("속보 배지", .865, .030, .110, .185, { shape:"ellipse", fillRole:"tertiary", padding:12, textVAlign:"center", textPreset:"badge", textRoles:["tag"] }),
+        R("기관 발표", .030, .245, .940, .060, { fillNone:true, padding:1, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("첫 행", .030, .345, .940, .155, { fillRole:"paper", padding:16, textVAlign:"center", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("둘째 행", .130, .535, .840, .130, { fillRole:"tertiary", padding:14, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("셋째 행", .030, .700, .680, .120, { fillRole:"secondary", padding:12, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("전화 문구", .465, .850, .505, .095, { fillNone:true, padding:2, textVAlign:"center", textPreset:"hotline", textRoles:["footer"] }),
+        R("주의 문구", .030, .865, .405, .065, { fillNone:true, padding:1, textVAlign:"left", textPreset:"micro", textRoles:["micro"] })
       ],
-      textSlots:[0,1,2,1,4]
+      textSlots:[1,0,2,3,4,5,6,7]
     },
     {
-      id: "sticker-chaos",
-      name: "겹친 원 · 카드 2개",
-      caption: "배경 원과 비대칭 카드가 겹치는 구성",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("배경 큰 원", -.070, .065, .290, .330, { shape:"ellipse", fillRole:"tertiary", acceptText:false, strokeNone:true, padding:0 }),
-        R("상단 제목", .105, .055, .735, .230, { fillNone:true, padding:2, textRoles:["headline"] }),
-        R("작은 원", .790, .055, .195, .215, { shape:"ellipse", fillRole:"paper", strokeNone:true, padding:24, textRoles:["tag","callout"] }),
-        R("왼쪽 카드", .055, .365, .555, .355, { fillRole:"paper", strokeNone:true, radius:18, padding:30, textRoles:["body","bullet"] }),
-        R("오른쪽 카드", .650, .345, .300, .340, { fillRole:"tertiary", strokeNone:true, radius:18, padding:28, textRoles:["callout","body"] }),
-        R("아래 문구", .420, .800, .530, .120, { fillNone:true, padding:2, textRoles:["footer"] })
+      id:"photo-slot",
+      name:"사진 자리형",
+      caption:"오른쪽 사진 자리를 비우고 왼쪽 텍스트를 촘촘하게",
+      bg:{ mode:"solid", role:"paper", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#111111", width:0, radius:0 },
+      regions:[
+        R("속보 배지", .030, .035, .135, .180, { shape:"ellipse", fillRole:"tertiary", padding:14, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("큰 제목", .185, .025, .455, .205, { fillNone:true, padding:2, textVAlign:"top", textPreset:"hero", textRoles:["headline"] }),
+        R("기관 발표", .030, .260, .610, .065, { fillRole:"secondary", padding:8, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("핵심 목록", .030, .365, .610, .320, { fillRole:"primary", padding:20, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("사진 자리", .680, .025, .290, .660, { fillRole:"secondary", acceptText:false, padding:0 }),
+        R("짧은 강조", .680, .720, .290, .105, { fillRole:"tertiary", padding:10, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("수치 배지", .030, .725, .230, .100, { fillRole:"secondary", padding:10, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("전화 문구", .285, .710, .355, .125, { fillNone:true, padding:2, textVAlign:"center", textPreset:"hotline", textRoles:["footer"] }),
+        R("주의 문구", .030, .890, .940, .055, { fillNone:true, padding:0, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] })
       ],
-      textSlots:[0,2,1,3,4]
+      textSlots:[0,1,2,3,5,6,7,8]
     },
     {
-      id: "shop-window",
-      name: "큰 머리말 · 본문 + 보조 2칸",
-      caption: "큰 머리말 아래 본문과 작은 카드 2개",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("큰 머리말", .045, .045, .910, .170, { fillNone:true, padding:2, textRoles:["headline","callout"] }),
-        R("큰 본문", .060, .255, .580, .520, { fillRole:"paper", strokeNone:true, radius:8, padding:36, textRoles:["body","bullet"] }),
-        R("오른쪽 위", .680, .255, .275, .225, { fillRole:"tertiary", strokeNone:true, radius:16, padding:26, textRoles:["callout","tag"] }),
-        R("오른쪽 아래", .680, .545, .275, .230, { fillRole:"secondary", strokeNone:true, radius:16, padding:26, textRoles:["body","callout"] }),
-        R("아래 문구", .065, .835, .880, .100, { fillNone:true, padding:2, textRoles:["footer"] })
+      id:"small-ad",
+      name:"소형 광고형",
+      caption:"외곽선 안에 제목·본문·연락처를 빈틈없이 배치",
+      bg:{ mode:"solid", role:"paper", pattern:"none", scale:48 },
+      border:{ enabled:true, color:"#111111", width:10, radius:0 },
+      regions:[
+        R("속보 배지", .030, .035, .135, .165, { shape:"ellipse", fillRole:"tertiary", padding:14, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("큰 제목", .180, .030, .790, .175, { fillNone:true, padding:2, textVAlign:"center", textPreset:"hero", textRoles:["headline"] }),
+        R("기관 발표", .030, .235, .940, .065, { fillRole:"secondary", padding:8, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("핵심 목록", .030, .335, .555, .285, { fillRole:"primary", padding:18, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("짧은 강조", .615, .335, .355, .170, { fillRole:"tertiary", padding:16, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("수치 배지", .615, .535, .355, .085, { fillRole:"secondary", padding:8, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("전화 문구", .030, .680, .940, .150, { fillRole:"tertiary", padding:13, textVAlign:"center", textPreset:"hotline", textRoles:["footer"] }),
+        R("주의 문구", .030, .870, .940, .070, { fillNone:true, padding:1, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] })
       ],
-      textSlots:[0,1,2,1,4]
+      textSlots:[0,1,2,3,4,5,6,7]
     },
     {
-      id: "notice-split",
-      name: "제목 · 본문 + 목록",
-      caption: "넓은 제목과 본문, 오른쪽 목록 카드",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("넓은 제목", .040, .050, .700, .240, { fillNone:true, padding:2, textRoles:["headline"] }),
-        R("상단 작은 카드", .765, .055, .195, .235, { fillRole:"secondary", strokeNone:true, radius:16, padding:22, textRoles:["tag","callout"] }),
-        R("본문 카드", .055, .355, .625, .395, { fillRole:"paper", strokeNone:true, radius:22, padding:32, textRoles:["body","bullet"] }),
-        R("목록 카드", .720, .355, .240, .395, { fillRole:"tertiary", strokeNone:true, radius:22, padding:26, textRoles:["bullet","body"] }),
-        R("아래 문구", .055, .825, .890, .110, { fillNone:true, padding:2, textRoles:["footer"] })
+      id:"blackout",
+      name:"검정 반전형",
+      caption:"검은 바탕 위 원색 제목과 두 개의 큰 정보칸",
+      bg:{ mode:"solid", role:"secondary", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#ffffff", width:0, radius:0 },
+      regions:[
+        R("큰 제목", .030, .030, .940, .285, { fillNone:true, padding:2, textVAlign:"top", textPreset:"heroOutline", textRoles:["headline"] }),
+        R("속보 배지", .780, .040, .185, .200, { shape:"ellipse", fillRole:"primary", padding:18, textVAlign:"center", textPreset:"badge", textRoles:["tag"] }),
+        R("기관 발표", .030, .340, .940, .065, { fillNone:true, padding:1, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("왼쪽 정보", .030, .445, .560, .285, { fillRole:"tertiary", padding:20, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("오른쪽 강조", .620, .445, .350, .175, { fillRole:"paper", padding:18, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("수치 배지", .620, .650, .350, .080, { fillRole:"primary", padding:8, textVAlign:"center", textPreset:"badge", textRoles:["tag"] }),
+        R("전화 문구", .500, .785, .470, .120, { fillRole:"primary", padding:12, textVAlign:"center", textPreset:"hotline", textRoles:["footer"] }),
+        R("주의 문구", .030, .805, .430, .080, { fillNone:true, padding:1, textVAlign:"left", textPreset:"micro", textRoles:["micro"] })
       ],
-      textSlots:[0,2,1,3,4]
+      textSlots:[1,0,2,3,4,5,6,7]
     },
     {
-      id: "memo-badge",
-      name: "제목 · 원형 + 메모 2칸",
-      caption: "상단 제목과 큰 배지, 아래 메모 카드 2개",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("상단 제목", .045, .050, .575, .245, { fillNone:true, padding:2, textRoles:["headline"] }),
-        R("큰 원형", .660, .045, .300, .310, { shape:"ellipse", fillRole:"secondary", strokeNone:true, padding:38, textRoles:["callout","tag"] }),
-        R("왼쪽 메모", .060, .380, .550, .390, { fillRole:"paper", strokeNone:true, radius:20, padding:32, textRoles:["body","bullet"] }),
-        R("오른쪽 메모", .660, .415, .300, .355, { fillRole:"tertiary", strokeNone:true, radius:20, padding:30, textRoles:["callout","body"] }),
-        R("아래 문구", .055, .835, .890, .100, { fillNone:true, padding:2, textRoles:["footer"] })
+      id:"bare-type",
+      name:"무테 타이포형",
+      caption:"카드와 띠 없이 글자 크기·색·작은 원만으로 구성",
+      bg:{ mode:"solid", role:"primary", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#111111", width:0, radius:0 },
+      regions:[
+        R("배경 원", .800, -.070, .265, .315, { shape:"ellipse", fillRole:"tertiary", acceptText:false, padding:0 }),
+        R("속보 배지", .030, .035, .135, .180, { fillNone:true, padding:2, textVAlign:"center", textPreset:"badge", textRoles:["tag"] }),
+        R("큰 제목", .170, .025, .710, .350, { fillNone:true, padding:2, emphasis:1.70, textVAlign:"top", textPreset:"hero", textRoles:["headline"] }),
+        R("기관 발표", .030, .400, .940, .065, { fillNone:true, padding:1, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("핵심 목록", .030, .505, .410, .270, { fillNone:true, padding:4, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("짧은 강조", .490, .490, .480, .170, { fillNone:true, padding:4, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("수치 배지", .560, .690, .330, .090, { fillNone:true, padding:2, textVAlign:"center", textPreset:"badge", textRoles:["tag"] }),
+        R("전화 문구", .300, .825, .670, .090, { fillNone:true, padding:2, textVAlign:"center", textPreset:"hotline", textRoles:["footer"] }),
+        R("주의 문구", .030, .830, .235, .080, { fillNone:true, padding:1, textVAlign:"left", textPreset:"micro", textRoles:["micro"] })
       ],
-      textSlots:[0,2,1,3,4]
+      textSlots:[1,2,3,4,5,6,7,8]
     },
     {
-      id: "black-zine",
-      name: "중앙 띠 · 기사 2칸",
-      caption: "밝은 제목 카드와 중앙 띠, 아래 기사 2개",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#ffffff", width:0, radius:0 },
-      regions: [
-        R("제목 카드", .040, .045, .920, .235, { fillRole:"paper", strokeNone:true, radius:18, padding:28, textRoles:["headline"] }),
-        R("중앙 띠", 0, .335, 1, .125, { fillRole:"secondary", radius:0, padding:22, textRoles:["callout","tag"] }),
-        R("왼쪽 기사", .050, .520, .405, .275, { fillRole:"tertiary", strokeNone:true, radius:14, padding:26, textRoles:["body","bullet"] }),
-        R("오른쪽 기사", .500, .520, .450, .275, { fillRole:"paper", strokeNone:true, radius:14, padding:26, textRoles:["body","callout"] }),
-        R("아래 문구", .055, .845, .890, .095, { fillNone:true, padding:2, textRoles:["footer"] })
+      id:"headline-two-columns",
+      name:"제목 아래 2칸",
+      caption:"띠 없이 큰 제목 아래 넓은 칸과 좁은 칸 배치",
+      bg:{ mode:"solid", role:"tertiary", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#111111", width:0, radius:0 },
+      regions:[
+        R("속보 배지", .030, .040, .140, .195, { shape:"ellipse", fillRole:"secondary", padding:16, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("큰 제목", .205, .030, .765, .260, { fillNone:true, padding:2, textVAlign:"top", textPreset:"heroOutline", textRoles:["headline"] }),
+        R("기관 발표", .030, .315, .940, .060, { fillNone:true, padding:1, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("왼쪽 목록", .030, .415, .585, .315, { fillRole:"paper", padding:20, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("오른쪽 강조", .645, .415, .325, .190, { fillRole:"primary", padding:18, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("수치 배지", .645, .640, .325, .090, { fillRole:"secondary", padding:8, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("전화 문구", .560, .790, .410, .120, { fillRole:"primary", padding:12, textVAlign:"center", textPreset:"hotline", textRoles:["footer"] }),
+        R("주의 문구", .030, .810, .490, .080, { fillNone:true, padding:1, textVAlign:"left", textPreset:"micro", textRoles:["micro"] })
       ],
-      textSlots:[0,2,1,3,4]
+      textSlots:[0,1,2,3,4,5,6,7]
     },
     {
-      id: "stamp-bottom",
-      name: "제목 · 본문 + 큰 원",
-      caption: "넓은 제목 아래 본문과 대형 원형 강조",
-      bg: { mode:"solid", role:"primary", pattern:"none", scale:48 },
-      border: { enabled:false, color:"#111111", width:0, radius:0 },
-      regions: [
-        R("넓은 제목", .035, .045, .930, .250, { fillNone:true, padding:2, textRoles:["headline"] }),
-        R("본문 카드", .055, .365, .545, .350, { fillRole:"paper", strokeNone:true, radius:24, padding:30, textRoles:["body","bullet"] }),
-        R("큰 원형", .635, .340, .320, .355, { shape:"ellipse", fillRole:"tertiary", strokeNone:true, padding:38, textRoles:["callout","tag"] }),
-        R("짧은 강조", .085, .735, .390, .115, { fillRole:"secondary", strokeNone:true, radius:0, padding:20, textRoles:["callout","tag"] }),
-        R("아래 큰 문구", .035, .855, .930, .100, { fillNone:true, padding:2, textRoles:["footer"] })
+      id:"top-bottom-stack",
+      name:"상하 3단형",
+      caption:"위쪽 제목과 아래쪽 세 칸을 단단하게 압축한 구성",
+      bg:{ mode:"solid", role:"paper", pattern:"none", scale:48 },
+      border:{ enabled:false, color:"#111111", width:0, radius:0 },
+      regions:[
+        R("속보 배지", .030, .030, .170, .145, { fillRole:"tertiary", padding:12, textVAlign:"center", textPreset:"badgeOutline", textRoles:["tag"] }),
+        R("큰 제목", .030, .195, .940, .250, { fillNone:true, padding:2, textVAlign:"top", textPreset:"hero", textRoles:["headline"] }),
+        R("기관 발표", .230, .045, .740, .115, { fillRole:"secondary", padding:10, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] }),
+        R("핵심 목록", .030, .495, .390, .285, { fillRole:"primary", padding:18, textVAlign:"top", textPreset:"bulletDense", textRoles:["bullet"] }),
+        R("짧은 강조", .455, .495, .215, .285, { fillRole:"secondary", padding:16, textVAlign:"center", textPreset:"bodyDisplay", textRoles:["callout"] }),
+        R("수치 배지", .705, .495, .265, .140, { fillRole:"tertiary", padding:14, textVAlign:"center", textPreset:"badge", textRoles:["tag"] }),
+        R("전화 문구", .705, .665, .265, .115, { fillRole:"primary", padding:10, textVAlign:"center", textPreset:"hotline", textRoles:["footer"] }),
+        R("주의 문구", .030, .835, .940, .075, { fillNone:true, padding:1, textVAlign:"center", textPreset:"microCenter", textRoles:["micro"] })
       ],
-      textSlots:[0,1,2,1,4]
+      textSlots:[0,1,2,3,4,5,6,7]
     }
   ];
   function makeText(text, overrides = {}) {
     return {
-      id: uid(), text, regionId: null, order: 0, role: "body",
+      id: uid(), text, regionId: null, order: 0, role: "body", roleHint: null, sample: false,
       styleMode: "auto", regionLocked: false,
       fontFamily: "dotum", fontSize: 54, align: "left",
       bold: true, italic: false, underline: false, strike: false,
@@ -370,9 +518,10 @@
   const initialState = {
     orientation: "landscape",
     bleedMm: 0,
-    templateId: "label-market",
-    palette: { primary: "#ffd400", secondary: "#111111", tertiary: "#0057ff" },
-    background: { mode:"solid", c1:"#ffd400", c2:"#ffd400", pattern:"dots", patternColor:"#111111", angle:0, scale:48 },
+    regionGapReduction: 32,
+    templateId: "street-alert",
+    palette: { primary: "#ffd400", secondary: "#111111", tertiary: "#e62d20" },
+    background: { mode:"solid", c1:"#ffd400", c2:"#ffd400", pattern:"none", patternColor:"#e62d20", angle:0, scale:48 },
     regions: [],
     elements: [],
     texts: [],
@@ -404,6 +553,7 @@
   const textNumericDefaults = new Map();
   const globalNumericDefaults = {
     bleedMm: 0,
+    regionGapReduction: 32,
     gradientAngle: 0,
     patternScale: 48,
     posterBorderWidth: 12,
@@ -422,6 +572,7 @@
 
   function snapshotState() {
     const documentState = deepClone(state);
+    // Selection and guide visibility are view state, not undoable design data.
     delete documentState.selectedTextId;
     delete documentState.selectedRegionId;
     delete documentState.selectedElementId;
@@ -486,16 +637,17 @@
   function restoreHistorySnapshot(snapshot) {
     historyRestoring = true;
     try {
-      const uiState = {
+      const viewState = {
         selectedTextId: state.selectedTextId,
         selectedRegionId: state.selectedRegionId,
         selectedElementId: state.selectedElementId,
         showRegions: state.showRegions
       };
-      state = { ...JSON.parse(snapshot), ...uiState };
-      if (!state.texts.some((item) => item.id === state.selectedTextId)) state.selectedTextId = state.texts[0]?.id || null;
-      if (!state.regions.some((item) => item.id === state.selectedRegionId)) state.selectedRegionId = null;
-      if (!state.elements.some((item) => item.id === state.selectedElementId)) state.selectedElementId = null;
+      state = JSON.parse(snapshot);
+      state.selectedTextId = state.texts.some((item) => item.id === viewState.selectedTextId) ? viewState.selectedTextId : (state.texts[0]?.id || null);
+      state.selectedRegionId = state.regions.some((item) => item.id === viewState.selectedRegionId) ? viewState.selectedRegionId : null;
+      state.selectedElementId = state.elements.some((item) => item.id === viewState.selectedElementId) ? viewState.selectedElementId : null;
+      state.showRegions = Boolean(viewState.showRegions);
       layoutFragments = [];
       regionHitBoxes = [];
       elementHitBoxes = [];
@@ -810,16 +962,20 @@
     region.y = Math.round(spec.y * H);
     region.w = Math.round(spec.w * W);
     region.h = Math.round(spec.h * H);
+    region.layoutBase = { x: region.x, y: region.y, w: region.w, h: region.h };
+    region.layoutDetached = false;
+    region.layoutManualDelta = null;
     return region;
   }
 
   const ROLE_STYLE_DEFAULTS = {
-    headline: { fontFamily:"dotum", fontSize:78, align:"left", bold:true, italic:false, lineHeight:1.02, scaleX:.95, letterSpacing:-3, effect:"outline", outlineWidth:2, colorMode:"auto", gap:8 },
-    bullet: { fontFamily:"dotum", fontSize:44, align:"left", bold:true, italic:false, lineHeight:1.12, scaleX:1, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:8 },
-    callout: { fontFamily:"dotum", fontSize:42, align:"center", bold:true, italic:false, lineHeight:1.04, scaleX:.98, letterSpacing:-1, effect:"outline", outlineWidth:1, colorMode:"auto", gap:6 },
-    body: { fontFamily:"dotum", fontSize:50, align:"left", bold:true, italic:false, lineHeight:1.06, scaleX:.98, letterSpacing:-2, effect:"none", outlineWidth:2, colorMode:"auto", gap:8 },
-    footer: { fontFamily:"batang", fontSize:40, align:"center", bold:true, italic:false, lineHeight:1.04, scaleX:.98, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:6 },
-    tag: { fontFamily:"dotum", fontSize:30, align:"center", bold:true, italic:false, lineHeight:1.04, scaleX:1, letterSpacing:0, effect:"none", outlineWidth:2, colorMode:"auto", gap:6 }
+    headline: { fontFamily:"dotum", fontSize:88, align:"left", bold:true, italic:false, lineHeight:.94, scaleX:.94, letterSpacing:-3, effect:"none", outlineWidth:4, colorMode:"auto", gap:4 },
+    bullet: { fontFamily:"dotum", fontSize:46, align:"left", bold:true, italic:false, lineHeight:1.03, scaleX:.98, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:4 },
+    callout: { fontFamily:"dotum", fontSize:54, align:"center", bold:true, italic:false, lineHeight:.96, scaleX:.98, letterSpacing:-2, effect:"outline", outlineWidth:2, colorMode:"auto", gap:3 },
+    body: { fontFamily:"dotum", fontSize:45, align:"left", bold:true, italic:false, lineHeight:1.02, scaleX:.96, letterSpacing:-2, effect:"none", outlineWidth:2, colorMode:"auto", gap:4 },
+    footer: { fontFamily:"dotum", fontSize:48, align:"center", bold:true, italic:false, lineHeight:.94, scaleX:.98, letterSpacing:-2, effect:"none", outlineWidth:2, colorMode:"auto", gap:3 },
+    tag: { fontFamily:"dotum", fontSize:34, align:"center", bold:true, italic:false, lineHeight:.92, scaleX:1.02, letterSpacing:-1, effect:"none", outlineWidth:2, colorMode:"auto", gap:2 },
+    micro: { fontFamily:"dotum", fontSize:25, align:"center", bold:true, italic:false, lineHeight:.98, scaleX:.94, letterSpacing:-1, effect:"none", outlineWidth:1, colorMode:"auto", gap:2 }
   };
 
   function applyRoleStyle(text, role) {
@@ -855,13 +1011,16 @@
   }
 
   function inferTextRole(text, index = 0) {
+    if (text.roleHint && ROLE_STYLE_DEFAULTS[text.roleHint]) return text.roleHint;
     const facts = textFacts(text);
     if (facts.hasContact) return "footer";
+    if (/^[※＊*]|부작용|주의|참고/.test(facts.raw) && facts.compact >= 24) return "micro";
     if (facts.hasBullet) return "bullet";
-    if (index === 0 && facts.compact >= 14) return "headline";
-    if (facts.compact <= 10) return "tag";
-    if (facts.compact <= 26 && facts.lines.length <= 2) return "callout";
-    if (facts.lines.length >= 3 && facts.compact <= 70) return "bullet";
+    if (facts.compact <= 5 && facts.lines.length === 1) return "tag";
+    if (index === 0 && facts.compact >= 12) return "headline";
+    if (facts.compact <= 18 && facts.lines.length <= 2) return "callout";
+    if (facts.lines.length >= 3 && facts.compact <= 80) return "bullet";
+    if (facts.compact >= 82) return "micro";
     if (index === 0) return "headline";
     return "body";
   }
@@ -871,26 +1030,77 @@
     const area = box.w * box.h;
     const aspect = box.w / Math.max(1, box.h);
     const potential = Math.sqrt(area / Math.max(5, facts.compact + facts.lines.length * 5));
-    const roleTarget = { headline: 100, body: 56, bullet: 50, callout: 72, footer: 48, tag: 62 }[role] || 54;
-    let score = 80 - Math.abs(potential - roleTarget) * .34;
+    const roleTarget = { headline: 102, body: 55, bullet: 52, callout: 72, footer: 54, tag: 58, micro: 28 }[role] || 54;
+    let score = 82 - Math.abs(potential - roleTarget) * .34;
     const hints = region.textRoles || [];
-    if (hints.includes(role)) score += 76 - hints.indexOf(role) * 9;
+    if (hints.includes(role)) score += 96 - hints.indexOf(role) * 10;
     if (region.shape === "ellipse" || region.shape === "burst") {
-      score += ["callout", "tag"].includes(role) ? 48 : -92;
-      if (facts.compact > 34) score -= 78;
-      if (occupied > 0) score -= 240 * occupied;
+      score += ["callout", "tag"].includes(role) ? 54 : -108;
+      if (facts.compact > 34) score -= 90;
     }
-    if (aspect > 4.2) score += ["headline", "footer", "tag", "callout"].includes(role) ? 32 : -24;
-    if (aspect < .78) score += ["tag", "footer", "callout"].includes(role) ? 18 : -20;
-    if (role === "body" && area > 170000) score += 20;
-    if (role === "headline" && (region.y < dimensions().trimH * .34 || area > 180000)) score += 18;
-    if (role === "footer" && region.y > dimensions().trimH * .62) score += 24;
-    score += (Number(region.emphasis) || 1) * 14;
-    const occupancyPenalty = area > 260000 ? 48 : area > 190000 ? 96 : 172;
-    score -= occupied * occupancyPenalty;
-    if (occupied > 0 && area < 190000) score -= 220 * occupied;
-    if (occupied > 0 && aspect > 4.2) score -= 190 * occupied;
+    if (aspect > 5.0) score += ["headline", "footer", "tag", "callout", "micro"].includes(role) ? 38 : -30;
+    if (aspect < .78) score += ["tag", "callout"].includes(role) ? 22 : -26;
+    if (role === "micro") {
+      score += aspect > 4.4 ? 62 : -18;
+      score += area < 150000 ? 20 : -12;
+    }
+    if (role === "body" && area > 150000) score += 22;
+    if (role === "headline" && (region.y < dimensions().trimH * .34 || area > 170000)) score += 24;
+    if (role === "footer" && region.y > dimensions().trimH * .62) score += 34;
+    score += (Number(region.emphasis) || 1) * 18;
+    if (occupied > 0) score -= area > 250000 ? 180 : 290;
+    if (occupied > 1) score -= 460 * occupied;
     return score;
+  }
+
+  function setAutomaticAccentRanges(text, role, region, baseColor) {
+    if (text.styleMode === "manual") return;
+    text.rangeColors = [];
+    if (!["headline", "callout", "tag", "footer"].includes(role)) return;
+    const regionBg = region.fillNone ? state.background.c1 : resolveColor(region, "fill");
+    const accent = bestAccentColor(regionBg, baseColor);
+    const patterns = [/수달/g, /심장/g, /압수/g, /입덕/g, /속보/g, /귀여움/g, /98\.7%/g, /조개/g, /돌/g, /무직/g];
+    let count = 0;
+    for (const pattern of patterns) {
+      for (const match of String(text.text || "").matchAll(pattern)) {
+        text.rangeColors.push({ start: match.index, end: match.index + match[0].length, color: accent });
+        count += 1;
+        if (count >= 2) return;
+      }
+    }
+  }
+
+  function regionAutoTextStyle(region, role) {
+    const preset = region?.textPreset ? REGION_TEXT_PRESETS[region.textPreset] : null;
+    const shared = region?.textStyle || null;
+    const roleSpecific = region?.roleStyles?.[role] || null;
+    if (!preset && !shared && !roleSpecific) return null;
+    return { ...(preset || {}), ...(shared || {}), ...(roleSpecific || {}) };
+  }
+
+  function applyRegionAutoTextStyle(text, role, region) {
+    const style = regionAutoTextStyle(region, role);
+    text.autoFontCap = null;
+    text.autoFontScale = 1;
+    text.autoGapScale = 1;
+    if (!style) return null;
+
+    const special = new Set(["fontCap", "fontScale", "gapScale", "colorRole", "effectColorRole", "accentWords"]);
+    Object.entries(style).forEach(([key, value]) => {
+      if (!special.has(key) && value !== undefined) text[key] = value;
+    });
+    text.autoFontCap = Number(style.fontCap) || null;
+    text.autoFontScale = Number(style.fontScale) || 1;
+    text.autoGapScale = Number(style.gapScale) || 1;
+    if (style.colorRole) {
+      if (style.colorRole === "auto") text.colorMode = "auto";
+      else {
+        text.colorMode = "manual";
+        text.color = paletteColor(style.colorRole, state.palette);
+      }
+    }
+    if (style.effectColorRole) text.effectColor = paletteColor(style.effectColorRole, state.palette);
+    return style;
   }
 
   function autoDecoration(text, role, region) {
@@ -898,87 +1108,108 @@
     const seed = hashString(`${text.id}:${facts.raw}`);
     const regionBg = region.fillNone ? state.background.c1 : resolveColor(region, "fill");
     const baseColor = contrastText(regionBg);
-    const opposite = luminance(baseColor) > .5 ? mix(state.palette.secondary, "#000000", .18) : mix(state.palette.tertiary, "#ffffff", .18);
-    text.bold = role !== "footer" || seed % 3 !== 0;
-    text.italic = role === "callout" && seed % 5 === 0;
+    const accent = bestAccentColor(regionBg, baseColor);
+    text.bold = role !== "micro" || seed % 4 !== 0;
+    text.italic = false;
     text.underline = false;
     text.strike = false;
     text.colorMode = "auto";
-    text.effectColor = opposite;
+    text.effectColor = accent;
     text.prefixEnabled = false;
-    text.prefixGap = 10;
+    text.prefixGap = 7;
     text.customUnicode = ["★", "※", "◆", "☎"][seed % 4];
+    text.autoFontCap = null;
+    text.autoFontScale = 1;
+    text.autoGapScale = 1;
 
     if (role === "headline") {
       text.fontFamily = "dotum";
-      text.align = region.w / Math.max(1, region.h) > 3.6 ? "center" : "left";
-      text.lineHeight = facts.lines.length > 1 ? .98 : .92;
-      text.scaleX = facts.compact < 18 ? 1.08 : .96;
-      text.letterSpacing = facts.compact < 18 ? -1 : -3;
-      text.unicodeStyle = facts.compact <= 18 && facts.words >= 2 ? (seed % 2 ? "slash" : "dot") : "none";
-      text.effect = facts.compact <= 48 ? "extrude" : "outline";
-      text.outlineWidth = facts.compact <= 24 ? 11 : 5;
+      text.align = "left";
+      text.lineHeight = facts.lines.length > 1 ? .90 : .86;
+      text.scaleX = facts.compact < 22 ? 1.02 : .92;
+      text.letterSpacing = facts.compact < 22 ? -2 : -4;
+      text.unicodeStyle = "none";
+      text.effect = "none";
+      text.outlineWidth = 0;
     } else if (role === "callout") {
       text.fontFamily = "dotum";
-      text.align = "center";
-      text.lineHeight = .98;
-      text.scaleX = facts.compact <= 12 ? 1.12 : 1;
-      text.letterSpacing = facts.compact <= 12 ? 0 : -1;
-      text.unicodeStyle = ["wrapQuote", "wrapCard", "custom"][seed % 3];
-      text.effect = ["extrude", "outline", "hollow"][seed % 3];
-      text.outlineWidth = text.effect === "extrude" ? 9 : 3;
+      text.align = region.w / Math.max(1, region.h) > 3.7 ? "left" : "center";
+      text.lineHeight = .92;
+      text.scaleX = facts.compact <= 12 ? 1.08 : .96;
+      text.letterSpacing = facts.compact <= 12 ? -1 : -3;
+      text.unicodeStyle = facts.compact <= 12 && seed % 4 === 0 ? "wrapQuote" : "none";
+      text.effect = facts.compact <= 8 && seed % 3 === 0 ? "outline" : "none";
+      text.outlineWidth = 2;
     } else if (role === "tag") {
-      text.fontFamily = seed % 3 === 0 ? "batang" : "dotum";
+      text.fontFamily = "dotum";
       text.align = "center";
-      text.lineHeight = .94;
-      text.scaleX = 1.12;
-      text.letterSpacing = 0;
-      text.unicodeStyle = ["wrapQuote", "wrapPhone", "custom"][seed % 3];
-      text.effect = seed % 2 ? "extrude" : "outline";
-      text.outlineWidth = text.effect === "extrude" ? 8 : 3;
+      text.lineHeight = .88;
+      text.scaleX = facts.compact <= 6 ? 1.10 : .98;
+      text.letterSpacing = -1;
+      text.unicodeStyle = "none";
+      text.effect = "none";
+      text.outlineWidth = 0;
     } else if (role === "bullet") {
       text.fontFamily = "dotum";
       text.align = "left";
-      text.lineHeight = 1.08;
-      text.scaleX = .99;
-      text.letterSpacing = -1;
+      text.lineHeight = 1.01;
+      text.scaleX = .96;
+      text.letterSpacing = -2;
       text.unicodeStyle = "none";
       text.prefixEnabled = !facts.hasBullet;
       text.prefixSymbol = ["•", "■", "★", "♥"][seed % 4];
-      text.effect = region.fillNone ? "outline" : "none";
-      text.outlineWidth = 2;
+      text.effect = "none";
+      text.outlineWidth = 0;
     } else if (role === "footer") {
-      text.fontFamily = seed % 2 ? "batang" : "dotum";
+      text.fontFamily = "dotum";
       text.align = "center";
-      text.lineHeight = .98;
-      text.scaleX = 1;
-      text.letterSpacing = -1;
+      text.lineHeight = .90;
+      text.scaleX = .96;
+      text.letterSpacing = -2;
       text.unicodeStyle = /☎|☏|✆/.test(facts.raw) ? "none" : "wrapPhone";
-      text.effect = "outline";
-      text.outlineWidth = 2;
+      text.effect = "none";
+      text.outlineWidth = 0;
+    } else if (role === "micro") {
+      text.fontFamily = "dotum";
+      text.align = region.w / Math.max(1, region.h) > 3.8 ? "center" : "left";
+      text.lineHeight = 1.08;
+      text.scaleX = .90;
+      text.letterSpacing = -1;
+      text.unicodeStyle = "none";
+      text.effect = "none";
+      text.outlineWidth = 0;
     } else {
-      text.fontFamily = seed % 5 === 0 ? "batang" : "dotum";
+      text.fontFamily = seed % 7 === 0 ? "batang" : "dotum";
       text.align = "left";
-      text.lineHeight = facts.lines.length >= 3 ? 1.10 : 1.04;
-      text.scaleX = .98;
+      text.lineHeight = facts.lines.length >= 3 ? 1.03 : .99;
+      text.scaleX = .95;
       text.letterSpacing = -2;
       text.unicodeStyle = "none";
       text.effect = "none";
-      text.outlineWidth = 2;
+      text.outlineWidth = 0;
     }
+
+    const regionStyle = applyRegionAutoTextStyle(text, role, region);
+    text.rangeColors = [];
+    const accentWords = regionStyle
+      ? (regionStyle.accentWords ?? ["hero", "heroShadow", "heroOutline"].includes(region.textPreset))
+      : true;
+    if (accentWords) setAutomaticAccentRanges(text, role, region, baseColor);
   }
 
   function fitTextFontSize(c, text, box, targetHeight, role, emphasis = 1) {
-    const caps = { headline: 210, callout: 180, tag: 150, bullet: 90, footer: 112, body: 96 };
+    const caps = { headline: 228, callout: 180, tag: 132, bullet: 98, footer: 168, body: 112, micro: 50 };
+    const cap = Number(text.autoFontCap) || caps[role] || 104;
+    const styleScale = clamp(Number(text.autoFontScale) || 1, .55, 1.8);
     let low = 12;
-    let high = Math.max(18, Math.min(caps[role] || 100, box.h * .92, box.w * .48) * clamp(emphasis, .76, 1.4));
+    let high = Math.max(18, Math.min(cap, box.h * .96, box.w * .54) * clamp(emphasis, .70, 1.62) * styleScale);
     const fits = (size) => {
       const lines = layoutTextLines(c, text, size, box.w);
       const height = Math.max(size * text.lineHeight, lines.length * size * text.lineHeight);
       const widest = Math.max(1, ...lines.map((line) => line.width * text.scaleX));
       return height <= targetHeight + 1 && widest <= box.w + 1;
     };
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 13; i++) {
       const mid = (low + high) / 2;
       if (fits(mid)) low = mid; else high = mid;
     }
@@ -989,6 +1220,7 @@
     const groups = new Map();
     state.texts.forEach((text, index) => {
       text.autoRole = inferTextRole(text, index);
+      text.role = text.autoRole;
       if (!groups.has(text.regionId)) groups.set(text.regionId, []);
       groups.get(text.regionId).push(text);
     });
@@ -1002,12 +1234,12 @@
       const weights = styled.map((text) => {
         const facts = textFacts(text);
         const role = text.autoRole || "body";
-        const factor = { headline: 1.34, callout: 1.14, tag: .88, bullet: 1.02, footer: .82, body: 1.16 }[role] || 1;
+        const factor = { headline: 1.42, callout: 1.12, tag: .72, bullet: 1.02, footer: .88, body: 1.06, micro: .58 }[role] || 1;
         const shortBoost = facts.compact <= 14 ? 1.34 : facts.compact <= 26 ? 1.16 : 1;
         return clamp(Math.sqrt(facts.compact + 8) * factor * shortBoost, 2.5, 14);
       });
       const totalWeight = weights.reduce((sum, value) => sum + value, 0) || 1;
-      const gapBudget = Math.max(0, styled.length - 1) * 10;
+      const gapBudget = Math.max(0, styled.length - 1) * 5;
       styled.forEach((text, index) => {
         const role = text.autoRole || "body";
         autoDecoration(text, role, region);
@@ -1017,7 +1249,7 @@
         const facts = textFacts(text);
         const emphasis = (Number(region.emphasis) || 1) * (facts.compact <= 14 ? 1.18 : 1);
         text.fontSize = fitTextFontSize(sceneCtx, text, box, targetHeight, role, emphasis);
-        text.gap = Math.round(clamp(text.fontSize * .14, 5, 20));
+        text.gap = Math.round(clamp(text.fontSize * .065 * (Number(text.autoGapScale) || 1), 1, 10));
       });
     });
   }
@@ -1036,7 +1268,7 @@
       const ranked = state.texts.filter((text) => !locked.includes(text)).map((text, index) => {
         const role = inferTextRole(text, state.texts.indexOf(text));
         const facts = textFacts(text);
-        const priority = ({ footer: 170, headline: 160, bullet: 130, body: 120, callout: 110, tag: 105 }[role] || 100) + facts.compact;
+        const priority = ({ headline: 190, footer: 170, bullet: 145, callout: 135, tag: 125, body: 118, micro: 90 }[role] || 100) + Math.min(facts.compact, 60);
         return { text, index, role, facts, priority };
       }).sort((a, b) => b.priority - a.priority);
 
@@ -1070,7 +1302,11 @@
     }, 220);
   }
 
-  function assignTextsToTemplate(spec, { restyle = false } = {}) {
+  function assignTextsToTemplate(spec, { restyle = false, preferSlots = true } = {}) {
+    const regions = state.regions.filter((region) => region.acceptText && region.shape !== "line");
+    const occupancy = new Map(regions.map((region) => [region.id, 0]));
+    const overflow = [];
+
     state.texts.forEach((text, index) => {
       if (!text.styleMode) text.styleMode = "auto";
       text.role = inferTextRole(text, index);
@@ -1078,9 +1314,135 @@
       text.regionLocked = false;
       text.manualX = null;
       text.manualY = null;
+
+      const slot = preferSlots && Array.isArray(spec.textSlots) ? spec.textSlots[index] : null;
+      const region = Number.isInteger(slot) ? state.regions[slot] : null;
+      if (region && region.acceptText && region.shape !== "line") {
+        text.regionId = region.id;
+        text.order = occupancy.get(region.id) || 0;
+        occupancy.set(region.id, text.order + 1);
+      } else {
+        overflow.push({ text, index, role:text.role, facts:textFacts(text) });
+      }
     });
-    autoArrangeTexts({ reassign: true, forceStyle: restyle });
+
+    overflow
+      .sort((a, b) => {
+        const priority = { headline:190, footer:170, bullet:145, callout:135, tag:125, body:118, micro:90 };
+        return (priority[b.role] || 100) - (priority[a.role] || 100);
+      })
+      .forEach(({ text, role, facts }) => {
+        let best = regions[0];
+        let bestScore = -Infinity;
+        regions.forEach((region) => {
+          const score = regionTextScore(region, role, facts, occupancy.get(region.id) || 0);
+          if (score > bestScore) { best = region; bestScore = score; }
+        });
+        if (!best) return;
+        text.regionId = best.id;
+        text.order = occupancy.get(best.id) || 0;
+        occupancy.set(best.id, text.order + 1);
+      });
+
+    normalizeTextOrders();
+    autoStyleAssignedTexts({ force: restyle });
   }
+
+  function ensureRegionLayoutBase(region) {
+    if (!region) return null;
+    if (!region.layoutBase) {
+      region.layoutBase = {
+        x: Number(region.x) || 0,
+        y: Number(region.y) || 0,
+        w: Math.max(20, Number(region.w) || 20),
+        h: Math.max(20, Number(region.h) || 20)
+      };
+    }
+    if (typeof region.layoutDetached !== "boolean") region.layoutDetached = false;
+    if (region.layoutManualDelta) {
+      region.layoutManualDelta = {
+        x: Number(region.layoutManualDelta.x) || 0,
+        y: Number(region.layoutManualDelta.y) || 0,
+        w: Number(region.layoutManualDelta.w) || 0,
+        h: Number(region.layoutManualDelta.h) || 0
+      };
+    }
+    return region.layoutBase;
+  }
+
+  function regionGapLabel(value = state.regionGapReduction) {
+    const amount = Math.round(clamp(Number(value) || 0, 0, 72));
+    return amount > 0 ? `${amount}px 더 촘촘` : "템플릿 원본";
+  }
+
+  function regionGapGeometry(region, amount = state.regionGapReduction) {
+    const base = ensureRegionLayoutBase(region);
+    const { trimW, trimH } = dimensions();
+    const gap = clamp(Number(amount) || 0, 0, 72);
+    const isFullWidth = base.x <= 1 && base.w >= trimW - 2;
+    const horizontal = region.shape === "line" || isFullWidth ? 0 : gap;
+    const vertical = region.shape === "line" ? Math.min(8, gap * .25) : gap;
+    let x = base.x - horizontal / 2;
+    let y = base.y - vertical / 2;
+    let w = base.w + horizontal;
+    let h = base.h + vertical;
+    if (isFullWidth) { x = 0; w = trimW; }
+    x = clamp(x, -trimW * .12, trimW - 20);
+    y = clamp(y, -trimH * .12, trimH - 20);
+    w = clamp(w, 20, trimW * 1.24);
+    h = clamp(h, 20, trimH * 1.24);
+    return { x, y, w, h };
+  }
+
+  function captureRegionManualDelta(region, amount = state.regionGapReduction) {
+    if (!region) return;
+    const target = regionGapGeometry(region, amount);
+    region.layoutManualDelta = {
+      x: (Number(region.x) || 0) - target.x,
+      y: (Number(region.y) || 0) - target.y,
+      w: Math.max(20, Number(region.w) || 20) - target.w,
+      h: Math.max(20, Number(region.h) || 20) - target.h
+    };
+    region.layoutDetached = true;
+  }
+
+  function applyGapToRegion(region, amount = state.regionGapReduction, { preserveManual = true } = {}) {
+    if (!region) return;
+    const target = regionGapGeometry(region, amount);
+    const delta = preserveManual && region.layoutDetached && region.layoutManualDelta
+      ? region.layoutManualDelta
+      : { x: 0, y: 0, w: 0, h: 0 };
+    const { trimW, trimH } = dimensions();
+    const nextW = clamp(target.w + (Number(delta.w) || 0), 20, trimW * 1.24);
+    const nextH = clamp(target.h + (Number(delta.h) || 0), 20, trimH * 1.24);
+    const nextX = clamp(target.x + (Number(delta.x) || 0), -trimW * .12, trimW - 20);
+    const nextY = clamp(target.y + (Number(delta.y) || 0), -trimH * .12, trimH - 20);
+    region.x = Math.round(nextX);
+    region.y = Math.round(nextY);
+    region.w = Math.round(nextW);
+    region.h = Math.round(nextH);
+  }
+
+  function applyRegionGapReduction({ force = false } = {}) {
+    state.regionGapReduction = clamp(Number(state.regionGapReduction) || 0, 0, 72);
+    state.regions.forEach((region) => {
+      ensureRegionLayoutBase(region);
+      if (force) {
+        region.layoutDetached = false;
+        region.layoutManualDelta = null;
+      }
+      applyGapToRegion(region, state.regionGapReduction, { preserveManual: !force });
+    });
+    autoStyleAssignedTexts({ force: false });
+  }
+
+  function restoreRegionLayout(region) {
+    if (!region) return;
+    region.layoutDetached = false;
+    region.layoutManualDelta = null;
+    applyGapToRegion(region, state.regionGapReduction, { preserveManual: false });
+  }
+
 
   function applyTemplate(templateId, { preserveTexts = true } = {}) {
     const spec = templateSpecs.find((t) => t.id === templateId) || templateSpecs[0];
@@ -1092,6 +1454,8 @@
     const bgColor = paletteColor(bgRole, state.palette);
     state.background = { mode: "solid", c1: bgColor, c2: bgColor, pattern: "none", patternColor: state.palette.tertiary, angle: 0, scale: spec.bg?.scale || 48 };
     state.regions = spec.regions.map((r) => cloneTemplateRegion(r, W, H));
+    if (!Number.isFinite(Number(state.regionGapReduction))) state.regionGapReduction = globalNumericDefaults.regionGapReduction;
+    applyRegionGapReduction({ force: true });
     state.posterBorder = spec.border
       ? { enabled:Boolean(spec.border.enabled), color:spec.border.color || state.palette.secondary || "#111111", width:Number(spec.border.width) || 0, radius:Number(spec.border.radius) || 0 }
       : { enabled:false, color:state.palette.secondary || "#111111", width:0, radius:0 };
@@ -1104,22 +1468,29 @@
 
     const resetTexts = !preserveTexts || !state.texts.length;
     if (resetTexts) {
+      const sample = (copy, role, extra = {}) => makeText(copy, {
+        ...ROLE_STYLE_DEFAULTS[role], role, roleHint:role, sample:true, unicodeStyle:"none", ...extra
+      });
       state.texts = [
-        makeText(`수달이 왜 이렇게 귀엽냐는 질문에
-과학계는 아직 답을 못했습니다`, { role:"headline", ...ROLE_STYLE_DEFAULTS.headline }),
-        makeText(`•물 위에 둥둥
-•배 위에는 조개
-•마음에는 입덕`, { role:"bullet", ...ROLE_STYLE_DEFAULTS.bullet }),
-        makeText(`전/국/수/달/긴/급/속/보
-귀여움 기준치 초과`, { role:"callout", ...ROLE_STYLE_DEFAULTS.callout }),
-        makeText(`오늘도 수달은 아무것도 안 했지만
-이미 홍보에 성공했습니다`, { role:"body", ...ROLE_STYLE_DEFAULTS.body }),
-        makeText("☎ 입덕 상담은 지금 바로 ☎", { role:"footer", unicodeStyle:"none", ...ROLE_STYLE_DEFAULTS.footer })
+        sample("속보", "tag"),
+        sample(`수달, 돌 하나 주웠을 뿐인데
+전국민 심장 압수 시작`, "headline"),
+        sample("★국가수달과몰입대책본부 발표｜귀여움 경보 4단계｜조개 비축 권고★", "micro"),
+        sample(`•배 위 조개 개봉 가능
+•물 위 낮잠·식사 동시 수행
+•오늘의 문제: 너무 귀여움
+•해결 방법: 4K로 더 크게 보기`, "bullet"),
+        sample(`무직인데
+매일 바쁨`, "callout"),
+        sample(`입덕률
+98.7%`, "tag"),
+        sample("☎ 수달 제보 02)770-수달수달 ☎", "footer"),
+        sample("※부작용: 영상 47개 연속 재생·조약돌 수집·친구에게 사진 전송", "micro")
       ];
     }
 
-    assignTextsToTemplate(spec, { restyle: resetTexts });
-    if (!state.texts.some((t) => t.id === state.selectedTextId)) state.selectedTextId = state.texts[0]?.id || null;
+    assignTextsToTemplate(spec, { restyle: resetTexts, preferSlots: true });
+    if (!state.texts.some((t) => t.id === state.selectedTextId)) state.selectedTextId = resetTexts ? null : (state.texts[0]?.id || null);
     refreshAllUI();
     queueRender();
   }
@@ -1201,9 +1572,9 @@
     state.regions.forEach((region, index) => {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = `region-chip${state.selectedRegionId === region.id ? " active" : ""}`;
+      button.className = `region-chip${state.selectedRegionId === region.id ? " active" : ""}${region.layoutDetached ? " detached" : ""}`;
       const color = region.fillNone ? "transparent" : resolveColor(region, "fill");
-      button.innerHTML = `<span class="region-dot"></span>${index + 1}. ${region.name}`;
+      button.innerHTML = `<span class="region-dot"></span>${index + 1}. ${region.name}${region.layoutDetached ? '<span class="region-chip-state">수동</span>' : ""}`;
       button.querySelector(".region-dot").style.background = color;
       button.addEventListener("click", () => {
         state.selectedRegionId = region.id;
@@ -1229,6 +1600,10 @@
 
   function refreshAllUI() {
     updateCanvasMeta();
+    if ($("regionGapReduction")) {
+      $("regionGapReduction").value = String(state.regionGapReduction ?? globalNumericDefaults.regionGapReduction);
+      $("regionGapReductionValue").textContent = regionGapLabel(state.regionGapReduction);
+    }
     renderTemplateGrid();
     renderTextList();
     renderRegionList();
@@ -1260,14 +1635,9 @@
     return label;
   }
 
-  function isNumericDraftIntermediate(text) {
-    const value = String(text ?? "").trim().replace(",", ".");
-    return ["", "-", "+", ".", "-.", "+."].includes(value);
-  }
-
   function parseNumericDraft(text) {
     const value = String(text ?? "").trim().replace(",", ".");
-    if (isNumericDraftIntermediate(value)) return null;
+    if (["", "-", "+", ".", "-.", "+."].includes(value)) return null;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
   }
@@ -1287,14 +1657,6 @@
     return Number(normalized.toFixed(Math.min(8, numericPrecision(step))));
   }
 
-  function updateNumericRangeVisual(range) {
-    const min = Number(range.min || 0);
-    const max = Number(range.max || 100);
-    const value = Number(range.value || min);
-    const ratio = max === min ? 0 : clamp((value - min) / (max - min), 0, 1);
-    range.style.setProperty("--numeric-progress", `${ratio * 100}%`);
-  }
-
   function numericFieldControl(labelText, value, min, max, step, formatter, onInput, options = {}) {
     const wrap = document.createElement("div");
     wrap.className = "numeric-field numeric-stepper";
@@ -1308,9 +1670,9 @@
     const reset = document.createElement("button");
     reset.type = "button";
     reset.className = "numeric-reset-button";
-    reset.textContent = "↺ 복귀";
-    reset.title = `${labelText} 원상복귀`;
-    reset.setAttribute("aria-label", `${labelText} 원상복귀`);
+    reset.textContent = "↺ 원상복귀";
+    reset.title = `${labelText} 원래값으로 복귀`;
+    reset.setAttribute("aria-label", `${labelText} 원래값으로 복귀`);
     headRight.append(readout, reset);
     head.append(title, headRight);
 
@@ -1327,9 +1689,6 @@
     number.autocomplete = "off";
     number.spellcheck = false;
     number.className = "numeric-direct-input";
-    number.dataset.min = String(min);
-    number.dataset.max = String(max);
-    number.dataset.step = String(step);
     number.setAttribute("aria-label", `${labelText} 직접 입력`);
     const plus = document.createElement("button");
     plus.type = "button";
@@ -1360,13 +1719,12 @@
     const updateReset = () => {
       const defaultValue = currentDefault();
       reset.disabled = Math.abs(committed - defaultValue) < Math.max(1e-8, step / 1000);
-      reset.title = `${labelText} 처음 값 ${formatter(defaultValue)}로 원상복귀`;
+      reset.title = `${labelText} 원래값 ${formatter(defaultValue)}로 복귀`;
     };
     const syncDisplay = (next, { preserveDraft = false } = {}) => {
       committed = normalizeNumericValue(next, min, max, step, committed);
       if (!preserveDraft) number.value = String(committed);
       range.value = String(committed);
-      updateNumericRangeVisual(range);
       readout.textContent = formatter(committed);
       updateReset();
       return committed;
@@ -1396,7 +1754,6 @@
     });
     number.addEventListener("input", () => {
       const parsed = parseNumericDraft(number.value);
-      number.classList.toggle("is-draft-invalid", parsed === null && !isNumericDraftIntermediate(number.value));
       if (parsed === null) return;
       preview(parsed, { preserveDraft: true });
     });
@@ -1412,7 +1769,6 @@
       }
       numberEditing = false;
       numberCancelled = false;
-      number.classList.remove("is-draft-invalid");
     });
     number.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
@@ -1496,7 +1852,7 @@
           flowMargin: Number(item.flowMargin) || 0,
           effectSize: Number(item.effectSize) || 0,
           labelSize: Number(item.labelSize) || 12,
-          bandPosition: Math.round(clamp(Number.isFinite(Number(item.bandPosition)) ? Number(item.bandPosition) : .5, 0, 1) * 100)
+          bandPosition: Math.round(clamp(Number(item.bandPosition) || .5, 0, 1) * 100)
         };
     itemNumericDefaults.set(key, values);
     return values;
@@ -1525,7 +1881,7 @@
   }
 
   const STATIC_NUMERIC_SPECS = {
-    bleedMm: { min: 0, max: 20, step: 1, reset: () => globalNumericDefaults.bleedMm },
+    regionGapReduction: { min: 0, max: 72, step: 1, reset: () => globalNumericDefaults.regionGapReduction },
     regionX: { min: -1600, max: 3200, step: 1, reset: () => itemNumericDefault("region", "x", 0) },
     regionY: { min: -1600, max: 3200, step: 1, reset: () => itemNumericDefault("region", "y", 0) },
     regionW: { min: 20, max: 3200, step: 1, reset: () => itemNumericDefault("region", "w", 720) },
@@ -1546,12 +1902,22 @@
     flowMargin: { min: -160, max: 240, step: 1, reset: () => itemNumericDefault("element", "flowMargin", 0) },
     elementEffectSize: { min: 0, max: 100, step: 1, reset: () => itemNumericDefault("element", "effectSize", 20) },
     elementLabelSize: { min: 12, max: 280, step: 1, reset: () => itemNumericDefault("element", "labelSize", 72) },
+    bleedMm: { min: 0, max: 30, step: .5, reset: () => globalNumericDefaults.bleedMm },
     gradientAngle: { min: 0, max: 360, step: 1, reset: () => globalNumericDefaults.gradientAngle },
     patternScale: { min: 12, max: 180, step: 1, reset: () => globalNumericDefaults.patternScale },
     posterBorderWidth: { min: 0, max: 100, step: 1, reset: () => globalNumericDefaults.posterBorderWidth },
     posterBorderRadius: { min: 0, max: 240, step: 1, reset: () => globalNumericDefaults.posterBorderRadius },
     jpgQuality: { min: 50, max: 100, step: 1, reset: () => globalNumericDefaults.jpgQuality }
   };
+
+  function updateRangeVisual(input) {
+    if (!input) return;
+    const min = Number(input.min || 0);
+    const max = Number(input.max || 100);
+    const value = Number(input.value);
+    const ratio = max === min ? 0 : (value - min) / (max - min);
+    input.style.setProperty("--range-progress", `${clamp(ratio, 0, 1) * 100}%`);
+  }
 
   function enhanceStaticNumericField(bridge) {
     if (!bridge?.id || bridge.dataset.numericEnhanced === "true") return;
@@ -1590,9 +1956,6 @@
     number.autocomplete = "off";
     number.spellcheck = false;
     number.className = "numeric-direct-input";
-    number.dataset.min = String(min);
-    number.dataset.max = String(max);
-    number.dataset.step = String(step);
     number.setAttribute("aria-label", "수치 직접 입력");
     const plus = document.createElement("button");
     plus.type = "button";
@@ -1602,8 +1965,8 @@
     const reset = document.createElement("button");
     reset.type = "button";
     reset.className = "numeric-reset-button numeric-reset-compact";
-    reset.textContent = "↺ 복귀";
-    reset.setAttribute("aria-label", "이 항목을 원상복귀");
+    reset.textContent = "↺ 원상복귀";
+    reset.setAttribute("aria-label", "원래값으로 복귀");
     row.append(minus, number, plus, reset);
 
     const range = document.createElement("input");
@@ -1628,13 +1991,13 @@
     const updateReset = () => {
       const defaultValue = currentDefault();
       reset.disabled = isContextDisabled() || Math.abs(committed - defaultValue) < Math.max(1e-8, step / 1000);
-      reset.title = `처음 값 ${defaultValue}로 원상복귀`;
+      reset.title = `원래값 ${defaultValue}로 복귀`;
     };
     const sync = ({ preserveDraft = false } = {}) => {
       committed = normalizeNumericValue(bridge.value, min, max, step, committed);
       if (!preserveDraft && !editing) number.value = String(committed);
       range.value = String(committed);
-      updateNumericRangeVisual(range);
+      updateRangeVisual(range);
       const disabled = isContextDisabled();
       number.disabled = disabled;
       range.disabled = disabled;
@@ -1647,7 +2010,7 @@
       bridge.value = String(committed);
       if (!preserveDraft) number.value = String(committed);
       range.value = String(committed);
-      updateNumericRangeVisual(range);
+      updateRangeVisual(range);
       bridge.dispatchEvent(new Event("input", { bubbles: true }));
       if (commit) bridge.dispatchEvent(new Event("change", { bubbles: true }));
       updateReset();
@@ -1668,7 +2031,6 @@
     });
     number.addEventListener("input", () => {
       const parsed = parseNumericDraft(number.value);
-      number.classList.toggle("is-draft-invalid", parsed === null && !isNumericDraftIntermediate(number.value));
       if (parsed === null) return;
       emitBridge(parsed, { preserveDraft: true });
     });
@@ -1684,7 +2046,6 @@
       }
       editing = false;
       cancelled = false;
-      number.classList.remove("is-draft-invalid");
       sync();
     });
     number.addEventListener("keydown", (event) => {
@@ -1830,13 +2191,13 @@
       textarea.addEventListener("click", () => { state.selectedTextId = text.id; activeTextarea = textarea; });
       textarea.addEventListener("input", () => {
         text.text = textarea.value;
+        text.roleHint = null;
+        text.sample = false;
         textarea.rows = Math.max(2, Math.min(6, textarea.value.split("\n").length + 1));
         scheduleAutoArrange({ reassign: !text.regionLocked, refreshControls: false });
         queueRender();
       });
-      textarea.addEventListener("blur", (event) => {
-        const nextTarget = event.relatedTarget;
-        if (textarea.dataset.keepOwnControls === "true" || (nextTarget instanceof Node && card.contains(nextTarget))) return;
+      textarea.addEventListener("blur", () => {
         if (text.styleMode !== "manual") {
           autoArrangeTexts({ reassign: !text.regionLocked, forceStyle: false });
           renderTextList();
@@ -1872,14 +2233,6 @@
 
       const controls = document.createElement("div");
       controls.className = "inline-text-controls";
-      controls.addEventListener("pointerdown", () => {
-        if (autoArrangeTimer) {
-          clearTimeout(autoArrangeTimer);
-          autoArrangeTimer = null;
-        }
-        textarea.dataset.keepOwnControls = "true";
-        setTimeout(() => { delete textarea.dataset.keepOwnControls; }, 0);
-      }, true);
       const titleRow = document.createElement("div");
       titleRow.className = "text-style-heading";
       const title = document.createElement("p");
@@ -1931,7 +2284,7 @@
       const fontSelect = makeSelect([["dotum", "KoPub 돋움"], ["batang", "KoPub 바탕"], ["gulim", "굴림체"]], text.fontFamily);
       fontSelect.addEventListener("change", () => manual(() => { text.fontFamily = fontSelect.value; }));
       const fontSize = numericStepperControl("크기", text.fontSize, 12, 300, 1, (value) => `${Math.round(value)}px`, (value) => manual(() => { text.fontSize = clamp(Number(value), 12, 300); }), {
-        defaultValue: text.fontSize
+        defaultValue: () => textNumericDefault(text, "fontSize", ROLE_STYLE_DEFAULTS[text.role]?.fontSize ?? 54)
       });
       const regionSelect = document.createElement("select");
       accepting.forEach((region) => {
@@ -1961,7 +2314,7 @@
       const unicode = makeSelect(UNICODE_PRESETS, text.unicodeStyle);
       unicode.addEventListener("change", () => manual(() => { text.unicodeStyle = unicode.value; renderTextList(); }));
       const lineHeight = rangeControl("줄 간격", text.lineHeight, .8, 1.8, .02, (value) => `${value.toFixed(2)}배`, (value) => manual(() => { text.lineHeight = value; }), {
-        defaultValue: text.lineHeight
+        defaultValue: () => textNumericDefault(text, "lineHeight", ROLE_STYLE_DEFAULTS[text.role]?.lineHeight ?? 1.08)
       });
       row2.append(labeledControl("정렬", align), labeledControl("유니코드 연출", unicode), lineHeight);
       settingsBody.append(row2);
@@ -2003,13 +2356,13 @@
       const row3 = document.createElement("div"); row3.className = "field-grid three";
       row3.append(
         rangeControl("글자 폭", text.scaleX * 100, 50, 180, 1, (value) => `${Math.round(value)}%`, (value) => manual(() => { text.scaleX = value / 100; }), {
-          defaultValue: text.scaleX * 100
+          defaultValue: () => textNumericDefault(text, "scaleX", ROLE_STYLE_DEFAULTS[text.role]?.scaleX ?? 1) * 100
         }),
         rangeControl("자간", text.letterSpacing, -12, 36, 1, (value) => String(value), (value) => manual(() => { text.letterSpacing = value; }), {
-          defaultValue: text.letterSpacing
+          defaultValue: () => textNumericDefault(text, "letterSpacing", ROLE_STYLE_DEFAULTS[text.role]?.letterSpacing ?? 0)
         }),
         rangeControl("줄 앞 간격", text.prefixGap, 0, 60, 1, (value) => String(value), (value) => manual(() => { text.prefixGap = value; }), {
-          defaultValue: text.prefixGap
+          defaultValue: () => textNumericDefault(text, "prefixGap", 12)
         })
       );
       settingsBody.append(row3);
@@ -2018,13 +2371,17 @@
       const effect = makeSelect([["none", "없음"], ["outline", "외곽선"], ["shadow", "딱 떨어지는 그림자"], ["hollow", "빈 그림자"], ["extrude", "단색 입체"]], text.effect);
       effect.addEventListener("change", () => manual(() => { text.effect = effect.value; }));
       const outline = numericFieldControl("효과 두께", text.outlineWidth, 0, 48, 1, (value) => `${Math.round(value)}px`, (value) => manual(() => { text.outlineWidth = value; }), {
-        defaultValue: text.outlineWidth
+        defaultValue: () => textNumericDefault(text, "outlineWidth", ROLE_STYLE_DEFAULTS[text.role]?.outlineWidth ?? 2)
       });
       const gap = numericFieldControl("문장 아래 여백", text.gap, 0, 120, 1, (value) => `${Math.round(value)}px`, (value) => manual(() => { text.gap = value; }), {
-        defaultValue: text.gap
+        defaultValue: () => textNumericDefault(text, "gap", ROLE_STYLE_DEFAULTS[text.role]?.gap ?? 8)
       });
       row4.append(labeledControl("효과", effect), outline, gap);
       settingsBody.append(row4);
+      const effectRule = document.createElement("p");
+      effectRule.className = "effect-rule-note compact";
+      effectRule.innerHTML = "<b>딱 떨어지는 그림자</b>: 번짐 없는 단색 복사 · <b>단색 입체</b>: 그림자 없는 한 색 옆면";
+      settingsBody.append(effectRule);
 
       const row5 = document.createElement("div"); row5.className = "field-grid three";
       const colorModeWrap = document.createElement("div"); colorModeWrap.className = "segmented-field";
@@ -2098,15 +2455,21 @@
       $("selectedRegionName").textContent = "선택된 영역 없음";
       $("selectedRegionBadge").textContent = "미리보기에서 선택";
       $("toggleRegionTransformBtn").textContent = "핸들 열기";
-      syncStaticNumericFields(["regionX", "regionY", "regionW", "regionH", "regionRadius", "regionPadding", "regionStrokeWidth", "regionRotation", "regionEffectSize"]);
+      if ($("restoreRegionLayoutBtn")) $("restoreRegionLayoutBtn").disabled = true;
+      $("regionGapReduction").value = String(state.regionGapReduction ?? globalNumericDefaults.regionGapReduction);
+      $("regionGapReductionValue").textContent = regionGapLabel(state.regionGapReduction);
+      syncStaticNumericFields(["regionGapReduction", "regionX", "regionY", "regionW", "regionH", "regionRadius", "regionPadding", "regionStrokeWidth", "regionRotation", "regionEffectSize"]);
       colorFields.forEach((field) => field.update());
       return;
     }
     ensureItemNumericDefaults("region", region);
     const active = transformTarget?.kind === "region" && transformTarget.id === region.id;
     $("selectedRegionName").textContent = region.name;
-    $("selectedRegionBadge").textContent = active ? "캔버스 조작 중" : (region.acceptText ? "문장 영역" : "장식 영역");
+    $("selectedRegionBadge").textContent = active ? "캔버스 조작 중" : (region.layoutDetached ? "수동 위치" : (region.acceptText ? "문장 영역" : "장식 영역"));
     $("toggleRegionTransformBtn").textContent = active ? "핸들 닫기" : "핸들 열기";
+    if ($("restoreRegionLayoutBtn")) $("restoreRegionLayoutBtn").disabled = !region.layoutBase;
+    $("regionGapReduction").value = String(state.regionGapReduction ?? globalNumericDefaults.regionGapReduction);
+    $("regionGapReductionValue").textContent = regionGapLabel(state.regionGapReduction);
     $("regionX").value = round(region.x); $("regionY").value = round(region.y);
     $("regionW").value = round(region.w); $("regionH").value = round(region.h);
     $("regionShape").value = region.shape;
@@ -2116,7 +2479,7 @@
     $("regionRotation").value = region.rotation; $("regionRotationValue").textContent = `${round(region.rotation)}°`;
     syncSegmented("regionAcceptText", region.acceptText ? "yes" : "no");
     $("regionEffect").value = region.effect; $("regionEffectSize").value = region.effectSize;
-    syncStaticNumericFields(["regionX", "regionY", "regionW", "regionH", "regionRadius", "regionPadding", "regionStrokeWidth", "regionRotation", "regionEffectSize"]);
+    syncStaticNumericFields(["regionGapReduction", "regionX", "regionY", "regionW", "regionH", "regionRadius", "regionPadding", "regionStrokeWidth", "regionRotation", "regionEffectSize"]);
     colorFields.forEach((field) => field.update());
   }
 
@@ -2184,7 +2547,6 @@
   function syncBackgroundControls() {
     syncSegmented("orientation", state.orientation);
     $("bleedMm").value = String(state.bleedMm);
-    if ($("bleedMmValue")) $("bleedMmValue").textContent = Number(state.bleedMm) > 0 ? `${Number(state.bleedMm)} mm` : "없음";
     $("backgroundMode").value = state.background.mode;
     $("gradientAngle").value = state.background.angle; $("gradientAngleValue").textContent = `${round(state.background.angle)}°`;
     $("patternType").value = state.background.pattern;
@@ -2193,7 +2555,7 @@
     $("posterBorderWidth").value = state.posterBorder.width; $("posterBorderWidthValue").textContent = round(state.posterBorder.width);
     $("posterBorderRadius").value = state.posterBorder.radius; $("posterBorderRadiusValue").textContent = round(state.posterBorder.radius);
     $("jpgQuality").value = Math.round(state.jpgQuality * 100); $("jpgQualityValue").textContent = `${Math.round(state.jpgQuality * 100)}%`;
-    syncStaticNumericFields(["gradientAngle", "patternScale", "posterBorderWidth", "posterBorderRadius", "jpgQuality"]);
+    syncStaticNumericFields(["bleedMm", "gradientAngle", "patternScale", "posterBorderWidth", "posterBorderRadius", "jpgQuality"]);
   }
 
   function bindValue(id, getter, setter, event = "input", after = null) {
@@ -2246,6 +2608,9 @@
       const region = R(`영역 ${state.regions.length + 1}`, Math.round(W * .18), Math.round(H * .18), Math.round(W * .45), Math.round(H * .28), {
         fillRole: "paper", strokeNone: true, strokeWidth: 0, radius: 22, padding: 28
       });
+      region.layoutBase = { x: region.x, y: region.y, w: region.w, h: region.h };
+      region.layoutDetached = false;
+      region.layoutManualDelta = null;
       state.regions.push(region);
       state.selectedRegionId = region.id;
       state.selectedElementId = null;
@@ -2329,12 +2694,48 @@
       $("photoInput").value = "";
     });
 
+    bindValue("regionGapReduction", () => globalNumericDefaults.regionGapReduction, (value) => {
+      const previousGap = clamp(Number(state.regionGapReduction) || 0, 0, 72);
+      state.regions.forEach((region) => {
+        if (region.layoutDetached) captureRegionManualDelta(region, previousGap);
+      });
+      state.regionGapReduction = clamp(Number(value) || 0, 0, 72);
+      $("regionGapReductionValue").textContent = regionGapLabel(state.regionGapReduction);
+      applyRegionGapReduction({ force: false });
+      renderRegionList();
+      updateRegionControls();
+      renderTemplateGrid();
+    });
+    $("restoreAllRegionsBtn")?.addEventListener("click", () => {
+      state.regions.forEach((region) => { region.layoutDetached = false; });
+      applyRegionGapReduction({ force: true });
+      renderRegionList();
+      updateRegionControls();
+      queueRender();
+      markHistoryDirty(true);
+      toast("모든 영역을 템플릿 위치로 되돌렸습니다.");
+    });
+    $("restoreRegionLayoutBtn")?.addEventListener("click", () => {
+      const region = selectedRegion();
+      if (!region) return;
+      restoreRegionLayout(region);
+      autoStyleAssignedTexts({ force: false });
+      renderRegionList();
+      updateRegionControls();
+      queueRender();
+      markHistoryDirty(true);
+      toast("선택 영역을 원래 위치로 되돌렸습니다.");
+    });
+
     ["regionX", "regionY", "regionW", "regionH"].forEach((id) => bindValue(id, () => 0, (value) => {
       const region = selectedRegion();
       if (!region) return;
       const key = { regionX: "x", regionY: "y", regionW: "w", regionH: "h" }[id];
       region[key] = value;
       if (key === "w" || key === "h") region[key] = Math.max(20, region[key]);
+      ensureRegionLayoutBase(region);
+      captureRegionManualDelta(region, state.regionGapReduction);
+      renderRegionList();
       autoStyleAssignedTexts({ force: false });
     }));
     bindValue("regionShape", () => "rect", (value) => { const region = selectedRegion(); if (region) region.shape = value; }, "change");
@@ -2468,11 +2869,9 @@
     });
 
     bindSegmented("orientation", (value) => changeOrientation(value));
-    $("bleedMm").addEventListener("input", () => {
-      state.bleedMm = Number($("bleedMm").value);
-      if ($("bleedMmValue")) $("bleedMmValue").textContent = state.bleedMm > 0 ? `${state.bleedMm} mm` : "없음";
+    bindValue("bleedMm", () => globalNumericDefaults.bleedMm, (value) => {
+      state.bleedMm = clamp(Number(value) || 0, 0, 30);
       updateCanvasMeta();
-      queueRender();
     });
     bindValue("backgroundMode", () => "solid", (value) => state.background.mode = value, "change");
     bindValue("gradientAngle", () => 0, (value) => state.background.angle = value, "input", () => $("gradientAngleValue").textContent = `${$("gradientAngle").value}°`);
@@ -2489,7 +2888,7 @@
       itemNumericDefaults.clear();
       textNumericDefaults.clear();
       transformTarget = null;
-      applyTemplate("label-market", { preserveTexts: false });
+      applyTemplate("street-alert", { preserveTexts: false });
       initializeHistory();
       toast("처음 상태로 되돌렸습니다.");
     });
@@ -2505,7 +2904,11 @@
     state.orientation = next;
     const fresh = dimensions();
     const sx = fresh.trimW / old.trimW; const sy = fresh.trimH / old.trimH;
-    state.regions.forEach((r)=>{r.x*=sx;r.y*=sy;r.w*=sx;r.h*=sy;r.padding*=Math.min(sx,sy);});
+    state.regions.forEach((r)=>{
+      r.x*=sx;r.y*=sy;r.w*=sx;r.h*=sy;r.padding*=Math.min(sx,sy);
+      if(r.layoutBase){r.layoutBase.x*=sx;r.layoutBase.y*=sy;r.layoutBase.w*=sx;r.layoutBase.h*=sy;}
+      if(r.layoutManualDelta){r.layoutManualDelta.x*=sx;r.layoutManualDelta.y*=sy;r.layoutManualDelta.w*=sx;r.layoutManualDelta.h*=sy;}
+    });
     state.elements.forEach((e)=>{e.x*=sx;e.y*=sy;e.w*=sx;e.h*=sy;});
     state.texts.forEach((t)=>{if(t.manualX!=null)t.manualX*=sx;if(t.manualY!=null)t.manualY*=sy;});
     updateCanvasMeta(); updateRegionControls(); updateElementControls(); queueRender();
@@ -2663,8 +3066,12 @@
   function drawFlatShapeShadow(c, item) {
     if (item.effect !== "shadow") return;
     const offset = clamp(Number(item.effectSize) || 0, 0, 100) * .55;
-    const shadowColor = item.effectColor || "#111111";
+    const shadowColor = resolveColor(item, "effectColor") || "#111111";
     c.save();
+    c.shadowColor = "transparent";
+    c.shadowBlur = 0;
+    c.shadowOffsetX = 0;
+    c.shadowOffsetY = 0;
     c.translate(offset, offset);
     shapePath(c, item);
     if (item.fillNone && item.type !== "image") {
@@ -2680,7 +3087,7 @@
 
   function applyShapeEffect(c, item) {
     if (item.effect === "glow") {
-      c.shadowColor = item.effectColor || "#ffffff";
+      c.shadowColor = resolveColor(item, "effectColor") || "#ffffff";
       c.shadowBlur = item.effectSize;
       c.shadowOffsetX = 0;
       c.shadowOffsetY = 0;
@@ -2690,8 +3097,12 @@
   function drawShapeExtrusion(c, item) {
     if (item.effect !== "extrude") return;
     const depth = clamp(Number(item.effectSize) || 16, 3, 70);
-    const step = 1;
-    const sideColor = item.effectColor || "#111111";
+    const step = depth > 34 ? 2 : 1;
+    const sideColor = resolveColor(item, "effectColor") || "#111111";
+    c.shadowColor = "transparent";
+    c.shadowBlur = 0;
+    c.shadowOffsetX = 0;
+    c.shadowOffsetY = 0;
 
     // Build a solid, flat-color extrusion only. No drop shadow, blur, or
     // depth-dependent color mixing, so the side face stays crisp and uniform.
@@ -2728,7 +3139,7 @@
           c.save();
           c.translate(region.effectSize * .45, region.effectSize * .45);
           shapePath(c, region);
-          c.strokeStyle = region.effectColor;
+          c.strokeStyle = resolveColor(region, "effectColor");
           c.lineWidth = Math.max(3, region.effectSize * .28);
           c.stroke();
           c.restore();
@@ -2765,7 +3176,7 @@
         c.save();
         c.translate(item.effectSize * .45, item.effectSize * .45);
         shapePath(c, item);
-        c.strokeStyle = item.effectColor;
+        c.strokeStyle = resolveColor(item, "effectColor");
         c.lineWidth = Math.max(3, item.effectSize * .28);
         c.stroke();
         c.restore();
@@ -3022,7 +3433,12 @@
 
       const groupHeight=estimated.reduce((sum,item)=>sum+item.h+item.text.gap*commonScale,0)-texts.at(-1).gap*commonScale;
       const centerSingle=texts.length===1&&(region.shape!=="rect"||region.radius>55||region.h<trimH*.34);
-      let cursorY=centerSingle?box.y+Math.max(0,(box.h-groupHeight)/2):box.y;
+      const verticalAlign = region.textVAlign || (centerSingle ? "center" : "top");
+      let cursorY = verticalAlign === "center"
+        ? box.y + Math.max(0, (box.h - groupHeight) / 2)
+        : verticalAlign === "bottom"
+          ? box.y + Math.max(0, box.h - groupHeight)
+          : box.y;
 
       estimated.forEach((estimate)=>{
         const {text,fontSize,lineH}=estimate;
@@ -3070,6 +3486,12 @@
     if(text.align==="right")startX=fragment.x+fragment.w-scaledW;
     const y=fragment.y+lineIndex*lineH+fontSize*.82;
     c.save(); c.translate(startX,y); c.scale(sx,1); c.textAlign="left"; c.textBaseline="alphabetic";
+    // Text shadow and extrusion are always rendered as crisp, flat copies.
+    // Clear any inherited Canvas shadow state so extrusion never gains a drop shadow.
+    c.shadowColor="transparent";
+    c.shadowBlur=0;
+    c.shadowOffsetX=0;
+    c.shadowOffsetY=0;
 
     const drawGlyphs=(offsetX=0,offsetY=0,colorOverride=null,stroke=false,strokeWidth=0)=>{
       let pen=0;
@@ -3096,7 +3518,7 @@
     if(effect==="extrude"){
       const depth=clamp(thickness||8,3,38);
       const sideColor=text.effectColor||"#111111";
-      const step=1;
+      const step=depth>24?2:1;
       // Flat-color 3D side face only: no shadow, blur, or gradient shading.
       for(let offset=depth;offset>=1;offset-=step){
         drawGlyphs(offset*.58,offset*.58,sideColor);
@@ -3432,7 +3854,11 @@
         const angle=Math.atan2(point.y-dragState.center.y,point.x-dragState.center.x);
         source.rotation=Math.round(dragState.orig.rotation+(angle-dragState.startAngle)*180/Math.PI);
       }else resizeFromHandle(dragState,point);
-      if(dragState.kind==="region")autoStyleAssignedTexts({force:false});
+      if(dragState.kind==="region"){
+        if(dragState.handle!=="rotate") captureRegionManualDelta(source,state.regionGapReduction);
+        autoStyleAssignedTexts({force:false});
+        renderRegionList();
+      }
       updateRegionControls();updateElementControls();
     }
     queueRender();
@@ -3522,18 +3948,18 @@
     const mime=type==="jpg"?"image/jpeg":"image/png";
     const quality=type==="jpg"?state.jpgQuality:undefined;
     const link=document.createElement("a");
-    link.download=`otter-jjirasi-${state.orientation}-${Date.now()}.${type}`;
+    link.download=`otter-jjirasi-v14-${state.orientation}-${Date.now()}.${type}`;
     link.href=out.toDataURL(mime,quality);link.click();
     toast(`${type.toUpperCase()} 파일을 저장했습니다.`);
   }
 
   function setupColorFields(){
-    createColorField("palettePrimaryField",()=>state.palette.primary,(v)=>{state.palette.primary=v;if(state.background.mode==="solid"){state.background.c1=v;state.background.c2=v;}},{allowNone:false,onCommit:()=>{renderRegionList();renderTemplateGrid();}});
-    createColorField("paletteSecondaryField",()=>state.palette.secondary,(v)=>{state.palette.secondary=v;},{allowNone:false,onCommit:()=>{renderRegionList();renderTemplateGrid();}});
-    createColorField("paletteTertiaryField",()=>state.palette.tertiary,(v)=>{state.palette.tertiary=v;state.background.patternColor=v;},{allowNone:false,onCommit:()=>{renderRegionList();renderTemplateGrid();}});
+    createColorField("palettePrimaryField",()=>state.palette.primary,(v)=>{state.palette.primary=v;if(state.background.mode==="solid"){state.background.c1=v;state.background.c2=v;}},{allowNone:false,onCommit:()=>{autoStyleAssignedTexts({force:false});renderTextList();renderRegionList();renderTemplateGrid();}});
+    createColorField("paletteSecondaryField",()=>state.palette.secondary,(v)=>{state.palette.secondary=v;},{allowNone:false,onCommit:()=>{autoStyleAssignedTexts({force:false});renderTextList();renderRegionList();renderTemplateGrid();}});
+    createColorField("paletteTertiaryField",()=>state.palette.tertiary,(v)=>{state.palette.tertiary=v;state.background.patternColor=v;},{allowNone:false,onCommit:()=>{autoStyleAssignedTexts({force:false});renderTextList();renderRegionList();renderTemplateGrid();}});
     createColorField("regionFillField",()=>{const r=selectedRegion();return !r||r.fillNone?"none":resolveColor(r,"fill");},(v)=>{const r=selectedRegion();if(!r)return;if(v==="none")r.fillNone=true;else{r.fillNone=false;r.fill=v;r.fillRole=null;}renderRegionList();});
     createColorField("regionStrokeField",()=>{const r=selectedRegion();return !r||r.strokeNone?"none":resolveColor(r,"stroke");},(v)=>{const r=selectedRegion();if(!r)return;if(v==="none")r.strokeNone=true;else{r.strokeNone=false;r.stroke=v;r.strokeRole=null;}});
-    createColorField("regionEffectColorField",()=>selectedRegion()?.effectColor||"#111111",(v)=>{const r=selectedRegion();if(r)r.effectColor=v;},{allowNone:false});
+    createColorField("regionEffectColorField",()=>{const r=selectedRegion();return r?resolveColor(r,"effectColor"):"#111111";},(v)=>{const r=selectedRegion();if(r){r.effectColor=v;r.effectColorRole=null;}},{allowNone:false});
     createColorField("elementFillField",()=>{const e=selectedElement();return !e||e.fillNone?"none":e.fill;},(v)=>{const e=selectedElement();if(!e)return;if(v==="none")e.fillNone=true;else{e.fillNone=false;e.fill=v;}});
     createColorField("elementStrokeField",()=>{const e=selectedElement();return !e||e.strokeNone?"none":e.stroke;},(v)=>{const e=selectedElement();if(!e)return;if(v==="none")e.strokeNone=true;else{e.strokeNone=false;e.stroke=v;}});
     createColorField("elementEffectColorField",()=>selectedElement()?.effectColor||"#111111",(v)=>{const e=selectedElement();if(e)e.effectColor=v;},{allowNone:false});
@@ -3547,7 +3973,7 @@
   enhanceStaticNumericFields();
   bindControls();
   setupColorFields();
-  applyTemplate("label-market",{preserveTexts:false});
+  applyTemplate("street-alert",{preserveTexts:false});
   initializeHistory();
   $("showRegions").checked=state.showRegions;
   renderUnicodeGrid("전체","");

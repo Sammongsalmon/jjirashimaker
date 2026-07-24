@@ -39,7 +39,7 @@
           <button id="addTextBtn" class="button button-accent">+ 문장</button>
         </div>
       </div>
-      <p class="panel-note">문장을 추가하면 영역의 크기와 남은 공간을 계산해 크기·행간·자간·기호·효과를 자동으로 맞춥니다. 문장을 선택하면 바로 아래에서 자동/직접 꾸미기를 바꿀 수 있습니다.</p>
+      <p class="panel-note">문장을 추가하면 길이와 역할을 계산해 큰 제목·짧은 강조·본문·주의 문구로 나누고 크기·행간·자간·기호·효과를 자동으로 맞춥니다. 문장을 선택하면 바로 아래에서 자동/직접 꾸미기를 바꿀 수 있습니다.</p>
       <div id="textList" class="text-list"></div>
     </section>
 
@@ -47,7 +47,7 @@
       <div class="workspace-bar">
         <div>
           <span class="panel-kicker">LIVE PREVIEW</span>
-          <strong id="currentTemplateName">큰 제목 · 본문 2칸</strong>
+          <strong id="currentTemplateName">전화번호 전단</strong>
           <small id="canvasSizeLabel">1600 × 900</small>
         </div>
         <div class="workspace-actions">
@@ -69,13 +69,13 @@
         <button class="tool-tab" data-tool-tab="background" role="tab">배경·재단</button>
         <button class="tool-tab" data-tool-tab="export" role="tab">저장</button>
       </div>
-      <p class="numeric-usage-note"><strong>숫자 조절</strong><span>슬라이더</span><span>직접 입력</span><span>− / +</span><span>↺ 원상복귀</span></p>
+      <p class="numeric-usage-note"><strong>숫자 조절</strong><span>슬라이더</span><span>직접 입력</span><span>− / +</span><span>↺ 원래값 복귀</span></p>
 
       <div class="tool-pane active" data-tool-pane="templates">
         <div class="section-heading">
           <div>
             <h2>찌라시 템플릿</h2>
-            <p>색은 현재 주색·보조색을 따르고, 레이아웃만 바뀌는 15종입니다. 띠가 없는 구성과 한 줄만 쓰는 구성을 함께 넣었습니다.</p>
+            <p>색은 현재 주색·보조색을 따릅니다. 촘촘한 전화번호 전단, 2단 기사, 폭발형, 무테 타이포 등 15개 레이아웃을 넣었습니다.</p>
           </div>
         </div>
         <div id="templateGrid" class="template-grid"></div>
@@ -97,8 +97,8 @@
         </div>
         <div class="region-layout-toolbar">
           <div class="region-layout-control">
-            <label>영역 사이 여백 줄이기 <b id="regionGapReductionValue">18px</b><input id="regionGapReduction" type="range" min="0" max="72" step="1" value="18" /></label>
-            <p class="microcopy">0은 템플릿 원본 간격입니다. 값이 클수록 글자 영역이 서로 가까워집니다. 수동으로 옮긴 영역은 유지됩니다.</p>
+            <label>영역 사이 여백 줄이기 <b id="regionGapReductionValue">32px 더 촘촘</b><input id="regionGapReduction" type="range" min="0" max="72" step="1" value="32" /></label>
+            <p class="microcopy">0은 템플릿 원본 간격입니다. 슬라이더를 움직이는 동안 미리보기에 즉시 반영되며, 수동으로 옮긴 영역도 현재 위치 차이를 유지한 채 함께 촘촘해집니다.</p>
           </div>
           <button id="restoreAllRegionsBtn" class="button" type="button">전체 위치 복귀</button>
         </div>
@@ -165,6 +165,7 @@
             <div><span class="field-label">효과 색</span><div id="regionEffectColorField" class="color-field-host"></div></div>
             <label>효과 크기<input id="regionEffectSize" type="range" min="0" max="100" step="1" /></label>
           </div>
+          <p class="effect-rule-note"><b>평면 그림자</b>는 번짐 없는 단색 복사본, <b>단색 입체</b>는 그림자 없는 한 색 옆면입니다.</p>
           <button id="deleteRegionBtn" class="button button-danger button-wide">선택 영역 삭제</button>
         </div>
       </div>
@@ -253,6 +254,7 @@
             <div><span class="field-label">효과 색</span><div id="elementEffectColorField" class="color-field-host"></div></div>
             <label>효과 크기<input id="elementEffectSize" type="range" min="0" max="100" step="1" /></label>
           </div>
+          <p class="effect-rule-note"><b>평면 그림자</b>는 번짐 없는 단색 복사본, <b>단색 입체</b>는 그림자 없는 한 색 옆면입니다.</p>
           <div class="field-grid two">
             <label>요소 안 문구<input id="elementLabel" type="text" placeholder="예: 긴급입덕" /></label>
             <label>문구 크기<input id="elementLabelSize" type="number" min="12" max="280" step="1" /></label>
@@ -286,8 +288,8 @@
               <button type="button" data-value="portrait">세로</button>
             </div>
           </div>
-          <label>재단여백 <b id="bleedMmValue">없음</b>
-            <input id="bleedMm" type="range" min="0" max="20" step="1" value="0" />
+          <label>재단여백 (mm)
+            <input id="bleedMm" type="number" min="0" max="30" step="0.5" value="0" />
           </label>
           <label>배경 방식
             <select id="backgroundMode">

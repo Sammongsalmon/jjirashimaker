@@ -1018,7 +1018,7 @@ select:disabled {
   gap: 6px;
   align-items: center;
 }
-.numeric-stepper-body input[type="number"] {
+.numeric-stepper-body .numeric-direct-input {
   text-align: center;
   font-weight: 800;
 }
@@ -1097,17 +1097,6 @@ select:disabled {
   background: #151a21;
 }
 .text-settings-body { padding: 10px; }
-/* Text cards live in the narrow left column. Two columns keep every numeric
-   control inside its own field instead of spilling over adjacent selects. */
-.text-settings-body .field-grid.three {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.text-settings-body .numeric-field,
-.text-settings-body .numeric-control-row {
-  min-width: 0;
-}
-
-
 .text-settings-body > :first-child { margin-top: 0; }
 .text-settings-body > :last-child { margin-bottom: 0; }
 
@@ -1193,16 +1182,12 @@ select:disabled {
   gap: 6px;
   align-items: center;
 }
-.static-numeric-row { grid-template-columns: 36px minmax(64px, 1fr) 36px minmax(78px, auto); }
+.static-numeric-row { grid-template-columns: 36px minmax(64px, 1fr) 36px 78px; }
 .numeric-direct-input {
   min-width: 0;
   text-align: center;
   font-variant-numeric: tabular-nums;
   font-weight: 800;
-}
-.numeric-direct-input.is-draft-invalid {
-  border-color: #ff8a74;
-  box-shadow: 0 0 0 2px rgba(255, 95, 71, .12);
 }
 .numeric-field .step-button,
 .static-numeric-field .step-button,
@@ -1222,8 +1207,8 @@ select:disabled {
   font-weight: 900;
 }
 .numeric-reset-button {
-  min-width: 78px;
-  padding: 0 9px;
+  min-width: 74px;
+  padding: 0 8px;
   color: #cbd1da;
   font-size: 9px;
   font-weight: 850;
@@ -1241,52 +1226,55 @@ select:disabled {
   cursor: default;
 }
 .numeric-range-input {
-  --numeric-progress: 0%;
+  --range-progress: 50%;
   width: 100%;
   min-height: 28px;
   margin: 0;
-  cursor: pointer;
   direction: ltr;
+  cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  border: 0;
-  background: linear-gradient(
-    to right,
-    #ffe000 0 var(--numeric-progress),
-    #3b424e var(--numeric-progress) 100%
-  );
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 100% 4px;
-  box-shadow: none;
+  background: transparent;
 }
-.numeric-range-input::-webkit-slider-runnable-track { height: 4px; background: transparent; }
+.numeric-range-input::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #ffe000 0 var(--range-progress), #353b45 var(--range-progress) 100%);
+}
 .numeric-range-input::-webkit-slider-thumb {
-  width: 16px;
-  height: 16px;
-  margin-top: -6px;
-  border: 2px solid #14171d;
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,.5);
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  border: 2px solid #111318;
+  border-radius: 50%;
+  background: #ffe000;
+  box-shadow: 0 0 0 2px rgba(255, 224, 0, .22);
   appearance: none;
   -webkit-appearance: none;
 }
-.numeric-range-input::-moz-range-track { height: 4px; background: transparent; }
-.numeric-range-input::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border: 2px solid #14171d;
+.numeric-range-input::-moz-range-track {
+  height: 6px;
   border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,.5);
+  background: #353b45;
+}
+.numeric-range-input::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: #ffe000;
+}
+.numeric-range-input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #111318;
+  border-radius: 50%;
+  background: #ffe000;
 }
 .numeric-range-input:disabled { cursor: not-allowed; opacity: .42; }
 
 @media (max-width: 600px) {
   .numeric-control-row,
   .numeric-stepper-body { grid-template-columns: 42px minmax(68px, 1fr) 42px; }
-  .static-numeric-row { grid-template-columns: 42px minmax(68px, 1fr) 42px minmax(84px, auto); }
+  .static-numeric-row { grid-template-columns: 42px minmax(68px, 1fr) 42px 82px; }
   .numeric-field .step-button,
   .static-numeric-field .step-button,
   .numeric-reset-button { min-height: 42px; }
@@ -1401,4 +1389,36 @@ select:disabled {
   .region-layout-toolbar { grid-template-columns: 1fr; align-items: stretch; }
   .region-layout-toolbar > .button { width: 100%; }
   .numeric-entry-row.with-stepper { grid-template-columns: 36px minmax(68px, 1fr) 36px auto; }
+}
+
+
+/* v10: explicit flat-effect rules and fully reversible numeric controls */
+.effect-rule-note {
+  margin: 7px 0 0;
+  padding: 7px 9px;
+  border-left: 3px solid #ffe000;
+  background: #11151b;
+  color: #aeb5c0;
+  font-size: 9px;
+  line-height: 1.45;
+}
+.effect-rule-note b { color: #f2f4f7; }
+.effect-rule-note.compact { margin: 0 0 8px; }
+.numeric-direct-input { font-family: inherit; }
+.region-chip-state { flex: none; }
+@media (max-width: 600px) {
+  .effect-rule-note { font-size: 8px; }
+}
+
+
+/* v12: denser tabloid-layout presentation */
+.template-card { border-radius: 8px; }
+.template-thumb { border-radius: 3px; }
+.template-meta strong { letter-spacing: -.02em; }
+.canvas-stage { background-color: #0a0b0e; }
+.text-card { border-radius: 9px; }
+.text-input { line-height: 1.38; }
+.region-chip, .element-chip { border-radius: 7px; }
+@media (min-width: 1100px) {
+  .template-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
