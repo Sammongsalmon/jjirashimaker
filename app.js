@@ -7279,7 +7279,7 @@ function swapRegionTextBundles(sourceRegionId,targetRegionId){
   canvas.addEventListener("dblclick",v16DoubleClick,true);
 
   $("canvasStage")?.addEventListener("pointerdown",(event)=>{
-    if(event.target===canvas||canvas.contains?.(event.target))return;
+    if(event.target===canvas)return;
     clearV16LongPress();
     transformTarget=null;v16PointerState=null;
     state.selectedTextId=null;state.selectedRegionId=null;state.selectedElementId=null;state.clipPickMode=false;
@@ -7438,7 +7438,7 @@ function swapRegionTextBundles(sourceRegionId,targetRegionId){
     },{capture:true,passive:false});
     document.addEventListener("touchmove",(event)=>{
       if(!active||active.mode!=="touch")return;
-      const touch=[...(event.changedTouches||[])].find((item)=>item.identifier===active.id)||event.changedTouches?.[0];
+      const touch=Array.from(event.changedTouches||[]).find((item)=>item.identifier===active.id)||event.changedTouches?.[0];
       if(!touch)return;
       event.preventDefault();event.stopImmediatePropagation();move(touch.clientX);
     },{capture:true,passive:false});
@@ -7494,17 +7494,40 @@ function swapRegionTextBundles(sourceRegionId,targetRegionId){
       await Promise.race([fontLoad,timeout]);
     }
     fontsReady=true;
-    const restored=await restorePersistedState();
-    if(restored){
-      refreshAllUI();
-      updatePreviewZoom();
-    }else{
+    let restored=false;
+    try{
+      restored=await restorePersistedState();
+      if(restored){
+        refreshAllUI();
+        updatePreviewZoom();
+      }
+    }catch(error){
+      console.error("저장된 작업 복원 실패:",error);
+      restored=false;
+      state=deepClone(initialState);
+      ensureStateCompatibility();
+    }
+    if(!restored){
       applyTemplate("dense-left-rail",{preserveTexts:false});
     }
     initializeHistory();
-    $("showRegions").checked=state.showRegions;
+    const showRegionsControl=$("showRegions");
+    if(showRegionsControl)showRegionsControl.checked=Boolean(state.showRegions);
     renderUnicodeGrid("전체","");
     queueRender();
   }
-  initializeV17();
+  initializeV17().catch((error)=>{
+    console.error("찌라시 메이커 초기화 실패:",error);
+    try{
+      state=deepClone(initialState);
+      ensureStateCompatibility();
+      applyTemplate("dense-left-rail",{preserveTexts:false});
+      initializeHistory();
+      renderUnicodeGrid("전체","");
+      queueRender();
+      toast("초기화 중 문제가 발생해 기본 작업으로 복구했습니다.");
+    }catch(fallbackError){
+      console.error("기본 작업 복구 실패:",fallbackError);
+    }
+  });
 })();
