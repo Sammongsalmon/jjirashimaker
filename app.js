@@ -1846,7 +1846,7 @@
         updateRegionControls();
         updateElementControls();
         renderRegionList();
-        renderTextList();
+        renderTextList({bringSelectedRegionIntoView:true});
         queueRender();
       });
       list.append(button);
@@ -3982,7 +3982,7 @@ function moveTextInList(id, direction) {
     if(!source)return;
     transformTarget={kind,id};
     if(kind==="region"){
-      state.selectedRegionId=id;state.selectedElementId=null;openToolTab("regions");renderRegionList();
+      state.selectedRegionId=id;state.selectedElementId=null;openToolTab("regions");renderRegionList();renderTextList({bringSelectedRegionIntoView:true});
     }else{
       state.selectedElementId=id;state.selectedRegionId=null;openToolTab("elements");
     }
@@ -4143,7 +4143,7 @@ function moveTextInList(id, direction) {
       const region=state.regions.find((item)=>item.id===regionHit.id);if(!region)return;
       if(!(transformTarget?.kind==="region"&&transformTarget.id===region.id))transformTarget=null;
       state.selectedRegionId=region.id;state.selectedElementId=null;
-      openToolTab("regions");renderRegionList();updateRegionControls();updateElementControls();queueRender();
+      openToolTab("regions");renderRegionList();renderTextList({bringSelectedRegionIntoView:true});updateRegionControls();updateElementControls();queueRender();
       armLongPress("region",region.id,event,point);
       try{canvas.setPointerCapture(event.pointerId);}catch{}
       return;
@@ -6313,7 +6313,8 @@ function buildLayout(c){
     setTimeout(()=>document.addEventListener("pointerdown",function outside(event){if(!activeDeleteConfirm){document.removeEventListener("pointerdown",outside,true);return;}if(activeDeleteConfirm.contains(event.target)||anchor.contains(event.target))return;closeDeleteConfirm();document.removeEventListener("pointerdown",outside,true);},true),0);
   }
 
-  function renderTextList(){
+  function renderTextList(options={}){
+    const bringSelectedRegionIntoView=Boolean(options&&options.bringSelectedRegionIntoView);
     ensureStateCompatibility();
     const list=$("textList");list.replaceChildren();
     const accepting=state.regions.filter((region)=>region.acceptText&&region.shape!=="line");
@@ -6326,7 +6327,10 @@ function buildLayout(c){
     displayTexts.forEach((text,index)=>{
       normalizeEffects(text);
       const selected=state.selectedTextId===text.id;
-      const card=document.createElement("article");card.className=`text-card${selected?" active":""}`;card.dataset.textId=text.id;card.dataset.auto=String(!isTextManualProtected(text));
+      const card=document.createElement("article");
+      const belongsToSelectedRegion=Boolean(state.selectedRegionId&&text.regionId===state.selectedRegionId);
+      card.className=`text-card${selected?" active":""}${belongsToSelectedRegion?" selected-region-priority":""}`;
+      card.dataset.textId=text.id;card.dataset.regionId=text.regionId||"";card.dataset.auto=String(!isTextManualProtected(text));
       const head=document.createElement("div");head.className="text-card-head";
       const toolbar=document.createElement("div");toolbar.className="text-card-toolbar";
       const grip=document.createElement("div");grip.className="drag-grip";grip.innerHTML=`<b>${String(index+1).padStart(2,"0")}</b><small>${isTextManualProtected(text)?"LOCK":"AUTO"}</small>`;
@@ -6544,6 +6548,17 @@ function buildLayout(c){
 
       card.append(controls);list.append(card);
     });
+    if(bringSelectedRegionIntoView&&state.selectedRegionId){
+      const firstMatchingCard=Array.from(list.querySelectorAll(".text-card")).find((card)=>card.dataset.regionId===state.selectedRegionId);
+      if(firstMatchingCard){
+        list.scrollTop=0;
+        requestAnimationFrame(()=>{
+          firstMatchingCard.scrollIntoView({behavior:"smooth",block:"nearest",inline:"nearest"});
+          firstMatchingCard.classList.add("selected-region-arrived");
+          window.setTimeout(()=>firstMatchingCard.classList.remove("selected-region-arrived"),900);
+        });
+      }
+    }
   }
 
   function syncEffectToggle(id,item){
@@ -7065,7 +7080,7 @@ function buildLayout(c){
     const source=transformSource(kind,id);if(!source)return;
     transformTarget={kind,id};
     if(kind==="region"){
-      state.selectedRegionId=id;state.selectedElementId=null;openToolTab("regions");renderRegionList();
+      state.selectedRegionId=id;state.selectedElementId=null;openToolTab("regions");renderRegionList();renderTextList({bringSelectedRegionIntoView:true});
     }else if(kind==="element"){
       state.selectedElementId=id;state.selectedRegionId=null;state.selectedTextId=null;openToolTab("elements");
     }else{
@@ -7213,7 +7228,7 @@ function swapRegionTextBundles(sourceRegionId,targetRegionId){
     const regionHit=hitRegion(point);
     if(regionHit){
       const region=state.regions.find((item)=>item.id===regionHit.id);if(!region)return;
-      transformTarget=null;state.selectedRegionId=region.id;state.selectedElementId=null;state.selectedTextId=null;openToolTab("regions");renderRegionList();renderTextList();updateRegionControls();updateElementControls();queueRender();
+      transformTarget=null;state.selectedRegionId=region.id;state.selectedElementId=null;state.selectedTextId=null;openToolTab("regions");renderRegionList();renderTextList({bringSelectedRegionIntoView:true});updateRegionControls();updateElementControls();queueRender();
       v16PointerState={type:"select",kind:"region",id:region.id,pointerId:event.pointerId,start:point,moved:false};armV16LongPress("region",region.id,event,point);try{canvas.setPointerCapture(event.pointerId);}catch{}event.preventDefault();event.stopImmediatePropagation();return;
     }
     clearV16LongPress();transformTarget=null;state.selectedElementId=null;state.selectedRegionId=null;state.selectedTextId=null;state.clipPickMode=false;updateElementControls();updateRegionControls();renderRegionList();renderTextList();queueRender();event.stopImmediatePropagation();

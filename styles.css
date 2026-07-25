@@ -3104,3 +3104,15 @@ body[data-theme="light"] .uniform-scale-field .static-numeric-field {
     grid-template-rows: auto 34px;
   }
 }
+
+/* v27.3.2: 선택 영역의 문장을 목록 최상단에 모아 쉽게 편집 */
+.text-card.selected-region-priority {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--line));
+}
+.text-card.selected-region-arrived {
+  animation: selected-region-arrived-pulse .9s ease;
+}
+@keyframes selected-region-arrived-pulse {
+  0%, 100% { box-shadow: none; }
+  35% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+}
