@@ -3116,3 +3116,15 @@ body[data-theme="light"] .uniform-scale-field .static-numeric-field {
   0%, 100% { box-shadow: none; }
   35% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
 }
+
+/* v27.3.3: 선택한 문장 자체를 목록 최상단에 배치 */
+.text-card.selected-text-priority {
+  border-color: color-mix(in srgb, var(--accent) 72%, var(--line));
+}
+.text-card.selected-text-arrived {
+  animation: selected-text-arrived-pulse .9s ease;
+}
+@keyframes selected-text-arrived-pulse {
+  0%, 100% { box-shadow: none; }
+  35% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent); }
+}
