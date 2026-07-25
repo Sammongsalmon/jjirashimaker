@@ -1793,3 +1793,257 @@ h2{font-size:16px}.control-title{font-size:11px}.selected-element-head strong{fo
   .numeric-inline-row{grid-template-columns:minmax(58px,1fr) 32px 50px 32px 32px}
   .numeric-inline-label{font-size:9.5px}
 }
+
+
+/* v26: responsive, collision-free toolbox and aligned tabs */
+.toolbox,
+.tool-pane,
+.editor-card,
+.inline-text-controls,
+.text-settings-body,
+.advanced-details,
+.artboard-card,
+.region-layout-toolbar,
+.palette-editor,
+.effect-editor,
+.clip-editor {
+  min-width: 0;
+  max-width: 100%;
+}
+.toolbox,
+.tool-pane,
+.editor-card,
+.inline-text-controls,
+.advanced-details {
+  overflow-x: clip;
+}
+
+.tool-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 5px;
+  width: 100%;
+  padding: 7px;
+  overflow: visible;
+}
+.tool-tab {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  margin: 0;
+  padding: 7px 6px;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+}
+
+.tool-pane > *,
+.field-grid > *,
+.layout-spacing-grid > *,
+.palette-editor > *,
+.text-settings-body > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tool-pane .field-grid.two,
+.tool-pane .field-grid.three,
+.tool-pane .field-grid.four,
+.editor-card > .field-grid.two,
+.editor-card > .field-grid.three,
+.editor-card > .field-grid.four,
+.effect-editor .field-grid.two,
+.text-settings-body .field-grid.two,
+.text-settings-body .field-grid.three,
+.artboard-card .field-grid.two,
+.artboard-card .field-grid.three,
+.artboard-card .field-grid.four {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+.layout-spacing-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+.layout-spacing-grid > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.numeric-enhanced-label,
+.numeric-field,
+.static-numeric-field {
+  display: grid !important;
+  grid-template-rows: auto auto;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+.numeric-inline-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 30px minmax(48px, 62px) 30px 30px !important;
+  align-items: center;
+  gap: 4px !important;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.numeric-inline-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.numeric-inline-row .step-button,
+.numeric-inline-row .numeric-reset-button {
+  width: 30px !important;
+  min-width: 30px !important;
+  max-width: 30px;
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 !important;
+}
+.numeric-inline-row .numeric-direct-input {
+  width: 100%;
+  min-width: 0;
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 3px 4px !important;
+}
+.numeric-range-input {
+  display: block;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0;
+  height: 18px !important;
+  min-height: 18px !important;
+  margin: 0 !important;
+}
+
+.button,
+.small-button,
+.tool-tab,
+.segmented-control button,
+.multi-toggle button,
+.element-buttons .button {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.segmented-control,
+.multi-toggle,
+.color-role-chips,
+.region-layout-actions,
+.selected-head-actions,
+.text-mode-tools {
+  min-width: 0;
+  max-width: 100%;
+}
+.segmented-control button,
+.multi-toggle button {
+  min-width: 0;
+}
+.selected-element-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+.selected-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.selected-head-actions > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.text-mode-tools {
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 160px) !important;
+}
+.text-manual-reset {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.artboard-card,
+.region-layout-toolbar,
+.palette-primary-card,
+.optional-palette-card {
+  overflow: hidden;
+}
+.artboard-card .field-grid,
+.region-layout-toolbar .field-grid {
+  align-items: start;
+}
+
+@media (max-width: 1080px) {
+  .tool-pane .field-grid.two,
+  .tool-pane .field-grid.three,
+  .tool-pane .field-grid.four,
+  .editor-card > .field-grid.two,
+  .editor-card > .field-grid.three,
+  .editor-card > .field-grid.four,
+  .effect-editor .field-grid.two,
+  .text-settings-body .field-grid.two,
+  .text-settings-body .field-grid.three,
+  .artboard-card .field-grid.two,
+  .artboard-card .field-grid.three,
+  .artboard-card .field-grid.four,
+  .layout-spacing-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .layout-spacing-grid > :last-child:nth-child(odd) { grid-column: auto; }
+  .text-mode-tools { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 720px) {
+  .tool-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    position: static;
+  }
+  .tool-tab { min-height: 38px; }
+  .selected-element-head {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .selected-head-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+  .selected-head-actions > span { grid-column: 1 / -1; text-align: center; }
+  .selected-head-actions button { width: 100%; }
+  .numeric-inline-row {
+    grid-template-columns: minmax(0, 1fr) 32px minmax(46px, 58px) 32px 32px !important;
+  }
+  .numeric-inline-row .step-button,
+  .numeric-inline-row .numeric-reset-button {
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px;
+    height: 32px !important;
+    min-height: 32px !important;
+  }
+  .numeric-inline-row .numeric-direct-input {
+    height: 32px !important;
+    min-height: 32px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .tool-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tool-tab:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .tool-pane, .editor-card { padding: 8px; }
+  .numeric-inline-row {
+    grid-template-columns: minmax(0, 1fr) 30px 48px 30px 30px !important;
+    gap: 3px !important;
+  }
+  .numeric-inline-label { font-size: 9px; }
+  .selected-head-actions { grid-template-columns: 1fr; }
+  .selected-head-actions > span { grid-column: auto; }
+}
