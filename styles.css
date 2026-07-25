@@ -3150,3 +3150,42 @@ body[data-theme="light"] .uniform-scale-field .static-numeric-field {
 .range-dual-apply-row .range-clear-button {
   border-style: dashed;
 }
+
+
+/* v27.3.8: palette roles occupy the first three recommendation swatches. */
+.quick-swatch {
+  position: relative;
+  background: var(--swatch-color, #ffffff) !important;
+  color: var(--swatch-label-color, #111111) !important;
+}
+body[data-theme="light"] button.quick-swatch,
+body[data-theme="light"] button.quick-swatch:hover:not(:disabled),
+body[data-theme="light"] button.quick-swatch:focus-visible {
+  background: var(--swatch-color, #ffffff) !important;
+  color: var(--swatch-label-color, #111111) !important;
+  border-color: rgba(0, 0, 0, .26) !important;
+}
+.quick-swatch.palette-role-swatch {
+  display: grid;
+  place-items: end center;
+  padding: 0 3px 4px;
+  font-size: 8.5px;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -.03em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .45);
+}
+.quick-swatch.palette-role-swatch::after {
+  content: "";
+  position: absolute;
+  inset: auto 3px 3px;
+  height: 13px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, .18);
+  pointer-events: none;
+  z-index: 0;
+}
+.quick-swatch.palette-role-swatch {
+  isolation: isolate;
+}
+.quick-swatch.palette-role-swatch::after { z-index: -1; }

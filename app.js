@@ -1063,7 +1063,7 @@
           <div class="color-readout"><small>HSV</small><strong class="color-hsv"></strong></div>
           <div class="color-readout"><small>HSL</small><strong class="color-hsl"></strong></div>
         </div>
-        <div class="quick-swatches" aria-label="빠른 색상"></div>
+        <div class="quick-swatches" aria-label="추천색"></div>
       </div>`;
 
     const trigger = root.querySelector(".color-trigger");
@@ -1121,6 +1121,7 @@
       cmykReadout.textContent = `${Math.round(cmyk.c*100)}%, ${Math.round(cmyk.m*100)}%, ${Math.round(cmyk.y*100)}%, ${Math.round(cmyk.k*100)}%`;
       hsvReadout.textContent = `${Math.round(hsv.h)}°, ${Math.round(hsv.s*100)}%, ${Math.round(hsv.v*100)}%`;
       hslReadout.textContent = `${Math.round(hsl.h)}°, ${Math.round(hsl.s*100)}%, ${Math.round(hsl.l*100)}%`;
+      refreshQuickSwatches();
       trigger.setAttribute("aria-expanded", String(root.classList.contains("open")));
     }
 
@@ -1148,15 +1149,44 @@
       });
     }
 
-    QUICK_COLORS.forEach((color) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "quick-swatch";
-      btn.style.background = color;
-      btn.title = color;
-      btn.addEventListener("click", () => commit(color));
-      swatches.append(btn);
-    });
+    function quickColorEntries() {
+      const paletteEntries = [
+        { color: state.palette?.primary || "#FCBA03", label: "주색" },
+        { color: state.palette?.secondary || "#111111", label: "보조 1" },
+        { color: state.palette?.tertiary || "#FFFFFF", label: "보조 2" }
+      ].map((entry) => ({ ...entry, color: String(entry.color).toUpperCase() }));
+      const roleColors = new Set(paletteEntries.map((entry) => entry.color));
+      const recommendations = QUICK_COLORS
+        .map((color) => String(color).toUpperCase())
+        .filter((color) => !roleColors.has(color))
+        .slice(0, 13)
+        .map((color) => ({ color, label: "" }));
+      return [...paletteEntries, ...recommendations];
+    }
+
+    function refreshQuickSwatches() {
+      const entries = quickColorEntries();
+      while (swatches.children.length < entries.length) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "quick-swatch";
+        btn.addEventListener("click", () => commit(btn.dataset.color || "#FFFFFF"));
+        swatches.append(btn);
+      }
+      while (swatches.children.length > entries.length) swatches.lastElementChild.remove();
+      entries.forEach((entry, index) => {
+        const btn = swatches.children[index];
+        const rgb = hexToRgb(entry.color);
+        const lightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
+        btn.dataset.color = entry.color;
+        btn.classList.toggle("palette-role-swatch", index < 3);
+        btn.textContent = entry.label;
+        btn.title = entry.label ? `${entry.label}: ${entry.color}` : entry.color;
+        btn.setAttribute("aria-label", btn.title);
+        btn.style.setProperty("--swatch-color", entry.color);
+        btn.style.setProperty("--swatch-label-color", lightness > 155 ? "#111111" : "#FFFFFF");
+      });
+    }
 
     trigger.addEventListener("click", () => {
       const opening = !root.classList.contains("open");
