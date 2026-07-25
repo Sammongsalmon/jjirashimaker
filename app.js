@@ -107,13 +107,14 @@
     return Math.max(A, B) / Math.min(A, B);
   }
   function bestAccentColor(background, baseColor) {
-    const candidates = availablePalette(state?.palette).colors;
-    const ranked = candidates
-      .filter((color) => color.toLowerCase() !== String(baseColor || "").toLowerCase())
-      .map((color) => ({ color, score: contrastRatio(color, background) }))
-      .sort((a, b) => b.score - a.score);
-    return ranked.find((item) => item.score >= 3.2)?.color || ranked[0]?.color || contrastText(background);
+    const candidates=availablePalette(state?.palette).colors;
+    const ranked=candidates
+      .filter((color)=>color.toLowerCase()!==String(baseColor||"").toLowerCase())
+      .map((color)=>({color,score:contrastRatio(color,background)}))
+      .sort((a,b)=>b.score-a.score);
+    return ranked[0]?.color||candidates[0]||state?.palette?.primary||"#ffd400";
   }
+
 
   function rawPaletteRoleColor(role, palette = null) {
     const p = palette || state?.palette || {};
@@ -161,32 +162,36 @@
 
   function paletteColor(role, palette) {
     const p = palette || state?.palette || { primary: "#ffd400", secondary: "#111111", tertiary: "#e62d20" };
-    const { colors, neutrals } = availablePalette(p);
-    const primary = colors[0] || p.primary || "#ffd400";
-    const secondary = colors[1] || primary;
-    const tertiary = colors[2] || secondary;
-    const exactWhite = p.useWhite !== false ? "#ffffff" : null;
-    const exactBlack = p.useBlack !== false ? "#111111" : null;
-    const white = exactWhite || colors.slice().sort((a,b)=>luminance(b)-luminance(a))[0] || primary;
-    const black = exactBlack || colors.slice().sort((a,b)=>luminance(a)-luminance(b))[0] || primary;
-    const paperMix = clamp((Number(p.paperMix) || 78) / 100, 0, .96);
-    const backgroundEnabled = p.useBackground !== false;
-    if (!role) return black;
-    if (role === "primary") return primary;
-    if (role === "secondary") return secondary;
-    if (role === "tertiary") return tertiary;
-    if (role === "ink" || role === "black") return black;
-    if (role === "white") return white;
-    if (role === "paper") return backgroundEnabled ? mix(rawPaletteRoleColor("primary", p), "#ffffff", paperMix) : (exactWhite || primary);
-    if (role === "paperHard") return backgroundEnabled ? mix(rawPaletteRoleColor("primary", p), "#ffffff", clamp(paperMix - .18, 0, .88)) : (exactWhite || primary);
-    if (role === "primarySoft") return backgroundEnabled ? mix(primary, white, clamp(paperMix * .55, .12, .72)) : primary;
-    if (role === "primaryDeep") return mix(primary, black, .18);
-    if (role === "secondarySoft") return backgroundEnabled ? mix(secondary, white, .18) : secondary;
-    if (role === "secondaryPaper") return backgroundEnabled ? mix(secondary, white, .74) : secondary;
-    if (role === "tertiarySoft") return backgroundEnabled ? mix(tertiary, white, .22) : tertiary;
-    if (role === "tertiaryPaper") return backgroundEnabled ? mix(tertiary, white, .66) : tertiary;
-    if (role === "tertiaryDeep") return mix(tertiary, black, .16);
-    if (role === "cream") return backgroundEnabled ? mix(primary, "#fff4d2", .82) : primary;
+    const { colors } = availablePalette(p);
+    const active=colors.length?colors:[p.primary||"#ffd400"];
+    const primary=active[0];
+    const secondary=active[1%active.length];
+    const tertiary=active[2%active.length];
+    const exactWhite=p.useWhite!==false?"#ffffff":null;
+    const exactBlack=p.useBlack!==false?"#111111":null;
+    const lightest=active.slice().sort((a,b)=>luminance(b)-luminance(a))[0]||primary;
+    const darkest=active.slice().sort((a,b)=>luminance(a)-luminance(b))[0]||primary;
+    const templateWhite=exactWhite||active[3%active.length];
+    const templateBlack=exactBlack||active[4%active.length];
+    const paperMix=clamp((Number(p.paperMix)||78)/100,0,.96);
+    const backgroundEnabled=p.useBackground!==false;
+    if(!role)return darkest;
+    if(role==="primary")return primary;
+    if(role==="secondary")return secondary;
+    if(role==="tertiary")return tertiary;
+    if(role==="ink")return darkest;
+    if(role==="black")return templateBlack;
+    if(role==="white")return templateWhite;
+    if(role==="paper")return backgroundEnabled?mix(rawPaletteRoleColor("primary",p),"#ffffff",paperMix):(exactWhite||lightest);
+    if(role==="paperHard")return backgroundEnabled?mix(rawPaletteRoleColor("primary",p),"#ffffff",clamp(paperMix-.18,0,.88)):(exactWhite||lightest);
+    if(role==="primarySoft")return backgroundEnabled?mix(primary,exactWhite||lightest,clamp(paperMix*.55,.12,.72)):primary;
+    if(role==="primaryDeep")return mix(primary,exactBlack||darkest,.18);
+    if(role==="secondarySoft")return backgroundEnabled?mix(secondary,exactWhite||lightest,.18):secondary;
+    if(role==="secondaryPaper")return backgroundEnabled?mix(secondary,"#ffffff",.74):secondary;
+    if(role==="tertiarySoft")return backgroundEnabled?mix(tertiary,exactWhite||lightest,.22):tertiary;
+    if(role==="tertiaryPaper")return backgroundEnabled?mix(tertiary,"#ffffff",.66):tertiary;
+    if(role==="tertiaryDeep")return mix(tertiary,exactBlack||darkest,.16);
+    if(role==="cream")return backgroundEnabled?mix(primary,"#fff4d2",.82):primary;
     return role;
   }
 
@@ -1836,9 +1841,12 @@
       button.addEventListener("click", () => {
         state.selectedRegionId = region.id;
         state.selectedElementId = null;
+        state.selectedTextId = null;
+        transformTarget = null;
         updateRegionControls();
         updateElementControls();
         renderRegionList();
+        renderTextList();
         queueRender();
       });
       list.append(button);
@@ -2025,6 +2033,7 @@
     regionStrokeWidth: { min: 0, max: 80, step: 1, reset: () => itemNumericDefault("region", "strokeWidth", 0) },
     regionRotation: { min: -180, max: 180, step: 1, reset: () => itemNumericDefault("region", "rotation", 0) },
     regionEffectSize: { min: 0, max: 100, step: 1, reset: () => itemNumericDefault("region", "effectSize", 18) },
+    regionScale: { min: 20, max: 300, step: 1, reset: () => 100 },
     elementX: { min: -1600, max: 3200, step: 1, reset: () => itemNumericDefault("element", "x", 0) },
     elementY: { min: -1600, max: 3200, step: 1, reset: () => itemNumericDefault("element", "y", 0) },
     elementW: { min: 20, max: 3200, step: 1, reset: () => itemNumericDefault("element", "w", 360) },
@@ -2036,6 +2045,7 @@
     flowMargin: { min: -160, max: 240, step: 1, reset: () => itemNumericDefault("element", "flowMargin", 0) },
     elementEffectSize: { min: 0, max: 100, step: 1, reset: () => itemNumericDefault("element", "effectSize", 20) },
     elementLabelSize: { min: 12, max: 280, step: 1, reset: () => itemNumericDefault("element", "labelSize", 72) },
+    elementScale: { min: 20, max: 300, step: 1, reset: () => 100 },
     bleedMm: { min: 0, max: 30, step: .5, reset: () => globalNumericDefaults.bleedMm },
     gradientAngle: { min: 0, max: 360, step: 1, reset: () => globalNumericDefaults.gradientAngle },
     patternScale: { min: 12, max: 180, step: 1, reset: () => globalNumericDefaults.patternScale },
@@ -3018,8 +3028,14 @@ function moveTextInList(id, direction) {
         if (key === "h") element.h = Math.max(18, value);
         else if (key === "y" && element.bandScope === "canvas") element.y = value;
       } else {
-        element[key] = value;
-        if (key === "w" || key === "h") element[key] = Math.max(20, element[key]);
+        if(element.type==="image"&&(key==="w"||key==="h")){
+          const ratio=Math.max(.01,(Number(element.w)||20)/Math.max(1,Number(element.h)||20));
+          if(key==="w"){element.w=Math.max(20,value);element.h=Math.max(20,element.w/ratio);}
+          else{element.h=Math.max(20,value);element.w=Math.max(20,element.h*ratio);}
+        }else{
+          element[key]=value;
+          if(key==="w"||key==="h")element[key]=Math.max(20,element[key]);
+        }
         if (element.type === "image") {
           const { trimW, trimH } = dimensions();
           const constrained = clampImageToMinimumOverlap(
@@ -3459,6 +3475,7 @@ function moveTextInList(id, direction) {
     c.save(); c.clearRect(0,0,fullW,fullH);
     c.fillStyle=makeBackgroundFill(c,0,0,fullW,fullH); c.fillRect(0,0,fullW,fullH); drawPattern(c,0,0,fullW,fullH);
     c.translate(bleed,bleed);
+    c.beginPath();c.rect(0,0,W,H);c.clip();
     state.regions.forEach((r)=>drawRegion(c,r));
     state.elements.forEach((e)=>drawElement(c,e));
     if(state.posterBorder.enabled && state.posterBorder.width>0){
@@ -3914,8 +3931,8 @@ function moveTextInList(id, direction) {
     const layout=buildLayout(sceneCtx);
     targetCtx.clearRect(0,0,canvas.width,canvas.height);
     targetCtx.drawImage(sceneCanvas,0,0);
-    const {bleed}=dimensions();
-    targetCtx.save();targetCtx.translate(bleed,bleed);drawTexts(targetCtx,layout.fragments);targetCtx.restore();
+    const {bleed,trimW,trimH}=dimensions();
+    targetCtx.save();targetCtx.translate(bleed,bleed);targetCtx.beginPath();targetCtx.rect(0,0,trimW,trimH);targetCtx.clip();drawTexts(targetCtx,layout.fragments);targetCtx.restore();
     if(guides)drawGuides(targetCtx,layout.fragments);
     if(recordHits){
       layoutFragments=orderedTextFragments(layout.fragments).map((f)=>({id:f.text.id,regionId:f.region.id,x:f.x,y:f.y,w:f.w,h:f.h}));
@@ -4033,64 +4050,10 @@ function moveTextInList(id, direction) {
   // 사진은 대지 밖으로 충분히 이동할 수 있게 하되, 사진 면적의 최소 5%는
   // 대지 위에 남겨 둡니다. 사진이 지나치게 커서 5%가 대지 전체보다 큰
   // 경우에는 가능한 최대 교차 면적을 기준으로 제한합니다.
-  function clampImageToMinimumOverlap(x, y, w, h, W, H, minimumRatio = .05) {
-    w = Math.max(1, Number(w) || 1);
-    h = Math.max(1, Number(h) || 1);
-    const maxOverlapW = Math.min(w, W);
-    const maxOverlapH = Math.min(h, H);
-    const maximumPossibleArea = maxOverlapW * maxOverlapH;
-    const requiredArea = Math.min(w * h * minimumRatio, maximumPossibleArea);
-    if (requiredArea <= 0 || rectOverlapArea(x, y, w, h, W, H) >= requiredArea - .01) {
-      return { x, y };
-    }
-
-    const candidates = [];
-    const addCandidate = (cx, cy) => {
-      if (!Number.isFinite(cx) || !Number.isFinite(cy)) return;
-      if (rectOverlapArea(cx, cy, w, h, W, H) + .01 < requiredArea) return;
-      const distance = (cx - x) ** 2 + (cy - y) ** 2;
-      candidates.push({ x: cx, y: cy, distance });
-    };
-
-    // 세로 교차량을 유지할 수 있으면 가로 위치만 최소한으로 보정합니다.
-    const visibleH = overlapLength(y, h, H);
-    if (visibleH > 0) {
-      const neededW = requiredArea / visibleH;
-      if (neededW <= maxOverlapW + .01) {
-        addCandidate(clamp(x, neededW - w, W - neededW), y);
-      }
-    }
-
-    // 가로 교차량을 유지할 수 있으면 세로 위치만 최소한으로 보정합니다.
-    const visibleW = overlapLength(x, w, W);
-    if (visibleW > 0) {
-      const neededH = requiredArea / visibleW;
-      if (neededH <= maxOverlapH + .01) {
-        addCandidate(x, clamp(y, neededH - h, H - neededH));
-      }
-    }
-
-    // 두 축이 모두 벗어난 경우를 위한 균형 잡힌 최소 교차 사각형입니다.
-    let neededW = Math.min(maxOverlapW, Math.max(requiredArea / maxOverlapH, Math.sqrt(requiredArea)));
-    let neededH = requiredArea / Math.max(neededW, .0001);
-    if (neededH > maxOverlapH) {
-      neededH = maxOverlapH;
-      neededW = requiredArea / Math.max(neededH, .0001);
-    }
-    addCandidate(
-      clamp(x, neededW - w, W - neededW),
-      clamp(y, neededH - h, H - neededH)
-    );
-
-    if (!candidates.length) {
-      return {
-        x: clamp(x, maxOverlapW - w, W - maxOverlapW),
-        y: clamp(y, maxOverlapH - h, H - maxOverlapH)
-      };
-    }
-    candidates.sort((a, b) => a.distance - b.distance);
-    return { x: candidates[0].x, y: candidates[0].y };
+  function clampImageToMinimumOverlap(x,y,w,h,W,H,minimumRatio=.05){
+    return constrainRectToArtboard(x,y,w,h,W,H,minimumRatio);
   }
+
 
   function resizeFromHandle(drag,point){
     const source=transformSource(drag.kind,drag.id);
@@ -4138,7 +4101,7 @@ function moveTextInList(id, direction) {
     const minW=source.shape==="line"?40:32,minH=source.shape==="line"?2:26;
     if(w<minW){if(local.x<opposite.x)x=opposite.x-minW;w=minW;}
     if(h<minH){if(local.y<opposite.y)y=opposite.y-minH;h=minH;}
-    source.x=clamp(x,-w*.8,W-w*.05);source.y=clamp(y,-h*.8,H-h*.05);source.w=w;source.h=h;
+    const constrained=constrainRectToArtboard(x,y,w,h,W,H,.05);source.x=constrained.x;source.y=constrained.y;source.w=w;source.h=h;
   }
 
   canvas.addEventListener("pointerdown",(event)=>{
@@ -4223,8 +4186,8 @@ function moveTextInList(id, direction) {
             source.x = constrained.x;
             source.y = constrained.y;
           } else {
-            source.x=clamp(dragState.orig.x+dx,-dragState.orig.w*.8,W-dragState.orig.w*.05);
-            source.y=clamp(dragState.orig.y+dy,-dragState.orig.h*.8,H-dragState.orig.h*.05);
+            const constrained=constrainRectToArtboard(dragState.orig.x+dx,dragState.orig.y+dy,dragState.orig.w,dragState.orig.h,W,H,.05);
+            source.x=constrained.x;source.y=constrained.y;
           }
           if(dragState.kind==="region"){
             dragState.textPositions.forEach((saved)=>{
@@ -5362,8 +5325,12 @@ function adaptRegionsToText() {
     text.autoFontScale = Number(style.fontScale)||1;
     text.autoGapScale = Number(style.gapScale)||1;
     if (style.colorRole) {
-      if (style.colorRole === "auto") text.colorMode = "auto";
-      else { text.colorMode="custom"; text.color=paletteColor(style.colorRole,state.palette); }
+      const background=region.fillNone?state.background.c1:resolveColor(region,"fill");
+      const candidate=paletteColor(style.colorRole,state.palette);
+      const active=availablePalette(state.palette).colors;
+      const isActive=active.some((color)=>color.toLowerCase()===String(candidate||"").toLowerCase());
+      if(style.colorRole==="auto"||!isActive||contrastRatio(candidate,background)<2.65)text.colorMode="auto";
+      else{text.colorMode="custom";text.color=candidate;}
     }
     if (style.effectColorRole) text.effectColor = paletteColor(style.effectColorRole,state.palette);
     normalizeEffects(text);
@@ -5510,7 +5477,7 @@ function adaptRegionsToText() {
     const match=String(text.text||"").match(preset.word);
     if(!match||match.index==null)return;
     const fill=paletteColor(state.templateId==="headline-right-block"?"tertiary":"primary",state.palette);
-    const color=contrastText(fill);
+    const color=bestTextColorForEffects(fill,text);
     const start=match.index,end=start+match[0].length;
     text.rangeBackgrounds.push({start,end,shape:preset.shape,fill,strokeEnabled:false,stroke:paletteColor("ink",state.palette),strokeWidth:0,paddingX:5,paddingY:2,radius:preset.shape==="rect"?4:20,scaleX:1.05,scaleY:1.03,rotation:0});
     text.rangeColors=text.rangeColors.filter((range)=>range.end<=start||range.start>=end);
@@ -5522,7 +5489,7 @@ function adaptRegionsToText() {
     const caps={headline:430,callout:320,tag:280,bullet:220,footer:300,body:240,micro:112};
     const maxX={headline:1.10,callout:1.08,tag:1.12,bullet:1.03,footer:1.08,body:1.04,micro:1.03}[role]||1.05;
     const minSpacing={headline:-16,callout:-13,tag:-10,bullet:-10,footer:-14,body:-11,micro:-8}[role]??-10;
-    const minLineHeight={headline:.86,callout:.90,tag:.86,bullet:.98,footer:.88,body:.94,micro:.96}[role]||.94;
+    const minLineHeight={headline:1.00,callout:1.00,tag:1.00,bullet:1.05,footer:1.00,body:1.04,micro:1.02}[role]||1.02;
     const fill={headline:.985,callout:.975,tag:.970,bullet:.980,footer:.980,body:.975,micro:.930}[role]||.97;
     const minFont=role==="micro"?10:14;
     const styleCap=Number(text.autoFontCap)||caps[role]||220;
@@ -5748,21 +5715,16 @@ function autoArrangeTexts({ reassign = true, forceStyle = false, announce = fals
   }
 
   function automaticTextCandidates(background) {
-    const colors = availablePalette(state.palette).colors.slice();
-    if (!colors.length) colors.push(contrastText(background));
+    const colors=availablePalette(state.palette).colors.slice();
     const unique=[];
     colors.forEach((color)=>{if(color&&!unique.some((item)=>item.toLowerCase()===color.toLowerCase()))unique.push(color);});
-    const ranked=unique.map((color)=>({color,score:contrastRatio(color,background)})).sort((a,b)=>b.score-a.score);
-    if((ranked[0]?.score||0)<2.8){
-      const fallback=contrastText(background);
-      if(!unique.some((item)=>item.toLowerCase()===fallback.toLowerCase()))ranked.unshift({color:fallback,score:contrastRatio(fallback,background)});
-    }
-    return ranked.map((item)=>item.color);
+    if(!unique.length)unique.push(state.palette.primary||"#ffd400");
+    return unique.sort((a,b)=>contrastRatio(b,background)-contrastRatio(a,background));
   }
 
   function bestTextColorForEffects(background,text) {
     const candidates=automaticTextCandidates(background);
-    return candidates.map((color)=>({color,score:contrastRatio(color,background)})).sort((a,b)=>b.score-a.score)[0]?.color||contrastText(background);
+    return candidates.map((color)=>({color,score:contrastRatio(color,background)})).sort((a,b)=>b.score-a.score)[0]?.color||state.palette.primary;
   }
 
   function bestAutomaticEffectColor(background,textColor,text) {
@@ -5781,7 +5743,7 @@ function autoArrangeTexts({ reassign = true, forceStyle = false, announce = fals
     }).sort((a,b)=>b.score-a.score);
     const chosen=ranked.find((item)=>item.againstText>=2.2&&item.againstBackground>=1.35)||ranked[0];
     if(chosen)return chosen.color;
-    return contrastText(textColor);
+    return availablePalette(state.palette).colors.find((color)=>color.toLowerCase()!==String(textColor||"").toLowerCase())||textColor||state.palette.primary;
   }
 
   function resolvedShadowColor(color,background) {
@@ -6355,7 +6317,13 @@ function buildLayout(c){
     ensureStateCompatibility();
     const list=$("textList");list.replaceChildren();
     const accepting=state.regions.filter((region)=>region.acceptText&&region.shape!=="line");
-    state.texts.forEach((text,index)=>{
+    const displayTexts=[...state.texts].sort((a,b)=>{
+      const aSelected=state.selectedRegionId&&a.regionId===state.selectedRegionId?1:0;
+      const bSelected=state.selectedRegionId&&b.regionId===state.selectedRegionId?1:0;
+      if(aSelected!==bSelected)return bSelected-aSelected;
+      return state.texts.indexOf(a)-state.texts.indexOf(b);
+    });
+    displayTexts.forEach((text,index)=>{
       normalizeEffects(text);
       const selected=state.selectedTextId===text.id;
       const card=document.createElement("article");card.className=`text-card${selected?" active":""}`;card.dataset.textId=text.id;card.dataset.auto=String(!isTextManualProtected(text));
@@ -6601,7 +6569,7 @@ function buildLayout(c){
       if($("restoreRegionLayoutBtn"))$("restoreRegionLayoutBtn").disabled=true;
       syncEffectToggle("regionEffectStack",null);
       setConditionalVisible("regionEffectOptions",false);
-      syncStaticNumericFields(["regionX","regionY","regionW","regionH","regionRadius","regionPadding","regionStrokeWidth","regionRotation","regionEffectSize"]);
+      syncStaticNumericFields(["regionX","regionY","regionW","regionH","regionScale","regionRadius","regionPadding","regionStrokeWidth","regionRotation","regionEffectSize"]);
       colorFields.forEach((field)=>field.update());
       return;
     }
@@ -6612,7 +6580,9 @@ function buildLayout(c){
     $("selectedRegionBadge").textContent=active?"캔버스 조작 중":(region.layoutDetached?"수동 위치":(region.acceptText?"문장 영역":"장식 영역"));
     $("toggleRegionTransformBtn").textContent=active?"편집 닫기":"위치 편집";
     if($("restoreRegionLayoutBtn"))$("restoreRegionLayoutBtn").disabled=!region.layoutBase;
-    const values={regionX:region.x,regionY:region.y,regionW:region.w,regionH:region.h,regionRadius:region.radius,regionPadding:region.padding,regionStrokeWidth:region.strokeWidth,regionRotation:region.rotation,regionEffectSize:region.effectSize};
+    const defaults=ensureItemNumericDefaults("region",region)||{w:region.w,h:region.h};
+    const regionScaleValue=Math.round(((region.w/Math.max(1,defaults.w)+region.h/Math.max(1,defaults.h))/2)*100);
+    const values={regionX:region.x,regionY:region.y,regionW:region.w,regionH:region.h,regionScale:regionScaleValue,regionRadius:region.radius,regionPadding:region.padding,regionStrokeWidth:region.strokeWidth,regionRotation:region.rotation,regionEffectSize:region.effectSize};
     Object.entries(values).forEach(([id,value])=>{const field=$(id);if(field)field.value=String(round(value));});
     if($("regionShape"))$("regionShape").value=region.shape;
     if($("regionRadiusValue"))$("regionRadiusValue").textContent=round(region.radius);
@@ -6640,7 +6610,7 @@ function buildLayout(c){
       syncEffectToggle("elementEffectStack",null);
       setConditionalVisible("elementEffectOptions",false);
       setConditionalVisible("elementClipRegionWrap",false);
-      syncStaticNumericFields(["elementX","elementY","elementW","elementH","bandPosition","elementStrokeWidth","elementRadius","elementRotation","flowMargin","elementEffectSize","elementLabelSize"]);
+      syncStaticNumericFields(["elementX","elementY","elementW","elementH","elementScale","bandPosition","elementStrokeWidth","elementRadius","elementRotation","flowMargin","elementEffectSize","elementLabelSize"]);
       colorFields.forEach((field)=>field.update());
       return;
     }
@@ -6652,11 +6622,14 @@ function buildLayout(c){
     $("selectedElementName").textContent=labels[element.type]||"요소";
     $("selectedElementBadge").textContent=active?"캔버스 조작 중":(element.type==="image"?"투명 여백 제거 사진":"도형");
     $("toggleElementTransformBtn").textContent=active?"편집 닫기":"위치 편집";
-    const values={elementX:geometry.x,elementY:geometry.y,elementW:geometry.w,elementH:geometry.h,elementStrokeWidth:element.strokeWidth,elementRadius:element.radius,elementRotation:element.rotation,flowMargin:element.flowMargin,elementEffectSize:element.effectSize,elementLabelSize:element.labelSize};
+    const defaults=ensureItemNumericDefaults("element",element)||{w:geometry.w,h:geometry.h};
+    const elementScaleValue=Math.round(((geometry.w/Math.max(1,defaults.w)+geometry.h/Math.max(1,defaults.h))/2)*100);
+    const values={elementX:geometry.x,elementY:geometry.y,elementW:geometry.w,elementH:geometry.h,elementScale:elementScaleValue,elementStrokeWidth:element.strokeWidth,elementRadius:element.radius,elementRotation:element.rotation,flowMargin:element.flowMargin,elementEffectSize:element.effectSize,elementLabelSize:element.labelSize};
     Object.entries(values).forEach(([id,value])=>{const field=$(id);if(field)field.value=String(round(value));});
     const isBand=element.type==="band";
     if($("elementX"))$("elementX").disabled=isBand;
     if($("elementW"))$("elementW").disabled=isBand;
+    if($("elementScale"))$("elementScale").disabled=isBand;
     if($("elementY"))$("elementY").disabled=isBand&&element.bandScope==="region";
     if($("elementRadiusValue"))$("elementRadiusValue").textContent=round(element.radius);
     if($("rotationValue"))$("rotationValue").textContent=`${round(element.rotation)}°`;
@@ -6924,6 +6897,27 @@ function buildLayout(c){
     renderTemplateGrid();renderRegionList();renderTextList();colorFields.forEach((field)=>field.update());queueRender();
   }
 
+  function applyUniformItemScale(kind,percent){
+    const item=kind==="region"?selectedRegion():selectedElement();
+    if(!item)return;
+    const base=ensureItemNumericDefaults(kind,item);if(!base)return;
+    const scale=clamp(Number(percent)||100,20,300)/100;
+    const geometry=kind==="element"?elementGeometry(item):item;
+    const centerX=geometry.x+geometry.w/2,centerY=geometry.y+geometry.h/2;
+    const nextW=Math.max(20,base.w*scale),nextH=Math.max(kind==="element"&&item.shape==="line"?2:20,base.h*scale);
+    if(kind==="element"&&item.type==="band")return;
+    item.w=nextW;item.h=nextH;
+    item.x=centerX-nextW/2;item.y=centerY-nextH/2;
+    if(kind==="element"){
+      const {trimW,trimH}=dimensions();
+      const constrained=constrainRectToArtboard(item.x,item.y,item.w,item.h,trimW,trimH,.05);
+      item.x=constrained.x;item.y=constrained.y;
+      if(item.type==="image")item.imageFit="contain";
+    }
+    if(kind==="region"){captureRegionManualDelta(item);renderRegionList();}
+    updateRegionControls();updateElementControls();
+  }
+
   function bindV16Controls(){
     $("themeToggleBtn")?.addEventListener("click",()=>setTheme(state.theme==="dark"?"light":"dark"));
     $("previewBackgroundButton")?.addEventListener("click",(event)=>{
@@ -6956,6 +6950,8 @@ function buildLayout(c){
     $("paletteUseWhite")?.addEventListener("change",()=>{state.palette.useWhite=$("paletteUseWhite").checked;syncPaletteControls();applyPaletteRefresh();});
     $("paletteUseBlack")?.addEventListener("change",()=>{state.palette.useBlack=$("paletteUseBlack").checked;syncPaletteControls();applyPaletteRefresh();});
     bindValue("palettePaperMix",()=>globalNumericDefaults.palettePaperMix,(value)=>{state.palette.paperMix=clamp(value,0,96);$("palettePaperMixValue").textContent=`${round(value)}%`;applyPaletteRefresh();});
+    bindValue("regionScale",()=>100,(value)=>applyUniformItemScale("region",value),"input");
+    bindValue("elementScale",()=>100,(value)=>applyUniformItemScale("element",value),"input");
 
     const spacingChanged=()=>{reflowRegions({preserveManual:true,adaptText:true});renderRegionList();renderTextList();updateRegionControls();queueRender();};
     bindValue("pageMargin",()=>globalNumericDefaults.pageMargin,(value)=>{state.pageMargin=clamp(value,0,120);$("pageMarginValue").textContent=`${round(value)}px`;spacingChanged();});
@@ -7109,6 +7105,17 @@ function buildLayout(c){
     return true;
   }
 
+  function constrainRectToArtboard(x,y,w,h,W,H,fraction=.05){
+    const target=Math.max(1,Math.min(w*h,W*H)*fraction);
+    const maxOverlapX=Math.max(1,Math.min(w,W));
+    const minOverlapY=Math.min(Math.min(h,H),target/maxOverlapX);
+    y=clamp(y,minOverlapY-h,H-minOverlapY);
+    const overlapY=Math.max(1,Math.min(y+h,H)-Math.max(y,0));
+    const minOverlapX=Math.min(Math.min(w,W),target/overlapY);
+    x=clamp(x,minOverlapX-w,W-minOverlapX);
+    return {x,y};
+  }
+
   function resizeV16Transform(drag,point){
     const source=transformSource(drag.kind,drag.id);if(!source)return;
     const {trimW:W,trimH:H}=dimensions();
@@ -7131,8 +7138,8 @@ function buildLayout(c){
       const w=original.w*scale,h=original.h*scale;
       const x=drag.handle.includes("w")?opposite.x-w:opposite.x;
       const y=drag.handle.includes("n")?opposite.y-h:opposite.y;
-      source.x=clamp(x,-w*.05,W-w*.05);
-      source.y=clamp(y,-h*.05,H-h*.05);
+      const constrained=constrainRectToArtboard(x,y,w,h,W,H,.05);
+      source.x=constrained.x;source.y=constrained.y;
       source.w=w;source.h=h;source.imageFit="contain";
       return;
     }
@@ -7149,7 +7156,8 @@ function buildLayout(c){
     let x=Math.min(local.x,opposite.x),y=Math.min(local.y,opposite.y),w=Math.abs(local.x-opposite.x),h=Math.abs(local.y-opposite.y);
     const minW=source.shape==="line"?40:32,minH=source.shape==="line"?2:26;
     if(w<minW){if(local.x<opposite.x)x=opposite.x-minW;w=minW;}if(h<minH){if(local.y<opposite.y)y=opposite.y-minH;h=minH;}
-    source.x=clamp(x,-w*.05,W-w*.05);source.y=clamp(y,-h*.05,H-h*.05);source.w=w;source.h=h;
+    const constrained=constrainRectToArtboard(x,y,w,h,W,H,.05);
+    source.x=constrained.x;source.y=constrained.y;source.w=w;source.h=h;
   }
 
 function swapRegionTextBundles(sourceRegionId,targetRegionId){
@@ -7185,7 +7193,7 @@ function swapRegionTextBundles(sourceRegionId,targetRegionId){
         const regionHit=hitRegion(point);
         if(regionHit){selectedElement().clipRegionId=regionHit.id;state.clipPickMode=false;updateElementControls();queueRender();toast("선택한 영역으로 잘랐습니다.");event.preventDefault();event.stopImmediatePropagation();return;}
       }
-      transformTarget=null;state.selectedElementId=null;updateElementControls();queueRender();event.stopImmediatePropagation();return;
+      transformTarget=null;state.selectedElementId=null;state.selectedRegionId=null;state.selectedTextId=null;state.clipPickMode=false;updateElementControls();updateRegionControls();renderRegionList();renderTextList();queueRender();event.stopImmediatePropagation();return;
     }
     const textHit=hitText(point);
     if(textHit){
@@ -7205,10 +7213,10 @@ function swapRegionTextBundles(sourceRegionId,targetRegionId){
     const regionHit=hitRegion(point);
     if(regionHit){
       const region=state.regions.find((item)=>item.id===regionHit.id);if(!region)return;
-      transformTarget=null;state.selectedRegionId=region.id;state.selectedElementId=null;openToolTab("regions");renderRegionList();updateRegionControls();updateElementControls();queueRender();
+      transformTarget=null;state.selectedRegionId=region.id;state.selectedElementId=null;state.selectedTextId=null;openToolTab("regions");renderRegionList();renderTextList();updateRegionControls();updateElementControls();queueRender();
       v16PointerState={type:"select",kind:"region",id:region.id,pointerId:event.pointerId,start:point,moved:false};armV16LongPress("region",region.id,event,point);try{canvas.setPointerCapture(event.pointerId);}catch{}event.preventDefault();event.stopImmediatePropagation();return;
     }
-    clearV16LongPress();transformTarget=null;state.selectedElementId=null;state.selectedRegionId=null;updateElementControls();updateRegionControls();renderRegionList();queueRender();event.stopImmediatePropagation();
+    clearV16LongPress();transformTarget=null;state.selectedElementId=null;state.selectedRegionId=null;state.selectedTextId=null;state.clipPickMode=false;updateElementControls();updateRegionControls();renderRegionList();renderTextList();queueRender();event.stopImmediatePropagation();
   }
 
   function v16PointerMove(event){
@@ -7229,7 +7237,8 @@ function swapRegionTextBundles(sourceRegionId,targetRegionId){
           const region=state.regions.find((item)=>item.id===source.bandRegionId);if(region)source.bandPosition=clamp((drag.geometry.y+drag.geometry.h/2+dy-region.y)/Math.max(1,region.h),0,1);
         }else source.y=clamp(drag.orig.y+dy,-source.h*.7,H-source.h*.3);
       }else{
-        source.x=clamp(drag.orig.x+dx,-drag.orig.w*.05,W-drag.orig.w*.05);source.y=clamp(drag.orig.y+dy,-drag.orig.h*.05,H-drag.orig.h*.05);
+        const candidate=constrainRectToArtboard(drag.orig.x+dx,drag.orig.y+dy,drag.orig.w,drag.orig.h,W,H,.05);
+        source.x=candidate.x;source.y=candidate.y;
         if(drag.kind==="region")drag.textPositions.forEach((saved)=>{const text=state.texts.find((item)=>item.id===saved.id);if(text){text.manualX=saved.x+dx;text.manualY=saved.y+dy;}});
       }
     }else if(drag.handle==="rotate"&&drag.kind!=="text"){
@@ -7268,6 +7277,14 @@ function swapRegionTextBundles(sourceRegionId,targetRegionId){
   canvas.addEventListener("pointerup",v16PointerFinish,true);
   canvas.addEventListener("pointercancel",v16PointerFinish,true);
   canvas.addEventListener("dblclick",v16DoubleClick,true);
+
+  $("canvasStage")?.addEventListener("pointerdown",(event)=>{
+    if(event.target===canvas||canvas.contains?.(event.target))return;
+    clearV16LongPress();
+    transformTarget=null;v16PointerState=null;
+    state.selectedTextId=null;state.selectedRegionId=null;state.selectedElementId=null;state.clipPickMode=false;
+    renderTextList();renderRegionList();updateRegionControls();updateElementControls();queueRender();
+  },true);
 
 
   function imageAlphaInfo(layer){
