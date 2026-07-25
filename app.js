@@ -561,7 +561,7 @@
 
   const initialState = {
     schemaVersion: 20,
-    theme: "dark",
+    theme: "light",
     orientation: "landscape",
     artboard: { preset: "flyer", widthMm: 180, heightMm: 100 },
     bleedMm: 0,
@@ -4052,7 +4052,7 @@ function moveTextInList(id, direction) {
 
 function ensureStateCompatibility() {
     state.schemaVersion = 20;
-    state.theme ||= "dark";
+    state.theme ||= "light";
     state.artboard ||= { preset: "flyer", widthMm: 180, heightMm: 100 };
     state.artboard.widthMm = clamp(Number(state.artboard.widthMm) || 180, 50, 420);
     state.artboard.heightMm = clamp(Number(state.artboard.heightMm) || 100, 50, 420);
@@ -4965,7 +4965,10 @@ function adaptRegionsToText() {
       palettePaperMix:{min:0,max:96,step:1,reset:()=>globalNumericDefaults.palettePaperMix}
     });
     ensureStateCompatibility();
+    document.documentElement.dataset.theme = state.theme;
     document.body.dataset.theme = state.theme;
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeMeta) themeMeta.setAttribute("content", state.theme === "light" ? "#ffffff" : "#0b0c10");
   }
 
   function applyRoleStyle(text, role) {
@@ -6245,8 +6248,18 @@ function buildLayout(c){
     if($("regionGapYValue"))$("regionGapYValue").textContent=`${round(state.regionGapY)}px`;
     renderTemplateGrid();renderTextList();renderRegionList();updateRegionControls();updateElementControls();syncPaletteControls();syncBackgroundControls();
     colorFields.forEach((field)=>field.update());
+    document.documentElement.dataset.theme=state.theme;
     document.body.dataset.theme=state.theme;
-    const themeButton=$("themeToggleBtn");if(themeButton){const icon=themeButton.querySelector("span:first-child"),label=themeButton.querySelector("span:last-child");if(icon)icon.textContent=state.theme==="light"?"☀":"☾";if(label)label.textContent=state.theme==="light"?"라이트":"다크";}
+    const themeMeta=document.querySelector('meta[name="theme-color"]');
+    if(themeMeta)themeMeta.setAttribute("content",state.theme==="light"?"#ffffff":"#0b0c10");
+    const themeButton=$("themeToggleBtn");
+    if(themeButton){
+      const icon=themeButton.querySelector(".theme-icon");
+      const nextLabel=state.theme==="light"?"다크 모드로 전환":"화이트 모드로 전환";
+      if(icon)icon.textContent=state.theme==="light"?"☾":"☀";
+      themeButton.title=nextLabel;
+      themeButton.setAttribute("aria-label",nextLabel);
+    }
     if($("showRegions"))$("showRegions").checked=Boolean(state.showRegions);
     syncStaticNumericFields(["pageMargin","regionGapX","regionGapY","palettePaperMix"]);
   }
@@ -6260,7 +6273,11 @@ function buildLayout(c){
   }
 
   function setTheme(next){
-    state.theme=next==="light"?"light":"dark";document.body.dataset.theme=state.theme;refreshAllUI();markHistoryDirty(true);
+    state.theme=next==="light"?"light":"dark";
+    document.documentElement.dataset.theme=state.theme;
+    document.body.dataset.theme=state.theme;
+    refreshAllUI();
+    markHistoryDirty(true);
   }
 
   function setArtboardSize(widthMm,heightMm,{reapplyTemplate=true,preset="custom"}={}){

@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b0c10" />
+  <meta name="theme-color" content="#ffffff" />
   <title>찌라시 메이커</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body data-theme="light">
   <header class="topbar">
     <div class="brand">
       <span class="brand-mark">號</span>
@@ -17,11 +17,11 @@
       </div>
     </div>
     <div class="top-actions">
-      <div class="history-actions" aria-label="실행 기록">
+      <div class="history-actions" aria-label="화면 모드와 실행 기록">
+        <button id="themeToggleBtn" class="button button-ghost theme-toggle" type="button" title="다크 모드로 전환" aria-label="다크 모드로 전환"><span class="theme-icon" aria-hidden="true">☾</span></button>
         <button id="undoBtn" class="button button-ghost history-button" type="button" disabled title="실행취소 (Ctrl/Cmd+Z)">↶ <span>실행취소</span></button>
         <button id="redoBtn" class="button button-ghost history-button" type="button" disabled title="재실행 (Ctrl/Cmd+Shift+Z)">↷ <span>재실행</span></button>
       </div>
-      <button id="themeToggleBtn" class="button button-ghost theme-toggle" type="button" title="라이트/다크 모드 전환"><span aria-hidden="true">☾</span><span>다크</span></button>
       <button id="resetBtn" class="button button-ghost danger-reset-button" type="button" title="전체 작업 초기화">↺ <span>전체 초기화</span></button>
       <button id="exportPngBtn" class="button">PNG 저장</button>
       <button id="exportJpgBtn" class="button button-accent">JPG 저장</button>

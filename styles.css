@@ -2282,3 +2282,107 @@ body[data-theme="light"] .palette-neutral-inline label {
     width: calc(100% - 12px);
   }
 }
+
+/* v26.3: default white mode, adjacent theme toggle, and fully white light-mode buttons */
+html[data-theme="light"] {
+  color-scheme: light;
+  background: #f7f7f5;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  background: #0b0c0f;
+}
+.history-actions {
+  align-items: center;
+}
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0;
+  border-radius: 9px;
+}
+.theme-toggle .theme-icon {
+  display: block;
+  font-size: 19px;
+  line-height: 1;
+}
+
+/* In white mode every action button uses a white surface. State is shown by border/ring, never black fill. */
+body[data-theme="light"] button,
+body[data-theme="light"] button.button,
+body[data-theme="light"] button.small-button,
+body[data-theme="light"] button.icon-button,
+body[data-theme="light"] button.icon-text-button,
+body[data-theme="light"] button.zoom-readout,
+body[data-theme="light"] button.step-button,
+body[data-theme="light"] button.numeric-reset-button,
+body[data-theme="light"] button.tool-tab,
+body[data-theme="light"] .segmented-control button,
+body[data-theme="light"] .multi-toggle button,
+body[data-theme="light"] .text-card-actions button,
+body[data-theme="light"] .selected-head-actions button,
+body[data-theme="light"] .region-layout-actions button,
+body[data-theme="light"] .element-buttons button,
+body[data-theme="light"] .template-card,
+body[data-theme="light"] .color-copy-button,
+body[data-theme="light"] .color-none-button {
+  background-color: #ffffff !important;
+  color: #2f3437 !important;
+  border-color: #deded9 !important;
+  box-shadow: none !important;
+}
+body[data-theme="light"] button:hover:not(:disabled),
+body[data-theme="light"] .segmented-control button:hover:not(:disabled),
+body[data-theme="light"] .multi-toggle button:hover:not(:disabled) {
+  background-color: #f7f7f5 !important;
+  border-color: #bdbdb7 !important;
+}
+body[data-theme="light"] button:disabled,
+body[data-theme="light"] button[disabled] {
+  background-color: #ffffff !important;
+  color: #9b9b96 !important;
+  border-color: #e7e7e3 !important;
+}
+body[data-theme="light"] button.active,
+body[data-theme="light"] .tool-tab.active,
+body[data-theme="light"] .template-card.active,
+body[data-theme="light"] .segmented-control button.active,
+body[data-theme="light"] .multi-toggle button.active,
+body[data-theme="light"] button[aria-pressed="true"] {
+  background-color: #ffffff !important;
+  color: #1f2326 !important;
+  border-color: #8f8f89 !important;
+  box-shadow: inset 0 0 0 1px #8f8f89 !important;
+}
+body[data-theme="light"] .button-danger,
+body[data-theme="light"] .danger-reset-button {
+  background-color: #ffffff !important;
+  color: #b4233c !important;
+  border-color: #e5b6bf !important;
+}
+body[data-theme="light"] .button-accent {
+  background-color: #ffffff !important;
+  color: #2f3437 !important;
+  border-color: #bdbdb7 !important;
+  font-weight: 800;
+}
+/* Color controls retain the actual swatch inside, while the clickable button shell stays white. */
+body[data-theme="light"] .color-trigger {
+  background-color: #ffffff !important;
+  color: #2f3437 !important;
+  border-color: #deded9 !important;
+}
+
+@media (max-width: 700px) {
+  .theme-toggle {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+}
+
