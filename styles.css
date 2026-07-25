@@ -2386,3 +2386,212 @@ body[data-theme="light"] .color-trigger {
   }
 }
 
+
+/* v26.4 · custom Unicode placement */
+.custom-unicode-block {
+  display: grid;
+  grid-template-columns: minmax(160px, .8fr) minmax(0, 1.2fr);
+  gap: 10px;
+  align-items: end;
+  min-width: 0;
+}
+.custom-unicode-block > * { min-width: 0; }
+.custom-unicode-block .unicode-row input { min-width: 0; width: 100%; }
+@media (max-width: 720px) {
+  .custom-unicode-block { grid-template-columns: 1fr; }
+}
+
+/* v26.6: compact tabbed sentence styling and editable selected ranges */
+.text-settings-tabs {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-soft);
+  overflow: hidden;
+}
+.text-settings-tablist {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 7px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-raised);
+}
+.text-settings-tab {
+  min-width: 0;
+  min-height: 34px;
+  padding: 6px 7px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.15;
+  cursor: pointer;
+}
+.text-settings-tab:hover {
+  background: color-mix(in srgb, var(--surface-input) 72%, transparent);
+  color: var(--text);
+}
+.text-settings-tab.active {
+  border-color: var(--line-strong);
+  background: var(--surface-input);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0,0,0,.08);
+}
+.text-settings-tab-help {
+  min-height: 34px;
+  margin: 0;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  background: var(--surface-input);
+  font-size: 10px;
+  line-height: 1.45;
+}
+.text-settings-tab-panels { min-width: 0; }
+.text-settings-tab-panel {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 10px;
+}
+.text-settings-tab-panel[hidden] { display: none !important; }
+.range-apply-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, auto);
+  gap: 8px;
+  align-items: end;
+  min-width: 0;
+}
+.range-apply-button {
+  min-width: 0;
+  min-height: 38px;
+  padding-inline: 12px;
+  font-weight: 800;
+}
+.editable-range-list {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.editable-range-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-input);
+}
+.range-preview-button {
+  min-width: 0;
+  min-height: 32px;
+  padding: 6px 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 7px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.range-preview-button:hover { outline: 1px solid var(--line-strong); }
+.range-index-editor {
+  display: grid;
+  grid-template-columns: 50px auto 50px 32px;
+  gap: 4px;
+  align-items: center;
+}
+.range-index-editor input {
+  width: 50px;
+  min-width: 0;
+  min-height: 32px;
+  padding: 4px;
+  text-align: center;
+}
+.range-index-dash { color: var(--muted); font-size: 10px; }
+.range-remove-button {
+  width: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--danger) 38%, var(--line));
+  border-radius: 7px;
+  background: var(--surface-input);
+  color: var(--danger);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.range-empty-note {
+  margin: 0;
+  padding: 9px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 9.5px;
+  text-align: center;
+}
+
+/* Selected-range action buttons must remain legible in both themes. */
+body[data-theme="dark"] .text-settings-tab-panel .button-accent,
+body:not([data-theme="light"]) .text-settings-tab-panel .button-accent {
+  border-color: #f2cc00 !important;
+  background: #ffd800 !important;
+  color: #151515 !important;
+  box-shadow: none !important;
+}
+body[data-theme="dark"] .text-settings-tab-panel .button-accent:hover,
+body:not([data-theme="light"]) .text-settings-tab-panel .button-accent:hover {
+  background: #ffe34d !important;
+  color: #111 !important;
+}
+body[data-theme="light"] .text-settings-tabs,
+body[data-theme="light"] .text-settings-tablist,
+body[data-theme="light"] .text-settings-tab-help,
+body[data-theme="light"] .text-settings-tab-panel,
+body[data-theme="light"] .editable-range-row,
+body[data-theme="light"] .range-preview-button,
+body[data-theme="light"] .range-remove-button {
+  background: #fff;
+  color: #2f3437;
+}
+body[data-theme="light"] .text-settings-tablist { background: #f7f7f5; }
+body[data-theme="light"] .text-settings-tab.active {
+  background: #fff !important;
+  color: #202428 !important;
+  border-color: #c9c9c4 !important;
+}
+body[data-theme="light"] .text-settings-tab-panel .button-accent {
+  border-color: #c9c9c4 !important;
+  background: #fff !important;
+  color: #202428 !important;
+  box-shadow: 0 1px 2px rgba(15,15,15,.06) !important;
+}
+body[data-theme="light"] .text-settings-tab-panel .button-accent:hover {
+  background: #f4f4f2 !important;
+  color: #17191d !important;
+}
+
+@media (max-width: 900px) {
+  .text-settings-tablist { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .text-settings-tablist { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .range-apply-row { grid-template-columns: 1fr; }
+  .editable-range-row { grid-template-columns: 1fr; }
+  .range-index-editor { grid-template-columns: minmax(52px, 1fr) auto minmax(52px, 1fr) 36px; }
+  .range-index-editor input { width: 100%; }
+  .range-remove-button { width: 36px; min-width: 36px; min-height: 36px; }
+}

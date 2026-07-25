@@ -60,11 +60,17 @@
   const UNICODE_PRESETS = [
     ["none", "없음"],
     ["slash", "단어 사이 /"],
+    ["slashChar", "글자 사이 /"],
     ["dot", "단어 사이 ·"],
+    ["dotChar", "글자 사이 ·"],
     ["star", "단어 사이 ★"],
+    ["starChar", "글자 사이 ★"],
     ["heart", "단어 사이 ♥"],
+    ["heartChar", "글자 사이 ♥"],
     ["block", "단어 사이 ■"],
+    ["blockChar", "글자 사이 ■"],
     ["bullet", "단어 사이 •"],
+    ["bulletChar", "글자 사이 •"],
     ["wrapQuote", "『문장』"],
     ["wrapPhone", "☎ 문장 ☎"],
     ["wrapCard", "♠ 문장 ♠"],
@@ -537,9 +543,9 @@
       scaleX: 1, scaleY: 1, autoNoWrap: false, letterSpacing: -1, lineHeight: 1.08,
       effect: "none", effects: [], outlineWidth: 3,
       colorMode: "auto", color: "#ffffff", effectColor: "#111111",
-      gap: 12, unicodeStyle: "none", customUnicode: "★",
+      gap: 12, unicodeStyle: "none", customUnicode: "★", unicodePlacement: "word",
       prefixEnabled: false, prefixSymbol: "•", prefixGap: 12,
-      rangeColors: [], rangeBackgrounds: [], manualX: null, manualY: null, manualScale: 1,
+      rangeColors: [], rangeBackgrounds: [], rangeUnicodes: [], manualX: null, manualY: null, manualScale: 1,
       ...overrides
     };
   }
@@ -608,6 +614,7 @@
   const staticNumericControllers = new Map();
   const itemNumericDefaults = new Map();
   const textNumericDefaults = new Map();
+  const textEditorTabs = new Map();
   const globalNumericDefaults = {
     bleedMm: 0,
     artboardWidthMm: 180,
@@ -1047,10 +1054,13 @@
     const keep = {
       unicodeStyle: text.unicodeStyle,
       customUnicode: text.customUnicode,
+      unicodePlacement: text.unicodePlacement || "word",
       prefixEnabled: text.prefixEnabled,
       prefixSymbol: text.prefixSymbol,
       prefixGap: text.prefixGap,
-      rangeColors: text.rangeColors
+      rangeColors: text.rangeColors,
+      rangeBackgrounds: text.rangeBackgrounds,
+      rangeUnicodes: text.rangeUnicodes
     };
     Object.assign(text, ROLE_STYLE_DEFAULTS[role] || ROLE_STYLE_DEFAULTS.body, keep);
   }
@@ -1170,7 +1180,7 @@
 
   function autoDecoration(text, role, region) {
     const facts = textFacts(text);
-    const seed = hashString(`${text.id}:${facts.raw}`);
+    const seed = hashString(String(text.id));
     const regionBg = region.fillNone ? state.background.c1 : resolveColor(region, "fill");
     const baseColor = contrastText(regionBg);
     const accent = bestAccentColor(regionBg, baseColor);
@@ -2126,6 +2136,7 @@ function isTextManualProtected(text) {
     text.manualScale = 1;
     text.rangeColors = [];
     text.rangeBackgrounds = [];
+    text.rangeUnicodes = [];
     text.effects = [];
     text.effect = "none";
     text.unicodeStyle = "none";
@@ -2326,7 +2337,7 @@ function isTextManualProtected(text) {
       const customWrap = document.createElement("div"); customWrap.innerHTML = '<span class="field-label">직접 기호</span>';
       const customInputRow = document.createElement("div"); customInputRow.className = "unicode-row";
       const customInput = document.createElement("input"); customInput.value = text.customUnicode || "★";
-      customInput.addEventListener("input", () => manual(() => { text.customUnicode = customInput.value; text.unicodeStyle = "custom"; }));
+      customInput.addEventListener("input", () => manual(() => { text.customUnicode = customInput.value; text.unicodeStyle = "custom"; text.unicodePlacement ||= "word"; }));
       const customBrowse = document.createElement("button"); customBrowse.type = "button"; customBrowse.className = "button"; customBrowse.textContent = "찾아보기";
       customBrowse.addEventListener("click", () => openUnicodeBrowser((char) => {
         markTextManual(text); text.customUnicode = char; text.unicodeStyle = "custom"; renderTextList(); queueRender();
@@ -2826,6 +2837,17 @@ function moveTextInList(id, direction) {
       } else {
         element[key] = value;
         if (key === "w" || key === "h") element[key] = Math.max(20, element[key]);
+        if (element.type === "image") {
+          const { trimW, trimH } = dimensions();
+          const constrained = clampImageToMinimumOverlap(
+            Number(element.x) || 0, Number(element.y) || 0,
+            Number(element.w) || 20, Number(element.h) || 20,
+            trimW, trimH, .05
+          );
+          element.x = constrained.x;
+          element.y = constrained.y;
+          element.imageFit = "contain";
+        }
       }
       updateElementControls();
     };
@@ -3267,28 +3289,82 @@ function moveTextInList(id, direction) {
   function decoratedLine(text, raw, lineStart) {
     let body=[];
     [...raw].forEach((ch,i)=>body.push({ch,index:lineStart+i}));
-    const insertBetweenWords=(symbol)=>{
+
+    const insertBetweenWords=(items,symbol)=>{
       const out=[];
-      body.forEach((item)=>{
+      items.forEach((item)=>{
         if(/\s/.test(item.ch)) out.push({ch:` ${symbol} `,index:null});
         else out.push(item);
       });
       return out;
     };
-    if(text.unicodeStyle==="slash") body=insertBetweenWords("/");
-    else if(text.unicodeStyle==="dot") body=insertBetweenWords("·");
-    else if(text.unicodeStyle==="star") body=insertBetweenWords("★");
-    else if(text.unicodeStyle==="heart") body=insertBetweenWords("♥");
-    else if(text.unicodeStyle==="block") body=insertBetweenWords("■");
-    else if(text.unicodeStyle==="bullet") body=insertBetweenWords("•");
-    else if(text.unicodeStyle==="custom") body=insertBetweenWords(text.customUnicode||"★");
+    const insertBetweenCharacters=(items,symbol)=>{
+      const out=[];
+      items.forEach((item,index)=>{
+        out.push(item);
+        const next=items[index+1];
+        if(next && !/\s/.test(item.ch) && !/\s/.test(next.ch)) out.push({ch:symbol,index:null});
+      });
+      return out;
+    };
+    const applySelectedUnicode=(items,range)=>{
+      const symbol=String(range.customUnicode||range.symbol||"★");
+      const start=Math.max(0,Number(range.start)||0),end=Math.max(start+1,Number(range.end)||start+1);
+      if((range.placement||"word")==="char"){
+        const out=[];
+        items.forEach((item,index)=>{
+          out.push(item);
+          const next=items[index+1];
+          const inside=item.index!=null&&next?.index!=null&&item.index>=start&&next.index<end;
+          if(inside&&!/\s/.test(item.ch)&&!/\s/.test(next.ch))out.push({ch:symbol,index:null});
+        });
+        return out;
+      }
+      return items.map((item)=>item.index!=null&&item.index>=start&&item.index<end&&/\s/.test(item.ch)
+        ?{ch:` ${symbol} `,index:null}
+        :item);
+    };
+
+    (text.rangeUnicodes||[]).forEach((range)=>{body=applySelectedUnicode(body,range);});
+
+    const wordSymbols={slash:"/",dot:"·",star:"★",heart:"♥",block:"■",bullet:"•"};
+    const characterSymbols={slashChar:"/",dotChar:"·",starChar:"★",heartChar:"♥",blockChar:"■",bulletChar:"•"};
+    if(wordSymbols[text.unicodeStyle]) body=insertBetweenWords(body,wordSymbols[text.unicodeStyle]);
+    else if(characterSymbols[text.unicodeStyle]) body=insertBetweenCharacters(body,characterSymbols[text.unicodeStyle]);
+    else if(text.unicodeStyle==="custom") body=(text.unicodePlacement||"word")==="char"
+      ? insertBetweenCharacters(body,text.customUnicode||"★")
+      : insertBetweenWords(body,text.customUnicode||"★");
     else if(text.unicodeStyle==="wrapQuote") body=[{ch:"『",index:null},...body,{ch:"』",index:null}];
     else if(text.unicodeStyle==="wrapPhone") body=[{ch:"☎ ",index:null},...body,{ch:" ☎",index:null}];
     else if(text.unicodeStyle==="wrapCard") body=[{ch:"♠ ",index:null},...body,{ch:" ♠",index:null}];
     else if(text.unicodeStyle==="glitch") {
       const marks=["@","*","●","/","₩"];
-      const out=[]; let count=0;
-      body.forEach((item)=>{out.push(item);if(item.ch.trim() && ++count%3===0)out.push({ch:marks[(count/3-1)%marks.length],index:null});});
+      // 문장을 다시 그릴 때마다 기호가 흔들리지 않도록 텍스트별 시드를 쓰되,
+      // 고정 순환 대신 각 삽입 지점의 기호 순서를 의사난수로 섞습니다.
+      const seedSource=`${text.id||""}|${raw}|${text.unicodeRandomSeed||""}`;
+      let seed=2166136261;
+      for(const ch of seedSource){
+        seed^=ch.codePointAt(0);
+        seed=Math.imul(seed,16777619)>>>0;
+      }
+      const random=()=>{
+        seed=(seed+0x6D2B79F5)>>>0;
+        let value=seed;
+        value=Math.imul(value^(value>>>15),value|1);
+        value^=value+Math.imul(value^(value>>>7),value|61);
+        return ((value^(value>>>14))>>>0)/4294967296;
+      };
+      const out=[];
+      let count=0;
+      let previous=-1;
+      body.forEach((item)=>{
+        out.push(item);
+        if(!item.ch.trim() || ++count%3!==0)return;
+        let index=Math.floor(random()*marks.length);
+        if(marks.length>1 && index===previous)index=(index+1+Math.floor(random()*(marks.length-1)))%marks.length;
+        previous=index;
+        out.push({ch:marks[index],index:null});
+      });
       body=out;
     }
     if(text.prefixEnabled && raw.trim()) body=[{ch:`${text.prefixSymbol||"•"}${" ".repeat(Math.max(1,Math.round((text.prefixGap||12)/10)))}`,index:null},...body];
@@ -3759,6 +3835,80 @@ function moveTextInList(id, direction) {
     return true;
   }
 
+  function rectOverlapArea(x, y, w, h, W, H) {
+    const left = Math.max(0, x);
+    const top = Math.max(0, y);
+    const right = Math.min(W, x + w);
+    const bottom = Math.min(H, y + h);
+    return Math.max(0, right - left) * Math.max(0, bottom - top);
+  }
+
+  function overlapLength(position, size, boundary) {
+    return Math.max(0, Math.min(boundary, position + size) - Math.max(0, position));
+  }
+
+  // 사진은 대지 밖으로 충분히 이동할 수 있게 하되, 사진 면적의 최소 5%는
+  // 대지 위에 남겨 둡니다. 사진이 지나치게 커서 5%가 대지 전체보다 큰
+  // 경우에는 가능한 최대 교차 면적을 기준으로 제한합니다.
+  function clampImageToMinimumOverlap(x, y, w, h, W, H, minimumRatio = .05) {
+    w = Math.max(1, Number(w) || 1);
+    h = Math.max(1, Number(h) || 1);
+    const maxOverlapW = Math.min(w, W);
+    const maxOverlapH = Math.min(h, H);
+    const maximumPossibleArea = maxOverlapW * maxOverlapH;
+    const requiredArea = Math.min(w * h * minimumRatio, maximumPossibleArea);
+    if (requiredArea <= 0 || rectOverlapArea(x, y, w, h, W, H) >= requiredArea - .01) {
+      return { x, y };
+    }
+
+    const candidates = [];
+    const addCandidate = (cx, cy) => {
+      if (!Number.isFinite(cx) || !Number.isFinite(cy)) return;
+      if (rectOverlapArea(cx, cy, w, h, W, H) + .01 < requiredArea) return;
+      const distance = (cx - x) ** 2 + (cy - y) ** 2;
+      candidates.push({ x: cx, y: cy, distance });
+    };
+
+    // 세로 교차량을 유지할 수 있으면 가로 위치만 최소한으로 보정합니다.
+    const visibleH = overlapLength(y, h, H);
+    if (visibleH > 0) {
+      const neededW = requiredArea / visibleH;
+      if (neededW <= maxOverlapW + .01) {
+        addCandidate(clamp(x, neededW - w, W - neededW), y);
+      }
+    }
+
+    // 가로 교차량을 유지할 수 있으면 세로 위치만 최소한으로 보정합니다.
+    const visibleW = overlapLength(x, w, W);
+    if (visibleW > 0) {
+      const neededH = requiredArea / visibleW;
+      if (neededH <= maxOverlapH + .01) {
+        addCandidate(x, clamp(y, neededH - h, H - neededH));
+      }
+    }
+
+    // 두 축이 모두 벗어난 경우를 위한 균형 잡힌 최소 교차 사각형입니다.
+    let neededW = Math.min(maxOverlapW, Math.max(requiredArea / maxOverlapH, Math.sqrt(requiredArea)));
+    let neededH = requiredArea / Math.max(neededW, .0001);
+    if (neededH > maxOverlapH) {
+      neededH = maxOverlapH;
+      neededW = requiredArea / Math.max(neededH, .0001);
+    }
+    addCandidate(
+      clamp(x, neededW - w, W - neededW),
+      clamp(y, neededH - h, H - neededH)
+    );
+
+    if (!candidates.length) {
+      return {
+        x: clamp(x, maxOverlapW - w, W - maxOverlapW),
+        y: clamp(y, maxOverlapH - h, H - maxOverlapH)
+      };
+    }
+    candidates.sort((a, b) => a.distance - b.distance);
+    return { x: candidates[0].x, y: candidates[0].y };
+  }
+
   function resizeFromHandle(drag,point){
     const source=transformSource(drag.kind,drag.id);
     if(!source)return;
@@ -3774,8 +3924,9 @@ function moveTextInList(id, direction) {
       const w=original.w*scale,h=original.h*scale;
       const x=drag.handle.includes("w")?opposite.x-w:opposite.x;
       const y=drag.handle.includes("n")?opposite.y-h:opposite.y;
-      source.x=clamp(x,-w*.05,W-w*.05);
-      source.y=clamp(y,-h*.05,H-h*.05);
+      const constrained = clampImageToMinimumOverlap(x, y, w, h, W, H, .05);
+      source.x = constrained.x;
+      source.y = constrained.y;
       source.w=w;source.h=h;source.imageFit="contain";
       return;
     }
@@ -3881,8 +4032,17 @@ function moveTextInList(id, direction) {
             if(region)source.bandPosition=clamp((dragState.geometry.y+dragState.geometry.h/2+dy-region.y)/Math.max(1,region.h),0,1);
           }else source.y=clamp(dragState.orig.y+dy,-source.h*.7,H-source.h*.3);
         }else{
-          source.x=clamp(dragState.orig.x+dx,-dragState.orig.w*.8,W-dragState.orig.w*.05);
-          source.y=clamp(dragState.orig.y+dy,-dragState.orig.h*.8,H-dragState.orig.h*.05);
+          if (dragState.kind === "element" && source.type === "image") {
+            const constrained = clampImageToMinimumOverlap(
+              dragState.orig.x + dx, dragState.orig.y + dy,
+              dragState.orig.w, dragState.orig.h, W, H, .05
+            );
+            source.x = constrained.x;
+            source.y = constrained.y;
+          } else {
+            source.x=clamp(dragState.orig.x+dx,-dragState.orig.w*.8,W-dragState.orig.w*.05);
+            source.y=clamp(dragState.orig.y+dy,-dragState.orig.h*.8,H-dragState.orig.h*.05);
+          }
           if(dragState.kind==="region"){
             dragState.textPositions.forEach((saved)=>{
               const text=state.texts.find((item)=>item.id===saved.id);
@@ -4110,6 +4270,8 @@ function ensureStateCompatibility() {
       if (text.sample && !["tag","footer"].includes(savedRole)) text.autoNoWrap = false;
       text.rangeColors ||= [];
       text.rangeBackgrounds ||= [];
+      text.rangeUnicodes ||= [];
+      if (!['word', 'char'].includes(text.unicodePlacement)) text.unicodePlacement = 'word';
       text.manualScale = clamp(Number(text.manualScale) || 1, .35, 3);
       if (!text.styleMode) text.styleMode = "auto";
       if (typeof text.manualProtected !== "boolean") {
@@ -4975,6 +5137,7 @@ function adaptRegionsToText() {
     const keep = {
       unicodeStyle:text.unicodeStyle,
       customUnicode:text.customUnicode,
+      unicodePlacement:text.unicodePlacement || "word",
       prefixEnabled:text.prefixEnabled,
       prefixSymbol:text.prefixSymbol,
       prefixGap:text.prefixGap,
@@ -5015,7 +5178,7 @@ function adaptRegionsToText() {
 
   function autoDecoration(text, role, region) {
     const facts = textFacts(text);
-    const seed = hashString(`${text.id}:${facts.raw}`);
+    const seed = hashString(String(text.id));
     const regionBg = region.fillNone ? state.background.c1 : resolveColor(region,"fill");
     const baseColor = contrastText(regionBg);
     const accent = bestAccentColor(regionBg,baseColor);
@@ -5157,73 +5320,142 @@ function adaptRegionsToText() {
     const AUTO_MIN_SCALE=.70;
     const caps={headline:430,callout:320,tag:280,bullet:220,footer:300,body:240,micro:112};
     const maxX={headline:1.10,callout:1.08,tag:1.12,bullet:1.03,footer:1.08,body:1.04,micro:1.03}[role]||1.05;
-    const maxY={headline:1.08,callout:1.06,tag:1.08,bullet:1.03,footer:1.06,body:1.04,micro:1.03}[role]||1.05;
-    const lh=clamp(Number(text.lineHeight)||1,.72,1.40);
-    const fill={headline:.975,callout:.965,tag:.955,bullet:.97,footer:.965,body:.965,micro:.90}[role]||.96;
-    const minFont=role==="micro"?12:18;
+    const minSpacing={headline:-16,callout:-13,tag:-10,bullet:-10,footer:-14,body:-11,micro:-8}[role]??-10;
+    const minLineHeight={headline:.68,callout:.70,tag:.68,bullet:.78,footer:.70,body:.76,micro:.82}[role]||.74;
+    const fill={headline:.985,callout:.975,tag:.970,bullet:.980,footer:.980,body:.975,micro:.930}[role]||.97;
+    const minFont=role==="micro"?10:14;
     const styleCap=Number(text.autoFontCap)||caps[role]||220;
     const styleScale=clamp(Number(text.autoFontScale)||1,.60,2.1);
-    const cap=Math.max(minFont,Math.min(520,Math.max(styleCap*styleScale*clamp(emphasis,.72,1.72),box.h*1.28,box.w*.35)));
-    const widthLimit=box.w*fill;
-    const heightLimit=targetHeight*fill;
+    const cap=Math.max(minFont,Math.min(520,Math.max(styleCap*styleScale*clamp(emphasis,.72,1.72),box.h*1.34,box.w*.40)));
+    const widthLimit=Math.max(20,box.w*fill);
+    const heightLimit=Math.max(16,targetHeight*fill);
     const explicitLineCount=String(text.text||"").split("\n").length;
-    const compactLength=String(text.text||"").replace(/\s+/g,"").length;
+    const compactLength=[...String(text.text||"").replace(/\s+/g,"")].length;
     const aspect=box.w/Math.max(1,box.h);
+    const baseScaleX=clamp(Number(text.scaleX)||1,AUTO_MIN_SCALE,maxX);
+    const baseSpacing=clamp(Number(text.letterSpacing)||0,minSpacing,24);
+    const baseLineHeight=clamp(Number(text.lineHeight)||1,minLineHeight,1.45);
+
+    const measure=(size,sx,spacing,lineHeight,forceNoWrap)=>{
+      const probe={...text,scaleX:sx,scaleY:1,letterSpacing:spacing,lineHeight,autoNoWrap:false,autoLayoutNoWrap:false};
+      const lines=layoutTextLines(c,probe,size,widthLimit,{forceNoWrap});
+      const widest=Math.max(1,...lines.map((line)=>line.width*sx));
+      const rawH=Math.max(size*lineHeight,lines.length*size*lineHeight);
+      return {lines,widest,rawH,fit:widest<=widthLimit+1&&rawH<=heightLimit+1};
+    };
+
+    const binaryLargest=(low,high,test,iterations=18)=>{
+      let best=null;
+      for(let i=0;i<iterations;i++){
+        const mid=(low+high)/2;
+        const result=test(mid);
+        if(result){best={value:mid,result};low=mid;}else high=mid;
+      }
+      return best;
+    };
+
+    // One font size is tested in the requested priority order:
+    // glyph width -> letter spacing -> line height. Wrapping is considered only by the outer solver.
+    const fitAtSize=(size,forceNoWrap)=>{
+      let result=measure(size,maxX,baseSpacing,baseLineHeight,forceNoWrap);
+      if(result.fit)return {size,scaleX:maxX,letterSpacing:baseSpacing,lineHeight:baseLineHeight,...result,stage:"width"};
+
+      result=measure(size,AUTO_MIN_SCALE,baseSpacing,baseLineHeight,forceNoWrap);
+      if(result.fit){
+        const found=binaryLargest(AUTO_MIN_SCALE,maxX,(sx)=>{
+          const checked=measure(size,sx,baseSpacing,baseLineHeight,forceNoWrap);
+          return checked.fit?checked:null;
+        });
+        const sx=found?.value??AUTO_MIN_SCALE;
+        const checked=found?.result??result;
+        return {size,scaleX:sx,letterSpacing:baseSpacing,lineHeight:baseLineHeight,...checked,stage:"width"};
+      }
+
+      result=measure(size,AUTO_MIN_SCALE,minSpacing,baseLineHeight,forceNoWrap);
+      if(result.fit){
+        const found=binaryLargest(minSpacing,baseSpacing,(spacing)=>{
+          const checked=measure(size,AUTO_MIN_SCALE,spacing,baseLineHeight,forceNoWrap);
+          return checked.fit?checked:null;
+        });
+        const spacing=found?.value??minSpacing;
+        const checked=found?.result??result;
+        return {size,scaleX:AUTO_MIN_SCALE,letterSpacing:spacing,lineHeight:baseLineHeight,...checked,stage:"spacing"};
+      }
+
+      result=measure(size,AUTO_MIN_SCALE,minSpacing,minLineHeight,forceNoWrap);
+      if(result.fit){
+        const found=binaryLargest(minLineHeight,baseLineHeight,(lineHeight)=>{
+          const checked=measure(size,AUTO_MIN_SCALE,minSpacing,lineHeight,forceNoWrap);
+          return checked.fit?checked:null;
+        });
+        const lineHeight=found?.value??minLineHeight;
+        const checked=found?.result??result;
+        return {size,scaleX:AUTO_MIN_SCALE,letterSpacing:minSpacing,lineHeight,...checked,stage:"lineHeight"};
+      }
+      return null;
+    };
 
     const solve=(forceNoWrap)=>{
-      const measure=(size,sx)=>{
-        const lines=layoutTextLines(c,text,size,Math.max(20,widthLimit/Math.max(AUTO_MIN_SCALE,sx)),{forceNoWrap});
-        const widest=Math.max(1,...lines.map((line)=>line.width));
-        const rawH=Math.max(size*lh,lines.length*size*lh);
-        return {lines,widest,rawH,widthFits:widest*sx<=widthLimit+1};
-      };
-      const evaluate=(size)=>{
-        let sx=1;
-        let m=measure(size,1);
-        if(!(m.widthFits&&m.rawH<=heightLimit+1)){
-          const compressed=measure(size,AUTO_MIN_SCALE);
-          if(compressed.widthFits&&compressed.rawH<=heightLimit+1){
-            let lo=AUTO_MIN_SCALE,hi=1;
-            for(let i=0;i<20;i++){
-              const mid=(lo+hi)/2;
-              const test=measure(size,mid);
-              if(test.widthFits&&test.rawH<=heightLimit+1)lo=mid;else hi=mid;
-            }
-            sx=lo;m=measure(size,sx);
-          }else{sx=AUTO_MIN_SCALE;m=compressed;}
-        }
-        let sy=1;
-        if(m.rawH>heightLimit+1)sy=heightLimit/Math.max(1,m.rawH);
-        if(m.lines.length===1&&m.rawH<=heightLimit+1){
-          sx=clamp(Math.min(maxX,widthLimit/Math.max(1,m.widest)),AUTO_MIN_SCALE,maxX);
-        }
-        sy=clamp(sy,AUTO_MIN_SCALE,maxY);
-        return {fits:m.widest*sx<=widthLimit+1&&m.rawH*sy<=heightLimit+1,sx,sy,...m};
-      };
-      let lo=minFont,hi=cap,best=minFont,bestResult=evaluate(minFont);
-      for(let i=0;i<26;i++){
-        const mid=(lo+hi)/2,result=evaluate(mid);
-        if(result.fits){best=mid;bestResult=result;lo=mid;}else hi=mid;
+      let lo=minFont,hi=cap;
+      let best=fitAtSize(minFont,forceNoWrap);
+      for(let i=0;i<27;i++){
+        const mid=(lo+hi)/2;
+        const result=fitAtSize(mid,forceNoWrap);
+        if(result){best=result;lo=mid;}else hi=mid;
       }
-      const result=evaluate(best);
-      return {fontSize:Math.max(minFont,Math.floor(best)),scaleX:clamp(result.sx,AUTO_MIN_SCALE,maxX),scaleY:clamp(result.sy,AUTO_MIN_SCALE,maxY),lineCount:result.lines.length,noWrap:forceNoWrap};
+      if(!best){
+        const fallback=measure(minFont,AUTO_MIN_SCALE,minSpacing,minLineHeight,forceNoWrap);
+        best={size:minFont,scaleX:AUTO_MIN_SCALE,letterSpacing:minSpacing,lineHeight:minLineHeight,...fallback,stage:"fallback"};
+      }
+      const fontSize=Math.max(minFont,Math.floor(best.size));
+      const finalMeasure=measure(fontSize,best.scaleX,best.letterSpacing,best.lineHeight,forceNoWrap);
+      const horizontalFill=clamp(finalMeasure.widest/widthLimit,0,1.5);
+      const verticalFill=clamp(finalMeasure.rawH/heightLimit,0,1.5);
+      const density=horizontalFill*.48+verticalFill*.52;
+      return {
+        fontSize,
+        scaleX:clamp(best.scaleX,AUTO_MIN_SCALE,maxX),
+        scaleY:1,
+        letterSpacing:clamp(best.letterSpacing,minSpacing,24),
+        lineHeight:clamp(best.lineHeight,minLineHeight,1.45),
+        lineCount:finalMeasure.lines.length,
+        noWrap:forceNoWrap,
+        density,
+        horizontalFill,
+        verticalFill,
+        stage:best.stage
+      };
     };
 
     const wrapped=solve(false);
     if(explicitLineCount>1||role==="bullet")return wrapped;
     const single=solve(true);
+    if(wrapped.lineCount<=1)return single;
+
     const sizeGain=wrapped.fontSize/Math.max(1,single.fontSize);
-    const narrowShort=aspect<1.55&&compactLength<=24;
-    const singleLooksSmall=single.fontSize<Math.max(24,heightLimit*.34);
-    const wrapMakesMeaningfulGain=sizeGain>=(narrowShort?1.08:1.28);
-    const chooseWrapped=(narrowShort&&wrapped.lineCount<=4&&wrapMakesMeaningfulGain)||(singleLooksSmall&&sizeGain>=1.12)||(compactLength>34&&sizeGain>=1.38);
+    const densityGain=wrapped.density-single.density;
+    const narrowShort=aspect<1.48&&compactLength<=26;
+    const singleTiny=single.fontSize<Math.max(22,Math.min(heightLimit*.30,widthLimit*.085));
+    const heavilyCompressed=single.scaleX<=AUTO_MIN_SCALE+.015||single.letterSpacing<=minSpacing+.5||single.lineHeight<=minLineHeight+.015;
+    const wrappedReasonable=wrapped.lineCount<=Math.max(4,explicitLineCount+3);
+    const chooseWrapped=(
+      narrowShort&&wrappedReasonable&&sizeGain>=1.10&&densityGain>=-.03
+    )||(
+      singleTiny&&wrappedReasonable&&sizeGain>=1.16
+    )||(
+      heavilyCompressed&&wrappedReasonable&&sizeGain>=1.28&&densityGain>=.02
+    )||(
+      compactLength>42&&wrappedReasonable&&sizeGain>=1.42&&densityGain>=.08
+    );
     return chooseWrapped?wrapped:single;
   }
 
-function autoStyleAssignedTexts({ force = false, skipAdapt = false } = {}) {
+function autoStyleAssignedTexts({ force = false, skipAdapt = false, regionIds = null } = {}) {
     if (!skipAdapt) adaptRegionsToText();
+    const filter=regionIds?new Set(regionIds):null;
     const groups=new Map();
     state.texts.forEach((text,index)=>{
+      if(filter&&!filter.has(text.regionId))return;
       text.autoRole=inferTextRole(text,index);
       if(!isTextManualProtected(text))text.role=text.autoRole;
       if(!groups.has(text.regionId))groups.set(text.regionId,[]);
@@ -5253,6 +5485,8 @@ function autoStyleAssignedTexts({ force = false, skipAdapt = false } = {}) {
         text.fontSize=fitted.fontSize;
         text.scaleX=fitted.scaleX;
         text.scaleY=fitted.scaleY;
+        text.letterSpacing=fitted.letterSpacing;
+        text.lineHeight=fitted.lineHeight;
         text.autoLayoutNoWrap=Boolean(fitted.noWrap);
         text.gap=Math.round(clamp(text.fontSize*.025*(Number(text.autoGapScale)||1),0,5));
       });
@@ -5558,12 +5792,12 @@ function setTextFont(c,text,fontSize){
 function buildLayout(c){
     const AUTO_MIN_SCALE=.70;
     const fragments=[];
-    const obstacles=obstacleRects();
     let overflow=false;
     const regions=state.regions.filter((region)=>region.acceptText&&region.shape!=="line");
 
     for(const region of regions){
       const box=regionContentBox(region);
+      const obstacles=obstacleRects(region.id);
       const texts=state.texts.filter((text)=>text.regionId===region.id).sort((a,b)=>a.order-b.order);
       if(!texts.length)continue;
 
@@ -5816,6 +6050,21 @@ function buildLayout(c){
     return root;
   }
 
+  const pendingAutoTypographyRegions=new Set();
+  let pendingAutoTypographyFrame=0;
+
+  function scheduleAutoTypography(regionId){
+    if(regionId)pendingAutoTypographyRegions.add(regionId);
+    if(pendingAutoTypographyFrame)return;
+    pendingAutoTypographyFrame=requestAnimationFrame(()=>{
+      pendingAutoTypographyFrame=0;
+      const regionIds=[...pendingAutoTypographyRegions];
+      pendingAutoTypographyRegions.clear();
+      if(regionIds.length)autoStyleAssignedTexts({force:false,skipAdapt:true,regionIds});
+      queueRender();
+    });
+  }
+
   function renderTextList(){
     ensureStateCompatibility();
     const list=$("textList");list.replaceChildren();
@@ -5834,10 +6083,10 @@ function buildLayout(c){
       textarea.addEventListener("focus",()=>{selectCard();rememberSelection();});textarea.addEventListener("click",()=>{selectCard();rememberSelection();});textarea.addEventListener("select",rememberSelection);textarea.addEventListener("keyup",rememberSelection);textarea.addEventListener("pointerup",rememberSelection);
       textarea.addEventListener("input",()=>{
         text.text=textarea.value;
-        text.roleHint=null;
         text.sample=false;
         textarea.rows=Math.max(2,Math.min(7,textarea.value.split("\n").length+1));
-        queueRender();
+        if(!isTextManualProtected(text))scheduleAutoTypography(text.regionId);
+        else queueRender();
       });
       textarea.addEventListener("blur",()=>{
         markHistoryDirty(true);
@@ -5899,7 +6148,35 @@ function buildLayout(c){
       if(text.fontFamily==="pretendard")sizeGrid.append(numericStepperControl("글자 두께",text.fontWeight,100,900,10,(value)=>String(Math.round(value)),(value)=>manual(()=>{text.fontWeight=value;}),{defaultValue:()=>ROLE_STYLE_DEFAULTS[text.role]?.fontWeight??760}));
       layoutSection.append(sizeGrid);controls.append(layoutSection);
 
-      const spacingSection=textSettingsSection("간격 · 비율","줄바꿈은 입력한 위치를 우선하고 영역 안에서 자동 줄바꿈합니다.");
+      const tabShell=document.createElement("section");tabShell.className="text-settings-tabs";
+      const tabNav=document.createElement("div");tabNav.className="text-settings-tablist";tabNav.setAttribute("role","tablist");
+      const tabHelp=document.createElement("p");tabHelp.className="text-settings-tab-help";
+      const tabPanels=document.createElement("div");tabPanels.className="text-settings-tab-panels";
+      const tabDefs=[];
+      const addTab=(key,label,description,panel)=>{panel.classList.add("text-settings-tab-panel");panel.dataset.tab=key;tabDefs.push({key,label,description,panel});tabPanels.append(panel);};
+
+      const makeEditableRangeList=(ranges,{labelFor,deleteAt})=>{
+        const list=document.createElement("div");list.className="editable-range-list";
+        ranges.forEach((range,rangeIndex)=>{
+          const row=document.createElement("div");row.className="editable-range-row";
+          const selectButton=document.createElement("button");selectButton.type="button";selectButton.className="range-preview-button";
+          const refreshLabel=()=>{const preview=text.text.slice(range.start,range.end).replace(/\n/g,"↵")||"선택 범위";selectButton.textContent=`${labelFor(range)} · ${preview}`;};
+          refreshLabel();
+          selectButton.addEventListener("click",()=>{textarea.focus();textarea.setSelectionRange(range.start,range.end);savedSelection={start:range.start,end:range.end};});
+          const startInput=document.createElement("input");startInput.type="number";startInput.min="1";startInput.max=String(Math.max(1,text.text.length));startInput.value=String(range.start+1);startInput.setAttribute("aria-label","선택 시작 글자");
+          const endInput=document.createElement("input");endInput.type="number";endInput.min="1";endInput.max=String(Math.max(1,text.text.length));endInput.value=String(range.end);endInput.setAttribute("aria-label","선택 끝 글자");
+          const commitRange=()=>{const length=Math.max(1,text.text.length);const nextStart=clamp((Number(startInput.value)||1)-1,0,length-1);const nextEnd=clamp(Number(endInput.value)||nextStart+1,nextStart+1,length);markTextManual(text);range.start=nextStart;range.end=nextEnd;startInput.value=String(nextStart+1);endInput.value=String(nextEnd);refreshLabel();queueRender();markHistoryDirty(true);};
+          startInput.addEventListener("change",commitRange);endInput.addEventListener("change",commitRange);
+          const dash=document.createElement("span");dash.className="range-index-dash";dash.textContent="–";
+          const remove=document.createElement("button");remove.type="button";remove.className="range-remove-button";remove.textContent="×";remove.title="효과 삭제";remove.addEventListener("click",()=>{markTextManual(text);deleteAt(rangeIndex);renderTextList();queueRender();});
+          const indexBox=document.createElement("div");indexBox.className="range-index-editor";indexBox.append(startInput,dash,endInput,remove);
+          row.append(selectButton,indexBox);list.append(row);
+        });
+        if(!ranges.length){const empty=document.createElement("p");empty.className="range-empty-note";empty.textContent="아직 적용된 선택 범위가 없습니다.";list.append(empty);}
+        return list;
+      };
+
+      const spacingPanel=document.createElement("div");
       const spacingGrid=document.createElement("div");spacingGrid.className="field-grid two text-control-grid";
       spacingGrid.append(
         rangeControl("줄 간격",text.lineHeight,.72,1.8,.02,(value)=>`${value.toFixed(2)}배`,(value)=>manual(()=>{text.lineHeight=value;}),{defaultValue:()=>textNumericDefault(text,"lineHeight",ROLE_STYLE_DEFAULTS[text.role]?.lineHeight??1.08)}),
@@ -5907,57 +6184,77 @@ function buildLayout(c){
         rangeControl("글자 높이",text.scaleY*100,55,145,1,(value)=>`${Math.round(value)}%`,(value)=>manual(()=>{text.scaleY=value/100;}),{defaultValue:()=>100}),
         rangeControl("자간",text.letterSpacing,-16,40,1,(value)=>String(Math.round(value)),(value)=>manual(()=>{text.letterSpacing=value;}),{defaultValue:()=>textNumericDefault(text,"letterSpacing",ROLE_STYLE_DEFAULTS[text.role]?.letterSpacing??0)}),
         rangeControl("문장 아래 여백",text.gap,0,100,1,(value)=>`${Math.round(value)}px`,(value)=>manual(()=>{text.gap=value;}),{defaultValue:()=>textNumericDefault(text,"gap",ROLE_STYLE_DEFAULTS[text.role]?.gap??4)})
-      );spacingSection.append(spacingGrid);controls.append(spacingSection);
+      );spacingPanel.append(spacingGrid);addTab("spacing","간격","줄바꿈을 우선하고 폭·높이·자간을 세밀하게 조절합니다.",spacingPanel);
 
-      const symbolSection=textSettingsSection("기호 · 문자 장식","필요한 옵션만 켜서 사용합니다.");
+      const symbolPanel=document.createElement("div");
       const symbolGrid=document.createElement("div");symbolGrid.className="field-grid two text-control-grid";
-      const unicode=makeSelect(UNICODE_PRESETS,text.unicodeStyle);unicode.addEventListener("change",()=>manual(()=>{text.unicodeStyle=unicode.value;},{refresh:true}));symbolGrid.append(labeledControl("유니코드 연출",unicode));
+      const unicode=makeSelect(UNICODE_PRESETS,text.unicodeStyle);unicode.addEventListener("change",()=>manual(()=>{text.unicodeStyle=unicode.value;},{refresh:true}));symbolGrid.append(labeledControl("문장 전체 유니코드",unicode));
       const toggles=document.createElement("div");toggles.className="toggle-row compact-toggle-row";
-      [["bold","볼드"],["italic","이탤릭"],["underline","밑줄"],["strike","취소선"],["prefixEnabled","줄 앞 기호"]].forEach(([key,labelText])=>{const label=document.createElement("label");const input=document.createElement("input");input.type="checkbox";input.checked=Boolean(text[key]);input.addEventListener("change",()=>manual(()=>{text[key]=input.checked;},{refresh:key==="prefixEnabled"}));label.append(input,labelText);toggles.append(label);});symbolGrid.append(toggles);symbolSection.append(symbolGrid);
+      [["bold","볼드"],["italic","이탤릭"],["underline","밑줄"],["strike","취소선"],["prefixEnabled","줄 앞 기호"]].forEach(([key,labelText])=>{const label=document.createElement("label");const input=document.createElement("input");input.type="checkbox";input.checked=Boolean(text[key]);input.addEventListener("change",()=>manual(()=>{text[key]=input.checked;},{refresh:key==="prefixEnabled"}));label.append(input,labelText);toggles.append(label);});symbolGrid.append(toggles);symbolPanel.append(symbolGrid);
       if(text.unicodeStyle==="custom"){
-        const row=document.createElement("div");row.className="unicode-row conditional-row";const input=document.createElement("input");input.value=text.customUnicode||"★";input.addEventListener("input",()=>manual(()=>{text.customUnicode=input.value;}));const browse=document.createElement("button");browse.type="button";browse.className="button";browse.textContent="유니코드 찾기";browse.addEventListener("click",()=>openUnicodeBrowser((char)=>{markTextManual(text);text.customUnicode=char;renderTextList();queueRender();},"선택한 문장의 단어 사이에 넣습니다."));row.append(input,browse);symbolSection.append(row);
+        const customBlock=document.createElement("div");customBlock.className="custom-unicode-block conditional-row";
+        const placementWrap=document.createElement("div");placementWrap.className="segmented-field";placementWrap.innerHTML='<span class="field-label">기호 삽입 위치</span>';
+        placementWrap.append(makeSegmentedControl([["word","단어 사이"],["char","글자 사이"]],text.unicodePlacement||"word",(value)=>manual(()=>{text.unicodePlacement=value;},{refresh:true})));
+        const row=document.createElement("div");row.className="unicode-row";
+        const input=document.createElement("input");input.value=text.customUnicode||"★";input.setAttribute("aria-label","직접 입력할 유니코드 기호");input.addEventListener("input",()=>manual(()=>{text.customUnicode=input.value;}));
+        const browse=document.createElement("button");browse.type="button";browse.className="button";browse.textContent="유니코드 찾기";browse.addEventListener("click",()=>openUnicodeBrowser((char)=>{markTextManual(text);text.customUnicode=char;renderTextList();queueRender();},(text.unicodePlacement||"word")==="char"?"선택한 문장의 글자 사이에 넣습니다.":"선택한 문장의 단어 사이에 넣습니다."));
+        row.append(input,browse);customBlock.append(placementWrap,row);symbolPanel.append(customBlock);
       }
       if(text.prefixEnabled){
         const row=document.createElement("div");row.className="field-grid two conditional-row";
-        const symbolWrap=document.createElement("div");symbolWrap.innerHTML='<span class="field-label">줄 앞 기호</span>';const inner=document.createElement("div");inner.className="unicode-row";const input=document.createElement("input");input.value=text.prefixSymbol||"•";input.addEventListener("input",()=>manual(()=>{text.prefixSymbol=input.value;}));const browse=document.createElement("button");browse.type="button";browse.className="button";browse.textContent="찾기";browse.addEventListener("click",()=>openUnicodeBrowser((char)=>{markTextManual(text);text.prefixSymbol=char;renderTextList();queueRender();},"각 줄 앞에 넣을 기호입니다."));inner.append(input,browse);symbolWrap.append(inner);row.append(symbolWrap,rangeControl("기호 간격",text.prefixGap,0,60,1,(value)=>`${Math.round(value)}px`,(value)=>manual(()=>{text.prefixGap=value;}),{defaultValue:()=>textNumericDefault(text,"prefixGap",8)}));symbolSection.append(row);
+        const symbolWrap=document.createElement("div");symbolWrap.innerHTML='<span class="field-label">줄 앞 기호</span>';const inner=document.createElement("div");inner.className="unicode-row";const input=document.createElement("input");input.value=text.prefixSymbol||"•";input.addEventListener("input",()=>manual(()=>{text.prefixSymbol=input.value;}));const browse=document.createElement("button");browse.type="button";browse.className="button";browse.textContent="찾기";browse.addEventListener("click",()=>openUnicodeBrowser((char)=>{markTextManual(text);text.prefixSymbol=char;renderTextList();queueRender();},"각 줄 앞에 넣을 기호입니다."));inner.append(input,browse);symbolWrap.append(inner);row.append(symbolWrap,rangeControl("기호 간격",text.prefixGap,0,60,1,(value)=>`${Math.round(value)}px`,(value)=>manual(()=>{text.prefixGap=value;}),{defaultValue:()=>textNumericDefault(text,"prefixGap",8)}));symbolPanel.append(row);
       }
-      controls.append(symbolSection);
+      addTab("symbol","기호","문장 전체 유니코드, 줄 앞 기호와 기본 문자 장식을 설정합니다.",symbolPanel);
 
-      const effectSection=textSettingsSection("효과 중첩","그림자·빈 그림자·입체·외곽선을 함께 사용할 수 있습니다.");
-      if(activeEffects(text).length)effectSection.open=true;
-      const effectStack=makeEffectToggleGroup(text,()=>manual(()=>{}, {refresh:true}));effectSection.append(effectStack);
+      const effectPanel=document.createElement("div");
+      const effectStack=makeEffectToggleGroup(text,()=>manual(()=>{}, {refresh:true}));effectPanel.append(effectStack);
       if(activeEffects(text).length){
         const effectGrid=document.createElement("div");effectGrid.className="field-grid two conditional-row text-control-grid";
         effectGrid.append(numericFieldControl("효과 두께",text.outlineWidth,0,48,1,(value)=>`${Math.round(value)}px`,(value)=>manual(()=>{text.outlineWidth=value;}),{defaultValue:()=>textNumericDefault(text,"outlineWidth",ROLE_STYLE_DEFAULTS[text.role]?.outlineWidth??3)}));
-        const effectColorHost=document.createElement("div");effectColorHost.innerHTML='<span class="field-label">효과 색</span>';makeInlineColorControl(effectColorHost,()=>text.effectColor,(value)=>manual(()=>{text.effectColor=value;}));effectGrid.append(effectColorHost);effectSection.append(effectGrid);
-        const rule=document.createElement("p");rule.className="effect-rule-note compact";rule.innerHTML="그림자는 번짐 없는 단색 복사, 입체는 그림자 없는 단색 옆면입니다. 자동 글자색은 배경과 효과색을 함께 보고 결정합니다.";effectSection.append(rule);
+        const effectColorHost=document.createElement("div");effectColorHost.innerHTML='<span class="field-label">효과 색</span>';makeInlineColorControl(effectColorHost,()=>text.effectColor,(value)=>manual(()=>{text.effectColor=value;}));effectGrid.append(effectColorHost);effectPanel.append(effectGrid);
+        const rule=document.createElement("p");rule.className="effect-rule-note compact";rule.textContent="그림자는 번짐 없는 단색 복사, 입체는 그림자 없는 단색 옆면입니다.";effectPanel.append(rule);
       }
-      controls.append(effectSection);
+      addTab("effect","효과","그림자·빈 그림자·입체·외곽선을 중첩할 수 있습니다.",effectPanel);
 
-      const colorSection=textSettingsSection("글자 색","배경 따라를 쓰면 흰색·검은색 사용 설정과 효과색까지 함께 계산합니다.");
-      const colorGrid=document.createElement("div");colorGrid.className="field-grid three text-control-grid";
+      const colorPanel=document.createElement("div");
+      const colorGrid=document.createElement("div");colorGrid.className="field-grid two text-control-grid";
       const colorModeWrap=document.createElement("div");colorModeWrap.className="segmented-field";colorModeWrap.innerHTML='<span class="field-label">본문 색</span>';
       colorModeWrap.append(makeSegmentedControl([["auto","배경 따라"],["custom","직접 선택"]],text.colorMode,(value)=>manual(()=>{text.colorMode=value;},{refresh:true})));
       colorGrid.append(colorModeWrap);
       if(text.colorMode==="custom"){const host=document.createElement("div");host.innerHTML='<span class="field-label">직접 글자색</span>';makeInlineColorControl(host,()=>text.color,(value)=>manual(()=>{text.color=value;text.colorMode="custom";}));colorGrid.append(host);}
-      colorSection.append(colorGrid);controls.append(colorSection);
+      colorPanel.append(colorGrid);addTab("color","글자색","전체 문장의 색을 자동 대비 또는 직접 지정으로 설정합니다.",colorPanel);
 
-      const rangeColorSection=textSettingsSection("선택 글자 색","위 문장 입력창에서 일부 글자를 드래그해 선택합니다.");
-      if((text.rangeColors||[]).length)rangeColorSection.open=true;
-      const rangeColorBox=document.createElement("div");rangeColorBox.className="range-color-controls";let selectedRangeColor="#f4e900";
+      const rangeColorPanel=document.createElement("div");let selectedRangeColor="#f4e900";
+      const rangeColorBox=document.createElement("div");rangeColorBox.className="range-apply-row";
       const rangeColorHost=document.createElement("div");rangeColorHost.innerHTML='<span class="field-label">선택 부분 색</span>';makeInlineColorControl(rangeColorHost,()=>selectedRangeColor,(value)=>{selectedRangeColor=value;});
-      const applyColor=document.createElement("button");applyColor.type="button";applyColor.className="button button-accent";applyColor.textContent="선택 글자 색 적용";applyColor.addEventListener("pointerdown",(event)=>event.preventDefault());applyColor.addEventListener("click",()=>{const {start,end}=selectedRange();if(start===end)return toast("먼저 문장 입력창에서 일부 글자를 선택하세요.");markTextManual(text);text.rangeColors.push({start,end,color:selectedRangeColor});renderTextList();queueRender();});rangeColorBox.append(rangeColorHost,applyColor);rangeColorSection.append(rangeColorBox);
-      const colorChips=document.createElement("div");colorChips.className="chips";(text.rangeColors||[]).forEach((range,rangeIndex)=>{const chip=document.createElement("span");chip.className="chip";chip.style.borderColor=range.color;chip.innerHTML=`${range.start+1}–${range.end} <button type="button">×</button>`;chip.querySelector("button").addEventListener("click",()=>{markTextManual(text);text.rangeColors.splice(rangeIndex,1);renderTextList();queueRender();});colorChips.append(chip);});rangeColorSection.append(colorChips);controls.append(rangeColorSection);
+      const applyColor=document.createElement("button");applyColor.type="button";applyColor.className="button button-accent range-apply-button";applyColor.textContent="선택 범위에 색 적용";applyColor.addEventListener("pointerdown",(event)=>event.preventDefault());applyColor.addEventListener("click",()=>{const {start,end}=selectedRange();if(start===end)return toast("먼저 문장 입력창에서 일부 글자를 선택하세요.");markTextManual(text);text.rangeColors.push({start,end,color:selectedRangeColor});renderTextList();queueRender();});rangeColorBox.append(rangeColorHost,applyColor);rangeColorPanel.append(rangeColorBox);
+      rangeColorPanel.append(makeEditableRangeList(text.rangeColors||[],{labelFor:(range)=>`색 ${range.color}`,deleteAt:(index)=>text.rangeColors.splice(index,1)}));
+      addTab("rangeColor","선택 색","입력창에서 선택한 글자 범위에만 색을 적용합니다. 적용 범위는 숫자로 다시 수정할 수 있습니다.",rangeColorPanel);
 
-      const bgSection=textSettingsSection("선택 글자 배경","배경 장식은 모든 영역 위, 모든 글자 아래에 그려집니다. 여러 줄은 줄마다 나뉩니다.");
-      if((text.rangeBackgrounds||[]).length)bgSection.open=true;
+      const rangeUnicodePanel=document.createElement("div");
+      const unicodeDraft={style:"slashChar",customUnicode:"/",placement:"char"};
+      const rangeUnicodeGrid=document.createElement("div");rangeUnicodeGrid.className="field-grid two text-control-grid";
+      const rangeUnicodePresets=[["slash","/ · 단어 사이"],["slashChar","/ · 글자 사이"],["dot","· · 단어 사이"],["dotChar","· · 글자 사이"],["star","★ · 단어 사이"],["starChar","★ · 글자 사이"],["heart","♥ · 단어 사이"],["heartChar","♥ · 글자 사이"],["block","■ · 단어 사이"],["blockChar","■ · 글자 사이"],["bullet","• · 단어 사이"],["bulletChar","• · 글자 사이"],["custom","직접 기호"]];
+      const rangeUnicodeSelect=makeSelect(rangeUnicodePresets,unicodeDraft.style);rangeUnicodeGrid.append(labeledControl("선택 범위 유니코드",rangeUnicodeSelect));
+      const rangePlacement=document.createElement("div");rangePlacement.className="segmented-field";rangePlacement.innerHTML='<span class="field-label">삽입 위치</span>';
+      const placementControl=makeSegmentedControl([["word","단어 사이"],["char","글자 사이"]],unicodeDraft.placement,(value)=>{unicodeDraft.placement=value;});rangePlacement.append(placementControl);rangeUnicodeGrid.append(rangePlacement);rangeUnicodePanel.append(rangeUnicodeGrid);
+      const rangeUnicodeCustom=document.createElement("div");rangeUnicodeCustom.className="unicode-row conditional-row is-hidden";
+      const rangeUnicodeInput=document.createElement("input");rangeUnicodeInput.value=unicodeDraft.customUnicode;rangeUnicodeInput.setAttribute("aria-label","선택 범위에 넣을 직접 기호");rangeUnicodeInput.addEventListener("input",()=>{unicodeDraft.customUnicode=rangeUnicodeInput.value;});
+      const rangeUnicodeBrowse=document.createElement("button");rangeUnicodeBrowse.type="button";rangeUnicodeBrowse.className="button";rangeUnicodeBrowse.textContent="유니코드 찾기";rangeUnicodeBrowse.addEventListener("click",()=>openUnicodeBrowser((char)=>{unicodeDraft.customUnicode=char;rangeUnicodeInput.value=char;},"선택 글자 범위에 넣을 기호입니다."));rangeUnicodeCustom.append(rangeUnicodeInput,rangeUnicodeBrowse);rangeUnicodePanel.append(rangeUnicodeCustom);
+      const presetToDraft=()=>{const style=rangeUnicodeSelect.value;unicodeDraft.style=style;const wordMap={slash:"/",dot:"·",star:"★",heart:"♥",block:"■",bullet:"•"};const charMap={slashChar:"/",dotChar:"·",starChar:"★",heartChar:"♥",blockChar:"■",bulletChar:"•"};if(wordMap[style]){unicodeDraft.customUnicode=wordMap[style];unicodeDraft.placement="word";}else if(charMap[style]){unicodeDraft.customUnicode=charMap[style];unicodeDraft.placement="char";}rangeUnicodeCustom.classList.toggle("is-hidden",style!=="custom");placementControl.querySelectorAll("button[data-value]").forEach((button)=>button.classList.toggle("active",button.dataset.value===unicodeDraft.placement));};
+      rangeUnicodeSelect.addEventListener("change",presetToDraft);presetToDraft();
+      const applyUnicode=document.createElement("button");applyUnicode.type="button";applyUnicode.className="button button-accent range-apply-button";applyUnicode.textContent="선택 범위에 유니코드 적용";applyUnicode.addEventListener("pointerdown",(event)=>event.preventDefault());applyUnicode.addEventListener("click",()=>{const {start,end}=selectedRange();if(start===end)return toast("먼저 문장 입력창에서 일부 글자를 선택하세요.");const symbol=unicodeDraft.style==="custom"?(unicodeDraft.customUnicode||"★"):unicodeDraft.customUnicode;markTextManual(text);text.rangeUnicodes.push({start,end,style:unicodeDraft.style,customUnicode:symbol,placement:unicodeDraft.placement});renderTextList();queueRender();});rangeUnicodePanel.append(applyUnicode);
+      rangeUnicodePanel.append(makeEditableRangeList(text.rangeUnicodes||[],{labelFor:(range)=>`기호 ${range.customUnicode||"★"} · ${(range.placement||"word")==="char"?"글자 사이":"단어 사이"}`,deleteAt:(index)=>text.rangeUnicodes.splice(index,1)}));
+      addTab("rangeUnicode","선택 기호","선택한 글자 범위 안에서만 단어 사이 또는 글자 사이에 유니코드를 삽입합니다.",rangeUnicodePanel);
+
+      const bgPanel=document.createElement("div");
       const bgDraft={shape:"rect",fill:paletteColor("primary",state.palette),strokeEnabled:false,stroke:paletteColor("ink",state.palette),strokeWidth:3,paddingX:10,paddingY:5,radius:12,scaleX:1,scaleY:1,rotation:0};
       const bgTop=document.createElement("div");bgTop.className="field-grid three text-control-grid";
       const shape=makeSelect([["rect","사각형"],["circle","한 글자씩 원"],["ellipse","긴 타원"],["heart","하트"],["burst","뾰족 말풍선"]],bgDraft.shape);shape.addEventListener("change",()=>{bgDraft.shape=shape.value;bgDetails.classList.toggle("shape-circle",shape.value==="circle");});
       const fillHost=document.createElement("div");fillHost.innerHTML='<span class="field-label">채우기</span>';makeInlineColorControl(fillHost,()=>bgDraft.fill,(value)=>{bgDraft.fill=value;});
       const strokeToggle=makeSegmentedControl([["off","선 없음"],["on","선 사용"]],"off",(value)=>{bgDraft.strokeEnabled=value==="on";strokeOptions.classList.toggle("is-hidden",!bgDraft.strokeEnabled);});
       const strokeWrap=document.createElement("div");strokeWrap.className="segmented-field";strokeWrap.innerHTML='<span class="field-label">외곽선</span>';strokeWrap.append(strokeToggle);
-      bgTop.append(labeledControl("모양",shape),fillHost,strokeWrap);bgSection.append(bgTop);
+      bgTop.append(labeledControl("모양",shape),fillHost,strokeWrap);bgPanel.append(bgTop);
       const bgDetails=document.createElement("div");bgDetails.className="field-grid two conditional-row text-control-grid";
       bgDetails.append(
         numericFieldControl("좌우 여백",bgDraft.paddingX,0,80,1,(value)=>`${Math.round(value)}px`,(value)=>{bgDraft.paddingX=value;}),
@@ -5966,11 +6263,18 @@ function buildLayout(c){
         numericFieldControl("가로 크기",bgDraft.scaleX*100,40,240,1,(value)=>`${Math.round(value)}%`,(value)=>{bgDraft.scaleX=value/100;}),
         numericFieldControl("세로 크기",bgDraft.scaleY*100,40,240,1,(value)=>`${Math.round(value)}%`,(value)=>{bgDraft.scaleY=value/100;}),
         numericFieldControl("기울기",bgDraft.rotation,-45,45,1,(value)=>`${Math.round(value)}°`,(value)=>{bgDraft.rotation=value;})
-      );bgSection.append(bgDetails);
+      );bgPanel.append(bgDetails);
       const strokeOptions=document.createElement("div");strokeOptions.className="field-grid two conditional-row text-control-grid is-hidden";
-      const strokeHost=document.createElement("div");strokeHost.innerHTML='<span class="field-label">선 색</span>';makeInlineColorControl(strokeHost,()=>bgDraft.stroke,(value)=>{bgDraft.stroke=value;});strokeOptions.append(strokeHost,numericFieldControl("선 두께",bgDraft.strokeWidth,1,24,1,(value)=>`${Math.round(value)}px`,(value)=>{bgDraft.strokeWidth=value;}));bgSection.append(strokeOptions);
-      const applyBg=document.createElement("button");applyBg.type="button";applyBg.className="button button-accent button-wide";applyBg.textContent="선택 글자에 배경 적용";applyBg.addEventListener("pointerdown",(event)=>event.preventDefault());applyBg.addEventListener("click",()=>{const {start,end}=selectedRange();if(start===end)return toast("먼저 문장 입력창에서 일부 글자를 선택하세요.");markTextManual(text);text.rangeBackgrounds.push({start,end,...deepClone(bgDraft)});renderTextList();queueRender();});bgSection.append(applyBg);
-      const bgChips=document.createElement("div");bgChips.className="chips";(text.rangeBackgrounds||[]).forEach((range,rangeIndex)=>{const chip=document.createElement("span");chip.className="chip";chip.style.borderColor=range.fill;chip.innerHTML=`${range.shape} ${range.start+1}–${range.end} <button type="button">×</button>`;chip.querySelector("button").addEventListener("click",()=>{markTextManual(text);text.rangeBackgrounds.splice(rangeIndex,1);renderTextList();queueRender();});bgChips.append(chip);});bgSection.append(bgChips);controls.append(bgSection);
+      const strokeHost=document.createElement("div");strokeHost.innerHTML='<span class="field-label">선 색</span>';makeInlineColorControl(strokeHost,()=>bgDraft.stroke,(value)=>{bgDraft.stroke=value;});strokeOptions.append(strokeHost,numericFieldControl("선 두께",bgDraft.strokeWidth,1,24,1,(value)=>`${Math.round(value)}px`,(value)=>{bgDraft.strokeWidth=value;}));bgPanel.append(strokeOptions);
+      const applyBg=document.createElement("button");applyBg.type="button";applyBg.className="button button-accent range-apply-button";applyBg.textContent="선택 범위에 배경 적용";applyBg.addEventListener("pointerdown",(event)=>event.preventDefault());applyBg.addEventListener("click",()=>{const {start,end}=selectedRange();if(start===end)return toast("먼저 문장 입력창에서 일부 글자를 선택하세요.");markTextManual(text);text.rangeBackgrounds.push({start,end,...deepClone(bgDraft)});renderTextList();queueRender();});bgPanel.append(applyBg);
+      bgPanel.append(makeEditableRangeList(text.rangeBackgrounds||[],{labelFor:(range)=>`배경 ${range.shape}`,deleteAt:(index)=>text.rangeBackgrounds.splice(index,1)}));
+      addTab("rangeBackground","선택 배경","선택한 글자 아래에 사각형·원·타원·하트·말풍선 배경을 넣습니다.",bgPanel);
+
+      let activeTab=textEditorTabs.get(text.id)||"spacing";
+      if(!tabDefs.some((item)=>item.key===activeTab))activeTab="spacing";
+      const activateTab=(key)=>{activeTab=key;textEditorTabs.set(text.id,key);tabNav.querySelectorAll("button").forEach((button)=>button.classList.toggle("active",button.dataset.tab===key));tabPanels.querySelectorAll(".text-settings-tab-panel").forEach((panel)=>panel.hidden=panel.dataset.tab!==key);tabHelp.textContent=tabDefs.find((item)=>item.key===key)?.description||"";};
+      tabDefs.forEach(({key,label})=>{const button=document.createElement("button");button.type="button";button.className="text-settings-tab";button.dataset.tab=key;button.textContent=label;button.addEventListener("click",()=>activateTab(key));tabNav.append(button);});
+      tabShell.append(tabNav,tabHelp,tabPanels);controls.append(tabShell);activateTab(activeTab);
 
       card.append(controls);list.append(card);
     });
@@ -6651,16 +6955,39 @@ function swapRegionTextBundles(sourceRegionId,targetRegionId){
     return layer.__alphaInfo;
   }
 
-  function obstacleRects(){
+  function obstacleRects(regionId=null){
     return state.elements.filter((element)=>element.affectFlow).map((element)=>{
       const item=elementGeometry(element);if(!item)return null;
+      const scopedRegionId=element.clipRegionId||item.bandClipRegion?.id||null;
+
+      // An element clipped to a text region belongs only to that region's flow.
+      // It must never push or break text in neighboring regions.
+      if(scopedRegionId&&regionId&&scopedRegionId!==regionId)return null;
+
       const margin=Number(element.flowMargin)||0;
       let effectPad=0;
       if(activeEffects(element).length)effectPad=Math.max(0,(Number(element.effectSize)||0)*.65);
+
+      let x=item.x-margin-effectPad;
+      let y=item.y-margin-effectPad;
+      let right=item.x+item.w+margin+effectPad;
+      let bottom=item.y+item.h+margin+effectPad;
+
+      // Clipped content is visible only inside its clipping region, so its
+      // avoidance bounds are also limited to that region.
+      if(scopedRegionId){
+        const clipRegion=state.regions.find((candidate)=>candidate.id===scopedRegionId);
+        if(clipRegion){
+          x=Math.max(x,clipRegion.x);
+          y=Math.max(y,clipRegion.y);
+          right=Math.min(right,clipRegion.x+clipRegion.w);
+          bottom=Math.min(bottom,clipRegion.y+clipRegion.h);
+        }
+      }
+
       return {
-        id:element.id,element,item,margin,
-        x:item.x-margin-effectPad,y:item.y-margin-effectPad,
-        w:item.w+(margin+effectPad)*2,h:item.h+(margin+effectPad)*2
+        id:element.id,element,item,margin,scopedRegionId,
+        x,y,w:right-x,h:bottom-y
       };
     }).filter((item)=>item&&item.w>0&&item.h>0);
   }
