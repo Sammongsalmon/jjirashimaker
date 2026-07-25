@@ -1121,6 +1121,7 @@
       cmykReadout.textContent = `${Math.round(cmyk.c*100)}%, ${Math.round(cmyk.m*100)}%, ${Math.round(cmyk.y*100)}%, ${Math.round(cmyk.k*100)}%`;
       hsvReadout.textContent = `${Math.round(hsv.h)}°, ${Math.round(hsv.s*100)}%, ${Math.round(hsv.v*100)}%`;
       hslReadout.textContent = `${Math.round(hsl.h)}°, ${Math.round(hsl.s*100)}%, ${Math.round(hsl.l*100)}%`;
+      renderQuickSwatches();
       trigger.setAttribute("aria-expanded", String(root.classList.contains("open")));
     }
 
@@ -1148,15 +1149,41 @@
       });
     }
 
-    QUICK_COLORS.forEach((color) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "quick-swatch";
-      btn.style.background = color;
-      btn.title = color;
-      btn.addEventListener("click", () => commit(color));
-      swatches.append(btn);
-    });
+    function quickSwatchEntries() {
+      const palette = state?.palette || {};
+      const roleEntries = [
+        { color: isHex(palette.primary) ? palette.primary.toUpperCase() : "#FFD400", label: "주색", badge: "주" },
+        { color: isHex(palette.secondary) ? palette.secondary.toUpperCase() : "#111111", label: "보조색 1", badge: "1" },
+        { color: isHex(palette.tertiary) ? palette.tertiary.toUpperCase() : "#E62D20", label: "보조색 2", badge: "2" }
+      ];
+      const used = new Set(roleEntries.map((entry) => entry.color.toLowerCase()));
+      const extras = QUICK_COLORS
+        .map((color) => String(color).toUpperCase())
+        .filter((color) => isHex(color) && !used.has(color.toLowerCase()))
+        .map((color) => ({ color, label: color, badge: "" }));
+      return [...roleEntries, ...extras];
+    }
+
+    function renderQuickSwatches() {
+      swatches.replaceChildren();
+      quickSwatchEntries().forEach(({ color, label: swatchLabel, badge }) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `quick-swatch${badge ? " palette-role-swatch" : ""}`;
+        btn.style.setProperty("--quick-swatch-color", color);
+        btn.title = badge ? `${swatchLabel} ${color}` : color;
+        btn.setAttribute("aria-label", badge ? `${swatchLabel} ${color} 적용` : `${color} 적용`);
+        if (badge) {
+          const marker = document.createElement("span");
+          marker.className = "quick-swatch-role-badge";
+          marker.textContent = badge;
+          marker.setAttribute("aria-hidden", "true");
+          btn.append(marker);
+        }
+        btn.addEventListener("click", () => commit(color));
+        swatches.append(btn);
+      });
+    }
 
     trigger.addEventListener("click", () => {
       const opening = !root.classList.contains("open");
@@ -6314,26 +6341,15 @@ function buildLayout(c){
   }
 
   function renderTextList(options={}){
-    const bringSelectedRegionIntoView=Boolean(options&&options.bringSelectedRegionIntoView);
-    const bringSelectedTextIntoView=Boolean(options&&options.bringSelectedTextIntoView);
     ensureStateCompatibility();
     const list=$("textList");list.replaceChildren();
     const accepting=state.regions.filter((region)=>region.acceptText&&region.shape!=="line");
-    const displayTexts=[...state.texts].sort((a,b)=>{
-      const aSelectedText=state.selectedTextId===a.id?1:0;
-      const bSelectedText=state.selectedTextId===b.id?1:0;
-      if(aSelectedText!==bSelectedText)return bSelectedText-aSelectedText;
-      const aSelectedRegion=state.selectedRegionId&&a.regionId===state.selectedRegionId?1:0;
-      const bSelectedRegion=state.selectedRegionId&&b.regionId===state.selectedRegionId?1:0;
-      if(aSelectedRegion!==bSelectedRegion)return bSelectedRegion-aSelectedRegion;
-      return state.texts.indexOf(a)-state.texts.indexOf(b);
-    });
+    const displayTexts=[...state.texts];
     displayTexts.forEach((text,index)=>{
       normalizeEffects(text);
       const selected=state.selectedTextId===text.id;
       const card=document.createElement("article");
-      const belongsToSelectedRegion=Boolean(state.selectedRegionId&&text.regionId===state.selectedRegionId);
-      card.className=`text-card${selected?" active selected-text-priority":""}${belongsToSelectedRegion?" selected-region-priority":""}`;
+      card.className=`text-card${selected?" active":""}`;
       card.dataset.textId=text.id;card.dataset.regionId=text.regionId||"";card.dataset.auto=String(!isTextManualProtected(text));
       const head=document.createElement("div");head.className="text-card-head";
       const toolbar=document.createElement("div");toolbar.className="text-card-toolbar";
@@ -6343,24 +6359,11 @@ function buildLayout(c){
       const rememberSelection=()=>{savedSelection={start:textarea.selectionStart??0,end:textarea.selectionEnd??0};activeTextarea=textarea;};
       const selectedRange=()=>{const current={start:textarea.selectionStart??0,end:textarea.selectionEnd??0};return current.start!==current.end?current:savedSelection;};
       const selectCard=()=>{
-        const changed=state.selectedTextId!==text.id;
         state.selectedTextId=text.id;
         activeTextarea=textarea;
         list.querySelectorAll(".text-card").forEach((node)=>{
-          const isSelected=node.dataset.textId===text.id;
-          node.classList.toggle("active",isSelected);
-          node.classList.toggle("selected-text-priority",isSelected);
+          node.classList.toggle("active",node.dataset.textId===text.id);
         });
-        if(changed&&list.firstElementChild!==card){
-          list.prepend(card);
-          Array.from(list.querySelectorAll(".text-card")).forEach((node,position)=>{
-            const number=node.querySelector(".drag-grip b");
-            if(number)number.textContent=String(position+1).padStart(2,"0");
-          });
-          list.scrollTop=0;
-          card.classList.add("selected-text-arrived");
-          window.setTimeout(()=>card.classList.remove("selected-text-arrived"),900);
-        }
         queueRender();
       };
       textarea.addEventListener("focus",()=>{selectCard();rememberSelection();});textarea.addEventListener("click",()=>{selectCard();rememberSelection();});textarea.addEventListener("select",rememberSelection);textarea.addEventListener("keyup",rememberSelection);textarea.addEventListener("pointerup",rememberSelection);
@@ -6574,28 +6577,7 @@ function buildLayout(c){
 
       card.append(controls);list.append(card);
     });
-    if(bringSelectedTextIntoView&&state.selectedTextId){
-      const selectedCard=list.querySelector(`.text-card[data-text-id="${state.selectedTextId}"]`);
-      if(selectedCard){
-        // The selected card is already sorted to the top. Only reset this list's own
-        // scroll position; scrollIntoView would also move the entire workspace and
-        // hide part of the preview panel on narrow screens.
-        list.scrollTop=0;
-        requestAnimationFrame(()=>{
-          selectedCard.classList.add("selected-text-arrived");
-          window.setTimeout(()=>selectedCard.classList.remove("selected-text-arrived"),900);
-        });
-      }
-    }else if(bringSelectedRegionIntoView&&state.selectedRegionId){
-      const firstMatchingCard=Array.from(list.querySelectorAll(".text-card")).find((card)=>card.dataset.regionId===state.selectedRegionId);
-      if(firstMatchingCard){
-        list.scrollTop=0;
-        requestAnimationFrame(()=>{
-          firstMatchingCard.classList.add("selected-region-arrived");
-          window.setTimeout(()=>firstMatchingCard.classList.remove("selected-region-arrived"),900);
-        });
-      }
-    }
+    // Selection only changes the active highlight. The sentence list keeps its existing order and scroll position.
   }
 
   function syncEffectToggle(id,item){
