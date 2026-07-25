@@ -6577,9 +6577,11 @@ function buildLayout(c){
     if(bringSelectedTextIntoView&&state.selectedTextId){
       const selectedCard=list.querySelector(`.text-card[data-text-id="${state.selectedTextId}"]`);
       if(selectedCard){
+        // The selected card is already sorted to the top. Only reset this list's own
+        // scroll position; scrollIntoView would also move the entire workspace and
+        // hide part of the preview panel on narrow screens.
         list.scrollTop=0;
         requestAnimationFrame(()=>{
-          selectedCard.scrollIntoView({behavior:"smooth",block:"nearest",inline:"nearest"});
           selectedCard.classList.add("selected-text-arrived");
           window.setTimeout(()=>selectedCard.classList.remove("selected-text-arrived"),900);
         });
@@ -6589,7 +6591,6 @@ function buildLayout(c){
       if(firstMatchingCard){
         list.scrollTop=0;
         requestAnimationFrame(()=>{
-          firstMatchingCard.scrollIntoView({behavior:"smooth",block:"nearest",inline:"nearest"});
           firstMatchingCard.classList.add("selected-region-arrived");
           window.setTimeout(()=>firstMatchingCard.classList.remove("selected-region-arrived"),900);
         });
