@@ -115,16 +115,27 @@
     return ranked.find((item) => item.score >= 3.2)?.color || ranked[0]?.color || baseColor;
   }
 
+  function paletteRoleOrder(palette = null) {
+    const p = palette || state?.palette || {};
+    const enabled = ["primary"];
+    if (p.secondaryEnabled !== false && p.secondary) enabled.push("secondary");
+    if (p.tertiaryEnabled !== false && p.tertiary) enabled.push("tertiary");
+    const saved = Array.isArray(p.roleOrder) ? p.roleOrder : [];
+    const ordered = saved.filter((role, index) => enabled.includes(role) && saved.indexOf(role) === index);
+    enabled.forEach((role) => { if (!ordered.includes(role)) ordered.push(role); });
+    return ordered;
+  }
+
   function availablePalette(palette = null) {
     const p = palette || state?.palette || {};
-    const colors = [p.primary || "#ffd400"];
-    if (p.secondaryEnabled !== false && p.secondary) colors.push(p.secondary);
-    if (p.tertiaryEnabled !== false && p.tertiary) colors.push(p.tertiary);
+    const order = paletteRoleOrder(p);
+    const colors = order.map((role) => p[role]).filter(Boolean);
+    if (!colors.length) colors.push(p.primary || "#ffd400");
     const neutrals = [];
     if (p.useWhite !== false) neutrals.push("#ffffff");
     if (p.useBlack !== false) neutrals.push("#111111");
     if (!neutrals.length) neutrals.push(luminance(colors[0]) > .45 ? "#111111" : "#ffffff");
-    return { colors, neutrals };
+    return { colors, neutrals, order };
   }
 
   function paletteColor(role, palette) {
@@ -153,6 +164,78 @@
     if (role === "tertiaryDeep") return mix(tertiary, black, .16);
     if (role === "cream") return mix(primary, "#fff4d2", .82);
     return role;
+  }
+
+  const PREVIEW_BACKGROUND_MODES = {
+    white: { label: "흰색" },
+    black: { label: "검은색" },
+    "black-transparent": { label: "검은 투명배경" },
+    "white-transparent": { label: "흰 투명배경" },
+    transparent: { label: "투명배경" }
+  };
+
+  function normalizedPreviewBackgroundMode(value) {
+    return Object.prototype.hasOwnProperty.call(PREVIEW_BACKGROUND_MODES, value) ? value : "black";
+  }
+
+  function applyPreviewBackgroundMode() {
+    const mode = normalizedPreviewBackgroundMode(state.previewBackgroundMode);
+    state.previewBackgroundMode = mode;
+    const stage = $("canvasStage");
+    if (stage) {
+      stage.dataset.previewBackgroundMode = mode;
+      stage.style.removeProperty("background");
+      stage.style.removeProperty("background-color");
+      stage.style.removeProperty("background-image");
+    }
+    const button = $("previewBackgroundButton");
+    const icon = $("previewBackgroundIcon");
+    const label = PREVIEW_BACKGROUND_MODES[mode].label;
+    if (button) {
+      button.dataset.mode = mode;
+      button.title = `미리보기 바탕: ${label}`;
+      button.setAttribute("aria-label", `미리보기 바탕: ${label}`);
+    }
+    if (icon) icon.dataset.mode = mode;
+    document.querySelectorAll("[data-preview-background-mode]").forEach((option) => {
+      const active = option.dataset.previewBackgroundMode === mode;
+      option.classList.toggle("active", active);
+      option.setAttribute("aria-checked", active ? "true" : "false");
+    });
+  }
+
+  function setPreviewBackgroundMenuOpen(open) {
+    const menu = $("previewBackgroundMenu");
+    const button = $("previewBackgroundButton");
+    const options = $("previewBackgroundOptions");
+    if (!menu || !button || !options) return;
+    menu.classList.toggle("open", Boolean(open));
+    button.setAttribute("aria-expanded", open ? "true" : "false");
+    options.hidden = !open;
+  }
+
+  function shufflePaletteRoles() {
+    const roles = ["primary"];
+    if (state.palette.secondaryEnabled !== false && state.palette.secondary) roles.push("secondary");
+    if (state.palette.tertiaryEnabled !== false && state.palette.tertiary) roles.push("tertiary");
+    if (roles.length < 2) {
+      toast("섞을 보조색을 먼저 켜 주세요.");
+      return;
+    }
+    const previous = paletteRoleOrder(state.palette).join("|");
+    let shuffled = roles.slice();
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      for (let i = shuffled.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      if (shuffled.join("|") !== previous) break;
+    }
+    state.palette.roleOrder = shuffled;
+    applyPaletteRefresh();
+    schedulePersistState();
+    markHistoryDirty(true);
+    toast("템플릿의 주색·보조색 위치를 섞었습니다.");
   }
 
   function R(name, x, y, w, h, options = {}) {
@@ -578,7 +661,8 @@
     templateId: "dense-left-rail",
     palette: {
       primary: "#ffd400", secondary: "#111111", tertiary: "#e62d20",
-      secondaryEnabled: true, tertiaryEnabled: true, useWhite: true, useBlack: true, paperMix: 78
+      secondaryEnabled: true, tertiaryEnabled: true, useWhite: true, useBlack: true, paperMix: 78,
+      roleOrder: ["primary", "secondary", "tertiary"]
     },
     background: { mode:"solid", c1:"#ffd400", c2:"#ffd400", pattern:"none", patternColor:"#e62d20", angle:0, scale:48 },
     regions: [],
@@ -593,6 +677,7 @@
     activeTool: "templates",
     previewZoom: 1,
     previewFit: true,
+    previewBackgroundMode: "black",
     previewBackground: "#1b1f25"
   };
 
@@ -1746,10 +1831,7 @@
     if (sceneCanvas.height !== fullH) sceneCanvas.height = fullH;
     $("canvasSizeLabel").textContent = bleed ? `${trimW} × ${trimH} + 재단 ${state.bleedMm}mm` : `${trimW} × ${trimH}`;
     $("currentTemplateName").textContent = state.templateId === CUSTOM_TEMPLATE_ID ? "직접 만들기" : (templateSpecs.find((x) => x.id === state.templateId)?.name || "사용자 템플릿");
-    const stage=$("canvasStage");
-    if(stage)stage.style.backgroundColor=state.previewBackground||"#1b1f25";
-    const previewColor=$("previewBackgroundColor");
-    if(previewColor&&previewColor.value!==(state.previewBackground||"#1b1f25"))previewColor.value=state.previewBackground||"#1b1f25";
+    applyPreviewBackgroundMode();
   }
 
   function refreshAllUI() {
@@ -4233,9 +4315,9 @@ function moveTextInList(id, direction) {
   }
 
   function setupColorFields(){
-    createColorField("palettePrimaryField",()=>state.palette.primary,(v)=>{state.palette.primary=v;if(state.background.mode==="solid"){state.background.c1=v;state.background.c2=v;}},{allowNone:false,onCommit:()=>{autoStyleAssignedTexts({force:false});renderTextList();renderRegionList();renderTemplateGrid();}});
-    createColorField("paletteSecondaryField",()=>state.palette.secondary,(v)=>{state.palette.secondary=v;},{allowNone:false,onCommit:()=>{autoStyleAssignedTexts({force:false});renderTextList();renderRegionList();renderTemplateGrid();}});
-    createColorField("paletteTertiaryField",()=>state.palette.tertiary,(v)=>{state.palette.tertiary=v;state.background.patternColor=v;},{allowNone:false,onCommit:()=>{autoStyleAssignedTexts({force:false});renderTextList();renderRegionList();renderTemplateGrid();}});
+    createColorField("palettePrimaryField",()=>state.palette.primary,(v)=>{state.palette.primary=v;if(state.background.mode==="solid"){state.background.c1=paletteColor("primary",state.palette);state.background.c2=state.background.c1;}},{allowNone:false,onCommit:()=>{autoStyleAssignedTexts({force:false});renderTextList();renderRegionList();renderTemplateGrid();}});
+    createColorField("paletteSecondaryField",()=>state.palette.secondary,(v)=>{state.palette.secondary=v;if(state.background.mode==="solid"){state.background.c1=paletteColor("primary",state.palette);state.background.c2=state.background.c1;}},{allowNone:false,onCommit:()=>{autoStyleAssignedTexts({force:false});renderTextList();renderRegionList();renderTemplateGrid();}});
+    createColorField("paletteTertiaryField",()=>state.palette.tertiary,(v)=>{state.palette.tertiary=v;state.background.patternColor=v;if(state.background.mode==="solid"){state.background.c1=paletteColor("primary",state.palette);state.background.c2=state.background.c1;}},{allowNone:false,onCommit:()=>{autoStyleAssignedTexts({force:false});renderTextList();renderRegionList();renderTemplateGrid();}});
     createColorField("regionFillField",()=>{const r=selectedRegion();return !r||r.fillNone?"none":resolveColor(r,"fill");},(v)=>{const r=selectedRegion();if(!r)return;if(v==="none")r.fillNone=true;else{r.fillNone=false;r.fill=v;r.fillRole=null;}renderRegionList();});
     createColorField("regionStrokeField",()=>{const r=selectedRegion();return !r||r.strokeNone?"none":resolveColor(r,"stroke");},(v)=>{const r=selectedRegion();if(!r)return;if(v==="none")r.strokeNone=true;else{r.strokeNone=false;r.stroke=v;r.strokeRole=null;}});
     createColorField("regionEffectColorField",()=>{const r=selectedRegion();return r?resolveColor(r,"effectColor"):"#111111";},(v)=>{const r=selectedRegion();if(r){r.effectColor=v;r.effectColorRole=null;}},{allowNone:false});
@@ -4290,7 +4372,7 @@ function moveTextInList(id, direction) {
   }
 
 function ensureStateCompatibility() {
-    state.schemaVersion = 21;
+    state.schemaVersion = 22;
     state.theme ||= "light";
     state.artboard ||= { preset: "flyer", widthMm: 180, heightMm: 100 };
     state.artboard.widthMm = clamp(Number(state.artboard.widthMm) || 180, 50, 420);
@@ -4302,7 +4384,11 @@ function ensureStateCompatibility() {
     state.activeTool ||= "templates";
     state.previewZoom = clamp(Number(state.previewZoom) || 1, .2, 3);
     state.previewFit = state.previewFit !== false;
-    if (!/^#[0-9a-f]{6}$/i.test(String(state.previewBackground || ""))) state.previewBackground = "#1b1f25";
+    if (!state.previewBackgroundMode) {
+      const legacy = String(state.previewBackground || "").toLowerCase();
+      state.previewBackgroundMode = legacy === "#ffffff" ? "white" : (legacy === "#111111" || legacy === "#000000" || legacy === "#1b1f25" ? "black" : "transparent");
+    }
+    state.previewBackgroundMode = normalizedPreviewBackgroundMode(state.previewBackgroundMode);
     state.palette ||= {};
     state.palette.primary ||= "#ffd400";
     state.palette.secondary ||= "#111111";
@@ -4312,6 +4398,7 @@ function ensureStateCompatibility() {
     if (typeof state.palette.useWhite !== "boolean") state.palette.useWhite = true;
     if (typeof state.palette.useBlack !== "boolean") state.palette.useBlack = true;
     state.palette.paperMix = clamp(Number(state.palette.paperMix) || 78, 0, 96);
+    state.palette.roleOrder = paletteRoleOrder(state.palette);
     state.regions ||= [];
     state.elements ||= [];
     state.texts ||= [];
@@ -6601,8 +6688,7 @@ function buildLayout(c){
     if(sceneCanvas.height!==fullH)sceneCanvas.height=fullH;
     if($("canvasSizeLabel"))$("canvasSizeLabel").textContent=`${widthMm} × ${heightMm}mm · ${trimW} × ${trimH}px${bleed?` · 재단 ${state.bleedMm}mm`:""}`;
     if($("currentTemplateName"))$("currentTemplateName").textContent=state.templateId===CUSTOM_TEMPLATE_ID?"직접 만들기":(templateSpecs.find((template)=>template.id===state.templateId)?.name||"사용자 템플릿");
-    if($("canvasStage"))$("canvasStage").style.backgroundColor=state.previewBackground||"#1b1f25";
-    if($("previewBackgroundColor"))$("previewBackgroundColor").value=state.previewBackground||"#1b1f25";
+    applyPreviewBackgroundMode();
     requestAnimationFrame(updatePreviewZoom);
   }
 
@@ -6708,8 +6794,7 @@ function buildLayout(c){
       themeButton.setAttribute("aria-label",nextLabel);
     }
     if($("showRegions"))$("showRegions").checked=Boolean(state.showRegions);
-    if($("previewBackgroundColor"))$("previewBackgroundColor").value=state.previewBackground||"#1b1f25";
-    if($("canvasStage"))$("canvasStage").style.backgroundColor=state.previewBackground||"#1b1f25";
+    applyPreviewBackgroundMode();
     syncStaticNumericFields(["pageMargin","regionGapX","regionGapY","palettePaperMix"]);
   }
 
@@ -6766,7 +6851,25 @@ function buildLayout(c){
 
   function bindV16Controls(){
     $("themeToggleBtn")?.addEventListener("click",()=>setTheme(state.theme==="dark"?"light":"dark"));
-    $("previewBackgroundColor")?.addEventListener("input",()=>{state.previewBackground=$("previewBackgroundColor").value;updateCanvasMeta();schedulePersistState();});
+    $("previewBackgroundButton")?.addEventListener("click",(event)=>{
+      event.stopPropagation();
+      setPreviewBackgroundMenuOpen(!$("previewBackgroundMenu")?.classList.contains("open"));
+    });
+    $("previewBackgroundOptions")?.addEventListener("click",(event)=>{
+      const option=event.target.closest("[data-preview-background-mode]");
+      if(!option)return;
+      state.previewBackgroundMode=normalizedPreviewBackgroundMode(option.dataset.previewBackgroundMode);
+      applyPreviewBackgroundMode();
+      setPreviewBackgroundMenuOpen(false);
+      schedulePersistState();
+      markHistoryDirty(true);
+    });
+    document.addEventListener("click",(event)=>{
+      const menu=$("previewBackgroundMenu");
+      if(menu&&!menu.contains(event.target))setPreviewBackgroundMenuOpen(false);
+    });
+    document.addEventListener("keydown",(event)=>{if(event.key==="Escape")setPreviewBackgroundMenuOpen(false);});
+    $("paletteShuffleBtn")?.addEventListener("click",shufflePaletteRoles);
     $("zoomOutBtn")?.addEventListener("click",()=>{state.previewFit=false;state.previewZoom=clamp((Number(state.previewZoom)||1)-.1,.2,3);updatePreviewZoom();});
     $("zoomInBtn")?.addEventListener("click",()=>{state.previewFit=false;state.previewZoom=clamp((Number(state.previewZoom)||1)+.1,.2,3);updatePreviewZoom();});
     $("zoomFitBtn")?.addEventListener("click",()=>{state.previewFit=true;updatePreviewZoom();});

@@ -52,10 +52,20 @@
           <small id="canvasSizeLabel">1600 × 900</small>
         </div>
         <div class="workspace-actions">
-          <label class="preview-background-control" title="찌라시 바깥 미리보기 화면의 색">
-            <span>미리보기 바탕</span>
-            <input id="previewBackgroundColor" type="color" value="#1b1f25" aria-label="미리보기 화면 배경색" />
-          </label>
+          <div id="previewBackgroundMenu" class="preview-background-menu">
+            <span class="preview-background-label">미리보기 바탕</span>
+            <button id="previewBackgroundButton" class="preview-background-button" type="button" aria-haspopup="menu" aria-expanded="false" title="미리보기 바탕 표시 모드">
+              <span id="previewBackgroundIcon" class="preview-mode-icon" data-mode="black" aria-hidden="true"></span>
+              <span class="sr-only">미리보기 바탕 표시 모드 선택</span>
+            </button>
+            <div id="previewBackgroundOptions" class="preview-background-options" role="menu" hidden>
+              <button type="button" role="menuitemradio" data-preview-background-mode="white"><span class="preview-mode-icon" data-mode="white" aria-hidden="true"></span><span>흰색</span></button>
+              <button type="button" role="menuitemradio" data-preview-background-mode="black"><span class="preview-mode-icon" data-mode="black" aria-hidden="true"></span><span>검은색</span></button>
+              <button type="button" role="menuitemradio" data-preview-background-mode="black-transparent"><span class="preview-mode-icon" data-mode="black-transparent" aria-hidden="true"></span><span>검은 투명배경</span></button>
+              <button type="button" role="menuitemradio" data-preview-background-mode="white-transparent"><span class="preview-mode-icon" data-mode="white-transparent" aria-hidden="true"></span><span>흰 투명배경</span></button>
+              <button type="button" role="menuitemradio" data-preview-background-mode="transparent"><span class="preview-mode-icon" data-mode="transparent" aria-hidden="true"></span><span>투명배경</span></button>
+            </div>
+          </div>
           <div class="preview-zoom" aria-label="미리보기 확대/축소">
             <button id="zoomOutBtn" class="icon-text-button" type="button" title="축소">−</button>
             <button id="zoomFitBtn" class="zoom-readout" type="button" title="화면에 맞춤"><span id="zoomValue">맞춤</span></button>
@@ -112,6 +122,7 @@
               <span>보조 2</span>
               <div id="paletteTertiaryEnabled" class="segmented-control compact" role="group"><button type="button" data-value="on">사용</button><button type="button" data-value="off">안 함</button></div>
             </div>
+            <button id="paletteShuffleBtn" class="palette-shuffle-button" type="button" title="주색·보조색이 들어가는 위치를 무작위로 섞기"><span aria-hidden="true">⇄</span><span>색 배치 섞기</span></button>
           </div>
           <p class="compact-palette-note">보조색을 끄면 주색과 선택한 흰색·검은색만으로 템플릿을 구성합니다.</p>
         </section>
