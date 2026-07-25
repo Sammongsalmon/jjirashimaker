@@ -40,7 +40,7 @@
           <button id="addTextBtn" class="button button-accent">+ 문장</button>
         </div>
       </div>
-      <p class="panel-note">처음 템플릿을 적용할 때만 자동 배치합니다. 문구를 수정해도 위치와 영역은 움직이지 않으며, 다시 계산하려면 ‘자동 배치 다시 실행’을 누르세요. 직접 바꾼 문장은 수동 조정 초기화 전까지 자동 배치에서 제외됩니다.</p>
+      <p class="panel-note">문구를 수정하면 같은 영역 안에서 글자 크기·폭·자간·행간만 자동으로 다시 맞춥니다. 영역 이동과 역할 재배치는 ‘자동 배치 다시 실행’을 눌렀을 때만 일어납니다. 작업 내용은 새로고침해도 자동 복원됩니다.</p>
       <div id="textList" class="text-list"></div>
     </section>
 
@@ -52,6 +52,10 @@
           <small id="canvasSizeLabel">1600 × 900</small>
         </div>
         <div class="workspace-actions">
+          <label class="preview-background-control" title="찌라시 바깥 미리보기 화면의 색">
+            <span>미리보기 바탕</span>
+            <input id="previewBackgroundColor" type="color" value="#1b1f25" aria-label="미리보기 화면 배경색" />
+          </label>
           <div class="preview-zoom" aria-label="미리보기 확대/축소">
             <button id="zoomOutBtn" class="icon-text-button" type="button" title="축소">−</button>
             <button id="zoomFitBtn" class="zoom-readout" type="button" title="화면에 맞춤"><span id="zoomValue">맞춤</span></button>

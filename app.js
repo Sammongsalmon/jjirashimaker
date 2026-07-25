@@ -592,7 +592,8 @@
     showRegions: false,
     activeTool: "templates",
     previewZoom: 1,
-    previewFit: true
+    previewFit: true,
+    previewBackground: "#1b1f25"
   };
 
   let state = deepClone(initialState);
@@ -639,6 +640,80 @@
   let historyReady = false;
   let historyRestoring = false;
   let historyInteractionDepth = 0;
+
+  const PERSIST_DB_NAME = "jjirasi-maker-document";
+  const PERSIST_STORE_NAME = "documents";
+  const PERSIST_KEY = "current";
+  let persistTimer = null;
+  let persistDisabled = false;
+
+  function persistedStatePayload() {
+    const documentState = deepClone(state);
+    documentState.elements?.forEach((element) => {
+      delete element.alphaMask;
+    });
+    return documentState;
+  }
+
+  function openPersistDb() {
+    return new Promise((resolve, reject) => {
+      if (!window.indexedDB) return reject(new Error("IndexedDB unavailable"));
+      const request = indexedDB.open(PERSIST_DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(PERSIST_STORE_NAME)) db.createObjectStore(PERSIST_STORE_NAME);
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error("IndexedDB open failed"));
+    });
+  }
+
+  async function persistStateNow() {
+    if (persistDisabled || historyRestoring) return;
+    const payload = persistedStatePayload();
+    try {
+      const db = await openPersistDb();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(PERSIST_STORE_NAME, "readwrite");
+        tx.objectStore(PERSIST_STORE_NAME).put(payload, PERSIST_KEY);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error || new Error("IndexedDB save failed"));
+      });
+      db.close();
+    } catch (error) {
+      try {
+        localStorage.setItem("jjirasi-maker-state", JSON.stringify(payload));
+      } catch {
+        persistDisabled = true;
+      }
+    }
+  }
+
+  function schedulePersistState() {
+    if (persistDisabled || historyRestoring) return;
+    clearTimeout(persistTimer);
+    persistTimer = setTimeout(persistStateNow, 420);
+  }
+
+  async function restorePersistedState() {
+    let saved = null;
+    try {
+      const db = await openPersistDb();
+      saved = await new Promise((resolve, reject) => {
+        const tx = db.transaction(PERSIST_STORE_NAME, "readonly");
+        const request = tx.objectStore(PERSIST_STORE_NAME).get(PERSIST_KEY);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error || new Error("IndexedDB read failed"));
+      });
+      db.close();
+    } catch {
+      try { saved = JSON.parse(localStorage.getItem("jjirasi-maker-state") || "null"); } catch { saved = null; }
+    }
+    if (!saved || !Array.isArray(saved.regions) || !Array.isArray(saved.texts)) return false;
+    state = saved;
+    ensureStateCompatibility();
+    return true;
+  }
 
   function snapshotState() {
     const documentState = deepClone(state);
@@ -1671,6 +1746,10 @@
     if (sceneCanvas.height !== fullH) sceneCanvas.height = fullH;
     $("canvasSizeLabel").textContent = bleed ? `${trimW} × ${trimH} + 재단 ${state.bleedMm}mm` : `${trimW} × ${trimH}`;
     $("currentTemplateName").textContent = state.templateId === CUSTOM_TEMPLATE_ID ? "직접 만들기" : (templateSpecs.find((x) => x.id === state.templateId)?.name || "사용자 템플릿");
+    const stage=$("canvasStage");
+    if(stage)stage.style.backgroundColor=state.previewBackground||"#1b1f25";
+    const previewColor=$("previewBackgroundColor");
+    if(previewColor&&previewColor.value!==(state.previewBackground||"#1b1f25"))previewColor.value=state.previewBackground||"#1b1f25";
   }
 
   function refreshAllUI() {
@@ -3735,16 +3814,16 @@ function moveTextInList(id, direction) {
     targetCtx.save();targetCtx.translate(bleed,bleed);drawTexts(targetCtx,layout.fragments);targetCtx.restore();
     if(guides)drawGuides(targetCtx,layout.fragments);
     if(recordHits){
-      layoutFragments=layout.fragments.map((f)=>({id:f.text.id,regionId:f.region.id,x:f.x,y:f.y,w:f.w,h:f.h}));
+      layoutFragments=orderedTextFragments(layout.fragments).map((f)=>({id:f.text.id,regionId:f.region.id,x:f.x,y:f.y,w:f.w,h:f.h}));
       regionHitBoxes=state.regions.map((r)=>({id:r.id,x:r.x,y:r.y,w:r.w,h:r.h}));
       elementHitBoxes=state.elements.map((e)=>{const g=elementGeometry(e);return {id:e.id,x:g.x,y:g.y,w:g.w,h:g.h};});
-      $("layoutStatus").textContent=layout.overflow?"영역 안에서 최소 크기로 맞춤":"배치 고정 · 자동 배치 버튼을 누를 때만 재계산";
-      $("layoutStatus").style.color=layout.overflow?"#ffd49a":"#9ef0b5";
+      $("layoutStatus").textContent=layout.overflow?"일부 문장이 영역 한계에 가까워요":"문장 수정 시 글자 맞춤 · 영역 재배치는 버튼에서만";
+      $("layoutStatus").dataset.state=layout.overflow?"warning":"ready";
     }
   }
 
   function render(){renderQueued=false;updateCanvasMeta();renderTo(ctx,{guides:true,recordHits:true});}
-  function queueRender(){markHistoryDirty(false);if(renderQueued)return;renderQueued=true;requestAnimationFrame(render);}
+  function queueRender(){markHistoryDirty(false);schedulePersistState();if(renderQueued)return;renderQueued=true;requestAnimationFrame(render);}
 
   function canvasPoint(event){
     const rect=canvas.getBoundingClientRect();
@@ -4211,7 +4290,7 @@ function moveTextInList(id, direction) {
   }
 
 function ensureStateCompatibility() {
-    state.schemaVersion = 20;
+    state.schemaVersion = 21;
     state.theme ||= "light";
     state.artboard ||= { preset: "flyer", widthMm: 180, heightMm: 100 };
     state.artboard.widthMm = clamp(Number(state.artboard.widthMm) || 180, 50, 420);
@@ -4223,6 +4302,7 @@ function ensureStateCompatibility() {
     state.activeTool ||= "templates";
     state.previewZoom = clamp(Number(state.previewZoom) || 1, .2, 3);
     state.previewFit = state.previewFit !== false;
+    if (!/^#[0-9a-f]{6}$/i.test(String(state.previewBackground || ""))) state.previewBackground = "#1b1f25";
     state.palette ||= {};
     state.palette.primary ||= "#ffd400";
     state.palette.secondary ||= "#111111";
@@ -5272,7 +5352,7 @@ function adaptRegionsToText() {
 
     if (tallNarrow) {
       text.align = "center";
-      text.lineHeight = .70;
+      text.lineHeight = .86;
       text.scaleX = 1;
       text.scaleY = 1;
       text.letterSpacing = -2;
@@ -5283,7 +5363,7 @@ function adaptRegionsToText() {
     if (regionStyle?.verticalWhenNarrow && region.h > region.w * 1.12 && facts.compact <= 24) {
       text.autoNoWrap = false;
       text.align = "center";
-      text.lineHeight = Math.min(text.lineHeight,.74);
+      text.lineHeight = Math.max(.86,Math.min(text.lineHeight,.96));
       text.scaleX = Math.max(.94,text.scaleX);
     }
     text.rangeColors = [];
@@ -5321,7 +5401,7 @@ function adaptRegionsToText() {
     const caps={headline:430,callout:320,tag:280,bullet:220,footer:300,body:240,micro:112};
     const maxX={headline:1.10,callout:1.08,tag:1.12,bullet:1.03,footer:1.08,body:1.04,micro:1.03}[role]||1.05;
     const minSpacing={headline:-16,callout:-13,tag:-10,bullet:-10,footer:-14,body:-11,micro:-8}[role]??-10;
-    const minLineHeight={headline:.68,callout:.70,tag:.68,bullet:.78,footer:.70,body:.76,micro:.82}[role]||.74;
+    const minLineHeight={headline:.86,callout:.90,tag:.86,bullet:.98,footer:.88,body:.94,micro:.96}[role]||.94;
     const fill={headline:.985,callout:.975,tag:.970,bullet:.980,footer:.980,body:.975,micro:.930}[role]||.97;
     const minFont=role==="micro"?10:14;
     const styleCap=Number(text.autoFontCap)||caps[role]||220;
@@ -5488,7 +5568,7 @@ function autoStyleAssignedTexts({ force = false, skipAdapt = false, regionIds = 
         text.letterSpacing=fitted.letterSpacing;
         text.lineHeight=fitted.lineHeight;
         text.autoLayoutNoWrap=Boolean(fitted.noWrap);
-        text.gap=Math.round(clamp(text.fontSize*.025*(Number(text.autoGapScale)||1),0,5));
+        text.gap=Math.round(clamp(text.fontSize*.055*(Number(text.autoGapScale)||1),2,12));
       });
     });
   }
@@ -5801,35 +5881,37 @@ function buildLayout(c){
       const texts=state.texts.filter((text)=>text.regionId===region.id).sort((a,b)=>a.order-b.order);
       if(!texts.length)continue;
 
-      let estimated=texts.map((text)=>{
+      const estimateText=(text,fontScale=1,availableWidth=box.w)=>{
         const protectedText=isTextManualProtected(text);
         const minScale=protectedText?.45:AUTO_MIN_SCALE;
-        const fontSize=Math.max(protectedText?8:12,(Number(text.fontSize)||12)*(Number(text.manualScale)||1));
+        const fontSize=Math.max(protectedText?8:10,(Number(text.fontSize)||12)*(Number(text.manualScale)||1)*fontScale);
         const scaleX=clamp(Number(text.scaleX)||1,minScale,1.65);
-        const scaleY=clamp(Number(text.scaleY)||1,minScale,1.65);
-        const lines=layoutTextLines(c,text,fontSize,box.w);
-        const lineH=Math.max(7,fontSize*clamp(Number(text.lineHeight)||1,.65,2)*scaleY);
+        const scaleY=protectedText?clamp(Number(text.scaleY)||1,.45,1.65):1;
+        const safeLineHeight=protectedText?clamp(Number(text.lineHeight)||1,.72,2):Math.max(.90,Number(text.lineHeight)||1);
+        const probe={...text,scaleX,scaleY,lineHeight:safeLineHeight};
+        const lines=layoutTextLines(c,probe,fontSize,availableWidth);
+        const lineH=Math.max(8,fontSize*safeLineHeight*scaleY);
         return {text,protectedText,minScale,fontSize,scaleX,scaleY,lines,lineH,h:Math.max(lineH,lines.length*lineH)};
-      });
+      };
 
-      const fixedHeight=estimated.filter((item)=>item.protectedText).reduce((sum,item)=>sum+item.h+Math.max(0,Number(item.text.gap)||0),0);
-      const autoItems=estimated.filter((item)=>!item.protectedText);
-      const autoHeight=autoItems.reduce((sum,item)=>sum+item.h+Math.max(0,Number(item.text.gap)||0),0);
-      const availableForAuto=Math.max(0,box.h-fixedHeight);
-      const autoCompression=autoHeight>availableForAuto&&autoHeight>0?clamp(availableForAuto/autoHeight,AUTO_MIN_SCALE,1):1;
-      estimated=estimated.map((item)=>{
-        if(item.protectedText)return item;
-        const scaleY=Math.max(AUTO_MIN_SCALE,item.scaleY*autoCompression);
-        const lineH=Math.max(7,item.fontSize*clamp(Number(item.text.lineHeight)||1,.65,2)*scaleY);
-        return {...item,scaleY,lineH,h:Math.max(lineH,item.lines.length*lineH)};
-      });
+      let estimated=texts.map((text)=>estimateText(text));
+      const totalHeight=()=>estimated.reduce((sum,item)=>sum+item.h+Math.max(0,Number(item.text.gap)||0),0)-Math.max(0,Number(texts.at(-1)?.gap)||0);
+      let groupHeight=totalHeight();
+      if(groupHeight>box.h){
+        const fixedHeight=estimated.filter((item)=>item.protectedText).reduce((sum,item)=>sum+item.h+Math.max(0,Number(item.text.gap)||0),0);
+        const autoHeight=Math.max(1,groupHeight-fixedHeight);
+        const autoRoom=Math.max(1,box.h-fixedHeight);
+        const fontFactor=clamp(autoRoom/autoHeight,.45,1);
+        estimated=estimated.map((item)=>item.protectedText?item:estimateText(item.text,fontFactor));
+        groupHeight=totalHeight();
+      }
 
-      const groupHeight=estimated.reduce((sum,item)=>sum+item.h+Math.max(0,Number(item.text.gap)||0),0)-Math.max(0,Number(texts.at(-1).gap)||0);
       let cursorY=box.y+Math.max(0,(box.h-groupHeight)/2);
-
-      for(const estimate of estimated){
-        const {text,fontSize,lineH,scaleY,minScale}=estimate;
+      for(const baseEstimate of estimated){
+        let estimate=baseEstimate;
+        const {text,minScale}=estimate;
         let lines=estimate.lines;
+        let lineH=estimate.lineH;
         let blockH=estimate.h;
         let desiredW=Math.max(1,...lines.map((line)=>line.width*estimate.scaleX));
         let place;
@@ -5839,23 +5921,36 @@ function buildLayout(c){
           const preferred=clamp(text.manualX,box.x,box.x+box.w-20);
           const interval=intervals.find(([a,b])=>preferred>=a&&preferred<=b)||intervals[0]||[box.x,box.x+box.w];
           const placedX=clamp(preferred,interval[0],Math.max(interval[0],interval[1]-20));
-          const availableW=Math.max(20,interval[1]-placedX);
-          lines=layoutTextLines(c,text,fontSize,availableW);
-          blockH=Math.max(lineH,lines.length*lineH);
-          desiredW=Math.max(1,...lines.map((line)=>line.width*estimate.scaleX));
-          place={x:placedX,y:clamp(y,box.y,Math.max(box.y,box.y+box.h-blockH)),w:availableW};
+          place={x:placedX,y,w:Math.max(20,interval[1]-placedX)};
         }else{
           place=findPlacement(box,cursorY,blockH,desiredW,obstacles);
-          lines=layoutTextLines(c,text,fontSize,place.w);
-          blockH=Math.max(lineH,lines.length*lineH);
-          desiredW=Math.max(1,...lines.map((line)=>line.width*estimate.scaleX));
+        }
+
+        // Re-wrap for the actual available interval. Auto text reduces font size rather than crushing line height.
+        for(let pass=0;pass<8;pass++){
+          estimate=estimateText(text,estimate.fontSize/Math.max(1,(Number(text.fontSize)||12)*(Number(text.manualScale)||1)),place.w);
+          lines=estimate.lines;lineH=estimate.lineH;blockH=estimate.h;desiredW=Math.max(1,...lines.map((line)=>line.width*estimate.scaleX));
+          const verticalLimit=text.manualY!=null?box.y+box.h-place.y:box.y+box.h-place.y;
+          if(estimate.protectedText||blockH<=verticalLimit+1)break;
+          const factor=clamp(verticalLimit/Math.max(1,blockH),.72,.96);
+          estimate={...estimate,fontSize:Math.max(10,estimate.fontSize*factor)};
+          const safeLineHeight=Math.max(.90,Number(text.lineHeight)||1);
+          const probe={...text,lineHeight:safeLineHeight,scaleY:1};
+          lines=layoutTextLines(c,probe,estimate.fontSize,place.w);
+          lineH=Math.max(8,estimate.fontSize*safeLineHeight);blockH=Math.max(lineH,lines.length*lineH);
+          estimate={...estimate,lines,lineH,h:blockH,scaleY:1};
+        }
+
+        if(text.manualX==null||text.manualY==null){
           place=findPlacement(box,place.y,blockH,desiredW,obstacles);
           cursorY=place.y+blockH+Math.max(0,Number(text.gap)||0);
+        }else{
+          place.y=clamp(place.y,box.y,Math.max(box.y,box.y+box.h-blockH));
         }
         const widthRatio=Math.min(1,place.w/Math.max(1,desiredW));
         const scaleX=Math.max(minScale,Math.min(estimate.scaleX,Math.max(AUTO_MIN_SCALE,estimate.scaleX*widthRatio)));
         if(place.y+blockH>box.y+box.h+1||Math.max(...lines.map((line)=>line.width*scaleX))>place.w+1)overflow=true;
-        fragments.push({text,region,lines,fontSize,lineH,scaleX,scaleY,x:place.x,y:place.y,w:place.w,h:blockH,fit:1,box});
+        fragments.push({text,region,lines,fontSize:estimate.fontSize,lineH,scaleX,scaleY:estimate.scaleY,x:place.x,y:place.y,w:place.w,h:blockH,fit:1,box});
       }
     }
     return {fragments,overflow};
@@ -5981,9 +6076,20 @@ function buildLayout(c){
     }else clipItemPath(c,region);
   }
 
+  function orderedTextFragments(fragments){
+    return [...fragments].sort((a,b)=>{
+      const aSelectedText=a.text.id===state.selectedTextId?2:0;
+      const bSelectedText=b.text.id===state.selectedTextId?2:0;
+      const aSelectedRegion=a.region.id===state.selectedRegionId?1:0;
+      const bSelectedRegion=b.region.id===state.selectedRegionId?1:0;
+      return (aSelectedText+aSelectedRegion)-(bSelectedText+bSelectedRegion);
+    });
+  }
+
   function drawTexts(c,fragments){
-    fragments.forEach((fragment)=>drawTextRangeBackgrounds(c,fragment));
-    fragments.forEach((fragment)=>{
+    const ordered=orderedTextFragments(fragments);
+    ordered.forEach((fragment)=>drawTextRangeBackgrounds(c,fragment));
+    ordered.forEach((fragment)=>{
       const bg=sampleSceneColor(fragment.x+fragment.w/2,fragment.y+fragment.h/2);
       const base=fragment.text.colorMode==="auto"?bestTextColorForEffects(bg,fragment.text):fragment.text.color;
       c.save();if(fragment.region.clipText)clipTextToRegion(c,fragment.region);fragment.lines.forEach((line,index)=>drawTokenLine(c,fragment,line,index,base));c.restore();
@@ -6065,6 +6171,29 @@ function buildLayout(c){
     });
   }
 
+  let activeDeleteConfirm=null;
+  function closeDeleteConfirm(){
+    activeDeleteConfirm?.remove();
+    activeDeleteConfirm=null;
+  }
+  function openDeleteConfirm(anchor,onConfirm){
+    closeDeleteConfirm();
+    const pop=document.createElement("div");pop.className="delete-confirm-popover";pop.setAttribute("role","dialog");pop.setAttribute("aria-label","문장 삭제 확인");
+    const message=document.createElement("strong");message.textContent="삭제하시겠습니까?";
+    const actions=document.createElement("div");actions.className="delete-confirm-actions";
+    const cancel=document.createElement("button");cancel.type="button";cancel.className="small-button";cancel.textContent="취소";
+    const confirm=document.createElement("button");confirm.type="button";confirm.className="small-button button-danger";confirm.textContent="삭제";
+    actions.append(cancel,confirm);pop.append(message,actions);document.body.append(pop);activeDeleteConfirm=pop;
+    const rect=anchor.getBoundingClientRect(),popRect=pop.getBoundingClientRect();
+    const left=clamp(rect.right-popRect.width,8,window.innerWidth-popRect.width-8);
+    const below=rect.bottom+8;
+    const top=below+popRect.height<=window.innerHeight-8?below:Math.max(8,rect.top-popRect.height-8);
+    pop.style.left=`${left}px`;pop.style.top=`${top}px`;
+    cancel.addEventListener("click",closeDeleteConfirm);
+    confirm.addEventListener("click",()=>{closeDeleteConfirm();onConfirm();});
+    setTimeout(()=>document.addEventListener("pointerdown",function outside(event){if(!activeDeleteConfirm){document.removeEventListener("pointerdown",outside,true);return;}if(activeDeleteConfirm.contains(event.target)||anchor.contains(event.target))return;closeDeleteConfirm();document.removeEventListener("pointerdown",outside,true);},true),0);
+  }
+
   function renderTextList(){
     ensureStateCompatibility();
     const list=$("textList");list.replaceChildren();
@@ -6074,8 +6203,9 @@ function buildLayout(c){
       const selected=state.selectedTextId===text.id;
       const card=document.createElement("article");card.className=`text-card${selected?" active":""}`;card.dataset.textId=text.id;card.dataset.auto=String(!isTextManualProtected(text));
       const head=document.createElement("div");head.className="text-card-head";
+      const toolbar=document.createElement("div");toolbar.className="text-card-toolbar";
       const grip=document.createElement("div");grip.className="drag-grip";grip.innerHTML=`<b>${String(index+1).padStart(2,"0")}</b><small>${isTextManualProtected(text)?"LOCK":"AUTO"}</small>`;
-      const textarea=document.createElement("textarea");textarea.className="text-input";textarea.value=text.text;textarea.rows=Math.max(2,Math.min(7,text.text.split("\n").length+1));
+      const textarea=document.createElement("textarea");textarea.className="text-input";textarea.value=text.text;textarea.rows=Math.max(1,Math.min(5,text.text.split("\n").length));
       let savedSelection={start:0,end:0};
       const rememberSelection=()=>{savedSelection={start:textarea.selectionStart??0,end:textarea.selectionEnd??0};activeTextarea=textarea;};
       const selectedRange=()=>{const current={start:textarea.selectionStart??0,end:textarea.selectionEnd??0};return current.start!==current.end?current:savedSelection;};
@@ -6084,7 +6214,7 @@ function buildLayout(c){
       textarea.addEventListener("input",()=>{
         text.text=textarea.value;
         text.sample=false;
-        textarea.rows=Math.max(2,Math.min(7,textarea.value.split("\n").length+1));
+        textarea.rows=Math.max(1,Math.min(5,textarea.value.split("\n").length));
         if(!isTextManualProtected(text))scheduleAutoTypography(text.regionId);
         else queueRender();
       });
@@ -6093,16 +6223,27 @@ function buildLayout(c){
         queueRender();
       });
       const actions=document.createElement("div");actions.className="text-card-actions";
-      [["↑","위로",()=>moveTextInList(text.id,-1)],["↓","아래로",()=>moveTextInList(text.id,1)],["×","삭제",()=>{if(state.texts.length===1)return toast("문장은 하나 이상 필요합니다.");state.texts=state.texts.filter((item)=>item.id!==text.id);state.selectedTextId=state.texts[Math.max(0,index-1)]?.id||null;normalizeTextOrders();renderTextList();queueRender();}]].forEach(([label,title,handler])=>{const button=document.createElement("button");button.className="small-button";button.type="button";button.textContent=label;button.title=title;button.addEventListener("click",handler);actions.append(button);});
-      head.append(grip,textarea,actions);head.addEventListener("pointerdown",(event)=>{if(event.target.closest("textarea,button,input,select"))return;selectCard();});card.append(head);
+      const actionDefs=[["↑","위로",()=>moveTextInList(text.id,-1)],["↓","아래로",()=>moveTextInList(text.id,1)],["×","삭제",null]];
+      actionDefs.forEach(([icon,title,handler])=>{
+        const item=document.createElement("span");item.className="text-card-action";
+        const name=document.createElement("span");name.className="text-card-action-label";name.textContent=title;
+        const button=document.createElement("button");button.className="small-button";button.type="button";button.textContent=icon;button.title=title;button.setAttribute("aria-label",title);
+        if(title==="삭제")button.addEventListener("click",()=>{
+          if(state.texts.length===1)return toast("문장은 하나 이상 필요합니다.");
+          openDeleteConfirm(button,()=>{state.texts=state.texts.filter((item)=>item.id!==text.id);state.selectedTextId=state.texts[Math.max(0,index-1)]?.id||null;normalizeTextOrders();renderTextList();queueRender();markHistoryDirty(true);});
+        });else button.addEventListener("click",handler);
+        item.append(name,button);actions.append(item);
+      });
+      toolbar.append(grip,actions);head.append(toolbar,textarea);head.addEventListener("pointerdown",(event)=>{if(event.target.closest("textarea,button,input,select"))return;selectCard();});card.append(head);
 
       const controls=document.createElement("div");controls.className="inline-text-controls";
       const top=document.createElement("div");top.className="text-style-heading";
       const title=document.createElement("div");title.innerHTML='<p class="control-title">선택 문장 꾸미기</p><small>자동 배치를 유지하거나, 이 문장만 직접 조절합니다.</small>';
-      const mode=makeSegmentedControl([["auto","자동 상태"],["manual","수동 고정"]],isTextManualProtected(text)?"manual":"auto",(value)=>{
+      const mode=makeSegmentedControl([["auto","자동 글자 맞춤"],["manual","배치 고정"]],isTextManualProtected(text)?"manual":"auto",(value)=>{
         if(value==="auto"){
           resetTextManualAdjustments(text,{restyle:true});
-          toast("수동 조정을 초기화했습니다. 다음 자동 배치부터 다시 계산됩니다.");
+          scheduleAutoTypography(text.regionId);
+          toast("자동 글자 맞춤으로 전환했습니다.");
         }else markTextManual(text);
         renderTextList();queueRender();
       },"compact");
@@ -6460,6 +6601,8 @@ function buildLayout(c){
     if(sceneCanvas.height!==fullH)sceneCanvas.height=fullH;
     if($("canvasSizeLabel"))$("canvasSizeLabel").textContent=`${widthMm} × ${heightMm}mm · ${trimW} × ${trimH}px${bleed?` · 재단 ${state.bleedMm}mm`:""}`;
     if($("currentTemplateName"))$("currentTemplateName").textContent=state.templateId===CUSTOM_TEMPLATE_ID?"직접 만들기":(templateSpecs.find((template)=>template.id===state.templateId)?.name||"사용자 템플릿");
+    if($("canvasStage"))$("canvasStage").style.backgroundColor=state.previewBackground||"#1b1f25";
+    if($("previewBackgroundColor"))$("previewBackgroundColor").value=state.previewBackground||"#1b1f25";
     requestAnimationFrame(updatePreviewZoom);
   }
 
@@ -6565,6 +6708,8 @@ function buildLayout(c){
       themeButton.setAttribute("aria-label",nextLabel);
     }
     if($("showRegions"))$("showRegions").checked=Boolean(state.showRegions);
+    if($("previewBackgroundColor"))$("previewBackgroundColor").value=state.previewBackground||"#1b1f25";
+    if($("canvasStage"))$("canvasStage").style.backgroundColor=state.previewBackground||"#1b1f25";
     syncStaticNumericFields(["pageMargin","regionGapX","regionGapY","palettePaperMix"]);
   }
 
@@ -6621,6 +6766,7 @@ function buildLayout(c){
 
   function bindV16Controls(){
     $("themeToggleBtn")?.addEventListener("click",()=>setTheme(state.theme==="dark"?"light":"dark"));
+    $("previewBackgroundColor")?.addEventListener("input",()=>{state.previewBackground=$("previewBackgroundColor").value;updateCanvasMeta();schedulePersistState();});
     $("zoomOutBtn")?.addEventListener("click",()=>{state.previewFit=false;state.previewZoom=clamp((Number(state.previewZoom)||1)-.1,.2,3);updatePreviewZoom();});
     $("zoomInBtn")?.addEventListener("click",()=>{state.previewFit=false;state.previewZoom=clamp((Number(state.previewZoom)||1)+.1,.2,3);updatePreviewZoom();});
     $("zoomFitBtn")?.addEventListener("click",()=>{state.previewFit=true;updatePreviewZoom();});
@@ -7152,7 +7298,13 @@ function swapRegionTextBundles(sourceRegionId,targetRegionId){
       await Promise.race([fontLoad,timeout]);
     }
     fontsReady=true;
-    applyTemplate("dense-left-rail",{preserveTexts:false});
+    const restored=await restorePersistedState();
+    if(restored){
+      refreshAllUI();
+      updatePreviewZoom();
+    }else{
+      applyTemplate("dense-left-rail",{preserveTexts:false});
+    }
     initializeHistory();
     $("showRegions").checked=state.showRegions;
     renderUnicodeGrid("전체","");
