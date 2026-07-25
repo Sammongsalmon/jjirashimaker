@@ -107,19 +107,37 @@
     return Math.max(A, B) / Math.min(A, B);
   }
   function bestAccentColor(background, baseColor) {
-    const candidates = [state?.palette?.tertiary, state?.palette?.primary, state?.palette?.secondary, "#ffffff", "#111111"].filter(Boolean);
+    const candidates = availablePalette(state?.palette).colors;
     const ranked = candidates
       .filter((color) => color.toLowerCase() !== String(baseColor || "").toLowerCase())
-      .map((color) => ({ color, score: contrastRatio(color, background) + (color === state?.palette?.tertiary ? .18 : 0) }))
+      .map((color) => ({ color, score: contrastRatio(color, background) }))
       .sort((a, b) => b.score - a.score);
-    return ranked.find((item) => item.score >= 3.2)?.color || ranked[0]?.color || baseColor;
+    return ranked.find((item) => item.score >= 3.2)?.color || ranked[0]?.color || contrastText(background);
   }
 
-  function paletteRoleOrder(palette = null) {
+  function rawPaletteRoleColor(role, palette = null) {
+    const p = palette || state?.palette || {};
+    if (role === "primary") return p.primary || "#ffd400";
+    if (role === "secondary") return p.secondary || p.primary || "#111111";
+    if (role === "tertiary") return p.tertiary || p.secondary || p.primary || "#e62d20";
+    if (role === "white") return "#ffffff";
+    if (role === "black") return "#111111";
+    return null;
+  }
+
+  function enabledPaletteRoles(palette = null) {
     const p = palette || state?.palette || {};
     const enabled = ["primary"];
     if (p.secondaryEnabled !== false && p.secondary) enabled.push("secondary");
     if (p.tertiaryEnabled !== false && p.tertiary) enabled.push("tertiary");
+    if (p.useWhite !== false) enabled.push("white");
+    if (p.useBlack !== false) enabled.push("black");
+    return enabled;
+  }
+
+  function paletteRoleOrder(palette = null) {
+    const p = palette || state?.palette || {};
+    const enabled = enabledPaletteRoles(p);
     const saved = Array.isArray(p.roleOrder) ? p.roleOrder : [];
     const ordered = saved.filter((role, index) => enabled.includes(role) && saved.indexOf(role) === index);
     enabled.forEach((role) => { if (!ordered.includes(role)) ordered.push(role); });
@@ -129,40 +147,46 @@
   function availablePalette(palette = null) {
     const p = palette || state?.palette || {};
     const order = paletteRoleOrder(p);
-    const colors = order.map((role) => p[role]).filter(Boolean);
+    const colors = [];
+    order.forEach((role) => {
+      const color = rawPaletteRoleColor(role, p);
+      if (color && !colors.some((item) => item.toLowerCase() === color.toLowerCase())) colors.push(color);
+    });
     if (!colors.length) colors.push(p.primary || "#ffd400");
     const neutrals = [];
     if (p.useWhite !== false) neutrals.push("#ffffff");
     if (p.useBlack !== false) neutrals.push("#111111");
-    if (!neutrals.length) neutrals.push(luminance(colors[0]) > .45 ? "#111111" : "#ffffff");
     return { colors, neutrals, order };
   }
 
   function paletteColor(role, palette) {
     const p = palette || state?.palette || { primary: "#ffd400", secondary: "#111111", tertiary: "#e62d20" };
     const { colors, neutrals } = availablePalette(p);
-    const primary = colors[0];
-    const secondary = colors[1] || colors[0];
-    const tertiary = colors[2] || colors[1] || colors[0];
-    const white = p.useWhite !== false ? "#ffffff" : (neutrals.find((c) => luminance(c) > .5) || primary);
-    const black = p.useBlack !== false ? "#111111" : (neutrals.find((c) => luminance(c) <= .5) || primary);
+    const primary = colors[0] || p.primary || "#ffd400";
+    const secondary = colors[1] || primary;
+    const tertiary = colors[2] || secondary;
+    const exactWhite = p.useWhite !== false ? "#ffffff" : null;
+    const exactBlack = p.useBlack !== false ? "#111111" : null;
+    const white = exactWhite || colors.slice().sort((a,b)=>luminance(b)-luminance(a))[0] || primary;
+    const black = exactBlack || colors.slice().sort((a,b)=>luminance(a)-luminance(b))[0] || primary;
     const paperMix = clamp((Number(p.paperMix) || 78) / 100, 0, .96);
+    const backgroundEnabled = p.useBackground !== false;
     if (!role) return black;
     if (role === "primary") return primary;
     if (role === "secondary") return secondary;
     if (role === "tertiary") return tertiary;
     if (role === "ink" || role === "black") return black;
     if (role === "white") return white;
-    if (role === "paper") return mix(primary, white, paperMix);
-    if (role === "paperHard") return mix(primary, white, clamp(paperMix - .18, 0, .88));
-    if (role === "primarySoft") return mix(primary, white, clamp(paperMix * .55, .12, .72));
+    if (role === "paper") return backgroundEnabled ? mix(rawPaletteRoleColor("primary", p), "#ffffff", paperMix) : (exactWhite || primary);
+    if (role === "paperHard") return backgroundEnabled ? mix(rawPaletteRoleColor("primary", p), "#ffffff", clamp(paperMix - .18, 0, .88)) : (exactWhite || primary);
+    if (role === "primarySoft") return backgroundEnabled ? mix(primary, white, clamp(paperMix * .55, .12, .72)) : primary;
     if (role === "primaryDeep") return mix(primary, black, .18);
-    if (role === "secondarySoft") return mix(secondary, white, .18);
-    if (role === "secondaryPaper") return mix(secondary, white, .74);
-    if (role === "tertiarySoft") return mix(tertiary, white, .22);
-    if (role === "tertiaryPaper") return mix(tertiary, white, .66);
+    if (role === "secondarySoft") return backgroundEnabled ? mix(secondary, white, .18) : secondary;
+    if (role === "secondaryPaper") return backgroundEnabled ? mix(secondary, white, .74) : secondary;
+    if (role === "tertiarySoft") return backgroundEnabled ? mix(tertiary, white, .22) : tertiary;
+    if (role === "tertiaryPaper") return backgroundEnabled ? mix(tertiary, white, .66) : tertiary;
     if (role === "tertiaryDeep") return mix(tertiary, black, .16);
-    if (role === "cream") return mix(primary, "#fff4d2", .82);
+    if (role === "cream") return backgroundEnabled ? mix(primary, "#fff4d2", .82) : primary;
     return role;
   }
 
@@ -215,16 +239,14 @@
   }
 
   function shufflePaletteRoles() {
-    const roles = ["primary"];
-    if (state.palette.secondaryEnabled !== false && state.palette.secondary) roles.push("secondary");
-    if (state.palette.tertiaryEnabled !== false && state.palette.tertiary) roles.push("tertiary");
+    const roles = enabledPaletteRoles(state.palette);
     if (roles.length < 2) {
-      toast("섞을 보조색을 먼저 켜 주세요.");
+      toast("섞을 색상을 두 가지 이상 켜 주세요.");
       return;
     }
     const previous = paletteRoleOrder(state.palette).join("|");
     let shuffled = roles.slice();
-    for (let attempt = 0; attempt < 8; attempt += 1) {
+    for (let attempt = 0; attempt < 12; attempt += 1) {
       for (let i = shuffled.length - 1; i > 0; i -= 1) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -235,7 +257,7 @@
     applyPaletteRefresh();
     schedulePersistState();
     markHistoryDirty(true);
-    toast("템플릿의 주색·보조색 위치를 섞었습니다.");
+    toast("템플릿의 사용 색상 위치를 섞었습니다.");
   }
 
   function R(name, x, y, w, h, options = {}) {
@@ -649,7 +671,7 @@
   }
 
   const initialState = {
-    schemaVersion: 20,
+    schemaVersion: 21,
     theme: "light",
     orientation: "landscape",
     artboard: { preset: "flyer", widthMm: 180, heightMm: 100 },
@@ -661,7 +683,7 @@
     templateId: "dense-left-rail",
     palette: {
       primary: "#ffd400", secondary: "#111111", tertiary: "#e62d20",
-      secondaryEnabled: true, tertiaryEnabled: true, useWhite: true, useBlack: true, paperMix: 78,
+      secondaryEnabled: true, tertiaryEnabled: true, useBackground: true, useWhite: true, useBlack: true, paperMix: 78,
       roleOrder: ["primary", "secondary", "tertiary"]
     },
     background: { mode:"solid", c1:"#ffd400", c2:"#ffd400", pattern:"none", patternColor:"#e62d20", angle:0, scale:48 },
@@ -3737,7 +3759,7 @@ function moveTextInList(id, direction) {
   }
 
 
-  function drawTokenLine(c,fragment,line,lineIndex,baseColor){
+  function drawTokenLine(c,fragment,line,lineIndex,baseColor,resolvedEffectColor=null){
     const {text,fontSize,lineH}=fragment;
     setTextFont(c,text,fontSize);
     const sx=Math.max(.2,text.scaleX*fragment.fit);
@@ -4325,8 +4347,8 @@ function moveTextInList(id, direction) {
     createColorField("elementStrokeField",()=>{const e=selectedElement();return !e||e.strokeNone?"none":e.stroke;},(v)=>{const e=selectedElement();if(!e)return;if(v==="none")e.strokeNone=true;else{e.strokeNone=false;e.stroke=v;}});
     createColorField("elementEffectColorField",()=>selectedElement()?.effectColor||"#111111",(v)=>{const e=selectedElement();if(e)e.effectColor=v;},{allowNone:false});
     createColorField("elementLabelColorField",()=>selectedElement()?.labelColor||"#111111",(v)=>{const e=selectedElement();if(e)e.labelColor=v;},{allowNone:false});
-    createColorField("backgroundColor1Field",()=>state.background.c1,(v)=>state.background.c1=v,{allowNone:false});
-    createColorField("backgroundColor2Field",()=>state.background.c2,(v)=>state.background.c2=v,{allowNone:false});
+    createColorField("backgroundColor1Field",()=>state.background.c1,(v)=>{state.background.c1=v;state.background.paletteRole=null;},{allowNone:false});
+    createColorField("backgroundColor2Field",()=>state.background.c2,(v)=>{state.background.c2=v;state.background.paletteRole=null;},{allowNone:false});
     createColorField("patternColorField",()=>state.background.patternColor,(v)=>state.background.patternColor=v,{allowNone:false});
     createColorField("posterBorderColorField",()=>state.posterBorder.color,(v)=>state.posterBorder.color=v,{allowNone:false});
   }
@@ -4395,10 +4417,15 @@ function ensureStateCompatibility() {
     state.palette.tertiary ||= "#e62d20";
     if (typeof state.palette.secondaryEnabled !== "boolean") state.palette.secondaryEnabled = true;
     if (typeof state.palette.tertiaryEnabled !== "boolean") state.palette.tertiaryEnabled = true;
+    if (typeof state.palette.useBackground !== "boolean") state.palette.useBackground = true;
     if (typeof state.palette.useWhite !== "boolean") state.palette.useWhite = true;
     if (typeof state.palette.useBlack !== "boolean") state.palette.useBlack = true;
     state.palette.paperMix = clamp(Number(state.palette.paperMix) || 78, 0, 96);
     state.palette.roleOrder = paletteRoleOrder(state.palette);
+    if(state.background&&state.background.paletteRole===undefined){
+      const savedTemplate=templateSpecs.find((template)=>template.id===state.templateId);
+      state.background.paletteRole=savedTemplate?.bg?.role || (state.templateId===CUSTOM_TEMPLATE_ID?"primary":null);
+    }
     state.regions ||= [];
     state.elements ||= [];
     state.texts ||= [];
@@ -5228,7 +5255,7 @@ function adaptRegionsToText() {
     ensureStateCompatibility();
     state.templateId = CUSTOM_TEMPLATE_ID;
     const base = paletteColor("primary", state.palette);
-    state.background = { mode:"solid", c1:base, c2:base, pattern:"none", patternColor:paletteColor("tertiary",state.palette), angle:0, scale:48 };
+    state.background = { mode:"solid", c1:base, c2:base, pattern:"none", patternColor:paletteColor("tertiary",state.palette), angle:0, scale:48, paletteRole:"primary" };
     state.posterBorder = { enabled:false, color:paletteColor("ink",state.palette), width:0, radius:0 };
     if (clearContent) {
       state.regions = [];
@@ -5254,7 +5281,7 @@ function adaptRegionsToText() {
     const { trimW:W, trimH:H } = dimensions();
     state.templateId = spec.id;
     const bgColor = paletteColor(spec.bg?.role || "primary",state.palette);
-    state.background = { mode:"solid", c1:bgColor, c2:bgColor, pattern:"none", patternColor:paletteColor("tertiary",state.palette), angle:0, scale:48 };
+    state.background = { mode:"solid", c1:bgColor, c2:bgColor, pattern:"none", patternColor:paletteColor("tertiary",state.palette), angle:0, scale:48, paletteRole:spec.bg?.role || "primary" };
     state.regions = getTemplateRegionSpecs(spec).map((region) => cloneTemplateRegion(region,W,H));
     state.posterBorder = spec.border ? {
       enabled:Boolean(spec.border.enabled), color:spec.border.color || paletteColor("ink",state.palette), width:Number(spec.border.width)||0, radius:Number(spec.border.radius)||0
@@ -5459,6 +5486,13 @@ function adaptRegionsToText() {
     if (accentWords) setAutomaticAccentRanges(text,role,region,baseColor);
     setAutomaticAccentBackground(text,role,region);
     normalizeEffects(text);
+    const finalTextColor=text.colorMode==="auto"?bestTextColorForEffects(regionBg,text):text.color;
+    if(contrastRatio(finalTextColor,regionBg)<2.65&&activeEffects(text).length===0){
+      text.effects=["outline"];
+      text.effect="outline";
+      text.outlineWidth=Math.max(2,Number(text.outlineWidth)||2);
+    }
+    if(activeEffects(text).length)text.effectColor=bestAutomaticEffectColor(regionBg,finalTextColor,text);
   }
 
   function setAutomaticAccentBackground(text,role,region){
@@ -5713,17 +5747,47 @@ function autoArrangeTexts({ reassign = true, forceStyle = false, announce = fals
     return values.map((item)=>labels[item]||item).join(" + ");
   }
 
+  function automaticTextCandidates(background) {
+    const colors = availablePalette(state.palette).colors.slice();
+    if (!colors.length) colors.push(contrastText(background));
+    const unique=[];
+    colors.forEach((color)=>{if(color&&!unique.some((item)=>item.toLowerCase()===color.toLowerCase()))unique.push(color);});
+    const ranked=unique.map((color)=>({color,score:contrastRatio(color,background)})).sort((a,b)=>b.score-a.score);
+    if((ranked[0]?.score||0)<2.8){
+      const fallback=contrastText(background);
+      if(!unique.some((item)=>item.toLowerCase()===fallback.toLowerCase()))ranked.unshift({color:fallback,score:contrastRatio(fallback,background)});
+    }
+    return ranked.map((item)=>item.color);
+  }
+
   function bestTextColorForEffects(background,text) {
-    const candidates=[];
-    if(state.palette.useBlack!==false)candidates.push("#111111");
-    if(state.palette.useWhite!==false)candidates.push("#ffffff");
-    if(!candidates.length)candidates.push(contrastText(background));
-    const surfaces=[background];
-    if(activeEffects(text).length&&text.effectColor)surfaces.push(text.effectColor);
-    return candidates.map((color)=>({
-      color,
-      score:Math.min(...surfaces.map((surface)=>contrastRatio(color,surface)))
-    })).sort((a,b)=>b.score-a.score)[0]?.color||contrastText(background);
+    const candidates=automaticTextCandidates(background);
+    return candidates.map((color)=>({color,score:contrastRatio(color,background)})).sort((a,b)=>b.score-a.score)[0]?.color||contrastText(background);
+  }
+
+  function bestAutomaticEffectColor(background,textColor,text) {
+    const effects=activeEffects(text);
+    if(!effects.length)return text.effectColor||bestAccentColor(background,textColor);
+    if(effects.includes("shadow")&&luminance(background)<.13)return "#777777";
+    const candidates=automaticTextCandidates(background)
+      .concat(availablePalette(state.palette).colors)
+      .filter((color,index,array)=>color&&array.findIndex((item)=>item.toLowerCase()===color.toLowerCase())===index)
+      .filter((color)=>color.toLowerCase()!==String(textColor||"").toLowerCase());
+    const ranked=candidates.map((color)=>{
+      const againstText=contrastRatio(color,textColor);
+      const againstBackground=contrastRatio(color,background);
+      const score=againstText*1.35+againstBackground*.45;
+      return {color,score,againstText,againstBackground};
+    }).sort((a,b)=>b.score-a.score);
+    const chosen=ranked.find((item)=>item.againstText>=2.2&&item.againstBackground>=1.35)||ranked[0];
+    if(chosen)return chosen.color;
+    return contrastText(textColor);
+  }
+
+  function resolvedShadowColor(color,background) {
+    const raw=color||"#111111";
+    if(luminance(background)<.13&&luminance(raw)<.24)return "#777777";
+    return raw;
   }
 
   function heartPath(c,x,y,w,h){
@@ -5769,7 +5833,9 @@ function autoArrangeTexts({ reassign = true, forceStyle = false, announce = fals
   function drawShapeEffectLayers(c,item){
     const effects=activeEffects(item);
     const size=clamp(Number(item.effectSize)||0,0,100);
-    const color=resolveColor(item,"effectColor")||item.effectColor||"#111111";
+    const rawEffectColor=resolveColor(item,"effectColor")||item.effectColor||"#111111";
+    const shadowSurface=(state.background?.mode==="solid"?state.background.c1:"#ffffff");
+    const color=effects.includes("shadow")?resolvedShadowColor(rawEffectColor,shadowSurface):rawEffectColor;
     c.shadowColor="transparent";c.shadowBlur=0;c.shadowOffsetX=0;c.shadowOffsetY=0;
     if(effects.includes("extrude")){
       const depth=clamp(size||14,2,70),step=depth>34?2:1;
@@ -5778,7 +5844,7 @@ function autoArrangeTexts({ reassign = true, forceStyle = false, announce = fals
       }
     }
     if(effects.includes("shadow")){
-      const offset=Math.max(2,size*.55);
+      const offset=Math.max(1,size*.32);
       c.save();c.translate(offset,offset);shapePath(c,item);
       if(item.fillNone){c.strokeStyle=color;c.lineWidth=Math.max(3,size*.28||3);c.stroke();}
       else{c.fillStyle=color;c.fill();}
@@ -5883,14 +5949,16 @@ function autoArrangeTexts({ reassign = true, forceStyle = false, announce = fals
   function drawImageEffects(c,item,layer){
     const effects=activeEffects(item),size=clamp(Number(item.effectSize)||0,0,100);
     if(!effects.length)return;
-    const color=item.effectColor||"#111111";
+    const rawEffectColor=item.effectColor||"#111111";
+    const shadowSurface=(state.background?.mode==="solid"?state.background.c1:"#ffffff");
+    const color=effects.includes("shadow")?resolvedShadowColor(rawEffectColor,shadowSurface):rawEffectColor;
     const tint=tintedAlphaLayer(layer,color);
     if(effects.includes("extrude")){
       const depth=clamp(size||14,2,70),step=depth>34?2:1;
       for(let offset=depth;offset>=1;offset-=step)c.drawImage(tint,item.x+offset*.58,item.y+offset*.58,item.w,item.h);
     }
     if(effects.includes("shadow")){
-      const offset=Math.max(2,size*.55);c.drawImage(tint,item.x+offset,item.y+offset,item.w,item.h);
+      const offset=Math.max(1,size*.32);c.drawImage(tint,item.x+offset,item.y+offset,item.w,item.h);
     }
     if(effects.includes("hollow")){
       const off=document.createElement("canvas");off.width=layer.width;off.height=layer.height;
@@ -6121,7 +6189,7 @@ function buildLayout(c){
   }
 
 
-  function drawTokenLine(c,fragment,line,lineIndex,baseColor){
+  function drawTokenLine(c,fragment,line,lineIndex,baseColor,resolvedEffectColor=null){
     const {text,fontSize,lineH}=fragment;
     setTextFont(c,text,fontSize);
     const minScale=isTextManualProtected(text)?.45:.70;
@@ -6140,12 +6208,12 @@ function buildLayout(c){
       }
       return Math.max(0,pen-text.letterSpacing);
     };
-    const effects=activeEffects(text),thickness=clamp(Number(text.outlineWidth)||0,0,48),effectColor=text.effectColor||"#111111";
+    const effects=activeEffects(text),thickness=clamp(Number(text.outlineWidth)||0,0,48),effectColor=resolvedEffectColor||text.effectColor||"#111111";
     if(effects.includes("extrude")){
       const depth=clamp(thickness||8,3,38),step=depth>24?2:1;
       for(let offset=depth;offset>=1;offset-=step)drawGlyphs(offset*.58,offset*.58,effectColor);
     }
-    if(effects.includes("shadow")){const offset=Math.max(2,thickness*1.35);drawGlyphs(offset,offset,effectColor);}
+    if(effects.includes("shadow")){const offset=Math.max(1,thickness*.72);drawGlyphs(offset,offset,effectColor);}
     if(effects.includes("hollow")){const offset=Math.max(2,thickness*1.30);drawGlyphs(offset,offset,effectColor,true,Math.max(2,thickness));}
     if(effects.includes("outline"))drawGlyphs(0,0,effectColor,true,Math.max(1,thickness*2));
     const drawW=drawGlyphs();
@@ -6179,7 +6247,9 @@ function buildLayout(c){
     ordered.forEach((fragment)=>{
       const bg=sampleSceneColor(fragment.x+fragment.w/2,fragment.y+fragment.h/2);
       const base=fragment.text.colorMode==="auto"?bestTextColorForEffects(bg,fragment.text):fragment.text.color;
-      c.save();if(fragment.region.clipText)clipTextToRegion(c,fragment.region);fragment.lines.forEach((line,index)=>drawTokenLine(c,fragment,line,index,base));c.restore();
+      const automaticEffect=fragment.text.colorMode==="auto"&&!isTextManualProtected(fragment.text);
+      const effectColor=automaticEffect?bestAutomaticEffectColor(bg,base,fragment.text):resolvedShadowColor(fragment.text.effectColor,bg);
+      c.save();if(fragment.region.clipText)clipTextToRegion(c,fragment.region);fragment.lines.forEach((line,index)=>drawTokenLine(c,fragment,line,index,base,effectColor));c.restore();
     });
   }
 
@@ -6628,9 +6698,10 @@ function buildLayout(c){
     syncSegmented("paletteTertiaryEnabled",state.palette.tertiaryEnabled?"on":"off");
     $("secondaryPaletteCard")?.classList.toggle("is-disabled",!state.palette.secondaryEnabled);
     $("tertiaryPaletteCard")?.classList.toggle("is-disabled",!state.palette.tertiaryEnabled);
+    if($("paletteUseBackground"))$("paletteUseBackground").checked=state.palette.useBackground!==false;
     if($("paletteUseWhite"))$("paletteUseWhite").checked=state.palette.useWhite!==false;
     if($("paletteUseBlack"))$("paletteUseBlack").checked=state.palette.useBlack!==false;
-    if($("palettePaperMix"))$("palettePaperMix").value=String(state.palette.paperMix);
+    if($("palettePaperMix")){$("palettePaperMix").value=String(state.palette.paperMix);$("palettePaperMix").disabled=state.palette.useBackground===false;$("palettePaperMix").closest(".palette-paper-inline")?.classList.toggle("is-disabled",state.palette.useBackground===false);}
     if($("palettePaperMixValue"))$("palettePaperMixValue").textContent=`${round(state.palette.paperMix)}%`;
     syncStaticNumericFields(["palettePaperMix"]);
   }
@@ -6844,9 +6915,13 @@ function buildLayout(c){
   }
 
   function applyPaletteRefresh(){
-    state.background.c1=state.background.mode==="solid"?paletteColor("primary",state.palette):state.background.c1;
-    if(state.background.mode==="solid")state.background.c2=state.background.c1;
-    autoStyleAssignedTexts({force:false});renderTemplateGrid();renderRegionList();renderTextList();colorFields.forEach((field)=>field.update());queueRender();
+    if(state.background.mode==="solid"){
+      const role=state.background.paletteRole || "primary";
+      state.background.c1=paletteColor(role,state.palette);
+      state.background.c2=state.background.c1;
+    }
+    autoStyleAssignedTexts({force:false});
+    renderTemplateGrid();renderRegionList();renderTextList();colorFields.forEach((field)=>field.update());queueRender();
   }
 
   function bindV16Controls(){
@@ -6876,9 +6951,10 @@ function buildLayout(c){
     window.addEventListener("resize",()=>{if(state.previewFit)updatePreviewZoom();});
 
     bindSegmented("paletteSecondaryEnabled",(value)=>{state.palette.secondaryEnabled=value==="on";syncPaletteControls();applyPaletteRefresh();});
+    $("paletteUseBackground")?.addEventListener("change",()=>{state.palette.useBackground=$("paletteUseBackground").checked;syncPaletteControls();applyPaletteRefresh();});
     bindSegmented("paletteTertiaryEnabled",(value)=>{state.palette.tertiaryEnabled=value==="on";syncPaletteControls();applyPaletteRefresh();});
-    $("paletteUseWhite")?.addEventListener("change",()=>{state.palette.useWhite=$("paletteUseWhite").checked;if(!state.palette.useWhite&&!state.palette.useBlack){state.palette.useBlack=true;$("paletteUseBlack").checked=true;}applyPaletteRefresh();});
-    $("paletteUseBlack")?.addEventListener("change",()=>{state.palette.useBlack=$("paletteUseBlack").checked;if(!state.palette.useWhite&&!state.palette.useBlack){state.palette.useWhite=true;$("paletteUseWhite").checked=true;}applyPaletteRefresh();});
+    $("paletteUseWhite")?.addEventListener("change",()=>{state.palette.useWhite=$("paletteUseWhite").checked;syncPaletteControls();applyPaletteRefresh();});
+    $("paletteUseBlack")?.addEventListener("change",()=>{state.palette.useBlack=$("paletteUseBlack").checked;syncPaletteControls();applyPaletteRefresh();});
     bindValue("palettePaperMix",()=>globalNumericDefaults.palettePaperMix,(value)=>{state.palette.paperMix=clamp(value,0,96);$("palettePaperMixValue").textContent=`${round(value)}%`;applyPaletteRefresh();});
 
     const spacingChanged=()=>{reflowRegions({preserveManual:true,adaptText:true});renderRegionList();renderTextList();updateRegionControls();queueRender();};

@@ -107,24 +107,27 @@
             </div>
           </div>
           <div class="compact-palette-options">
-            <label class="palette-paper-inline" for="palettePaperMix">연한 배경 <b id="palettePaperMixValue">78%</b>
-              <input id="palettePaperMix" type="range" min="0" max="96" step="1" value="78" />
-            </label>
-            <div class="palette-neutral-inline" aria-label="중립색 사용">
-              <label><input id="paletteUseWhite" type="checkbox" checked /> 흰색</label>
-              <label><input id="paletteUseBlack" type="checkbox" checked /> 검은색</label>
+            <div class="palette-option-row palette-option-row-background">
+              <label class="palette-check-pill palette-background-toggle"><input id="paletteUseBackground" type="checkbox" checked /> 배경색 사용</label>
+              <label class="palette-paper-inline" for="palettePaperMix">배경 밝기 <b id="palettePaperMixValue">78%</b>
+                <input id="palettePaperMix" type="range" min="0" max="96" step="1" value="78" />
+              </label>
+              <label class="palette-check-pill"><input id="paletteUseBlack" type="checkbox" checked /> 검은색 사용</label>
+              <label class="palette-check-pill"><input id="paletteUseWhite" type="checkbox" checked /> 흰색 사용</label>
             </div>
-            <div class="palette-enable-inline">
-              <span>보조 1</span>
-              <div id="paletteSecondaryEnabled" class="segmented-control compact" role="group"><button type="button" data-value="on">사용</button><button type="button" data-value="off">안 함</button></div>
+            <div class="palette-option-row palette-option-row-colors">
+              <div class="palette-enable-inline">
+                <span>보조색 1</span>
+                <div id="paletteSecondaryEnabled" class="segmented-control compact" role="group"><button type="button" data-value="on">사용</button><button type="button" data-value="off">안 함</button></div>
+              </div>
+              <div class="palette-enable-inline">
+                <span>보조색 2</span>
+                <div id="paletteTertiaryEnabled" class="segmented-control compact" role="group"><button type="button" data-value="on">사용</button><button type="button" data-value="off">안 함</button></div>
+              </div>
+              <button id="paletteShuffleBtn" class="palette-shuffle-button" type="button" title="현재 사용하는 주색·보조색·흰색·검은색의 배치 위치를 무작위로 섞기"><span aria-hidden="true">⇄</span><span>색 배치 섞기</span></button>
             </div>
-            <div class="palette-enable-inline">
-              <span>보조 2</span>
-              <div id="paletteTertiaryEnabled" class="segmented-control compact" role="group"><button type="button" data-value="on">사용</button><button type="button" data-value="off">안 함</button></div>
-            </div>
-            <button id="paletteShuffleBtn" class="palette-shuffle-button" type="button" title="주색·보조색이 들어가는 위치를 무작위로 섞기"><span aria-hidden="true">⇄</span><span>색 배치 섞기</span></button>
           </div>
-          <p class="compact-palette-note">보조색을 끄면 주색과 선택한 흰색·검은색만으로 템플릿을 구성합니다.</p>
+          <p class="compact-palette-note">배경색은 연한 대지·배경 요소에만 사용합니다. 영역과 자동 글자는 켜 둔 주색·보조색·흰색·검은색 안에서 대비가 가장 큰 조합을 사용합니다.</p>
         </section>
         <div class="section-heading template-section-heading">
           <div>
