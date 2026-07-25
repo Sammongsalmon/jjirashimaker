@@ -116,14 +116,14 @@
         <div class="region-layout-toolbar">
           <div class="layout-spacing-grid">
             <label>대지 가장자리 여백 <b id="pageMarginValue">28px</b><input id="pageMargin" type="range" min="0" max="120" step="1" value="28" /></label>
-            <label>가로 칸 간격 <b id="regionGapXValue">16px</b><input id="regionGapX" type="range" min="0" max="100" step="1" value="16" /></label>
-            <label>세로 칸 간격 <b id="regionGapYValue">12px</b><input id="regionGapY" type="range" min="0" max="100" step="1" value="12" /></label>
+            <label>가로 칸 간격 추가 <b id="regionGapXValue">0px</b><input id="regionGapX" type="range" min="0" max="100" step="1" value="0" /></label>
+            <label>세로 칸 간격 추가 <b id="regionGapYValue">0px</b><input id="regionGapY" type="range" min="0" max="100" step="1" value="0" /></label>
           </div>
           <div class="region-layout-actions">
             <button id="reflowRegionsBtn" class="button button-accent" type="button">여백 다시 맞춤</button>
             <button id="restoreAllRegionsBtn" class="button" type="button">↺ 전체 위치</button>
           </div>
-          <p class="microcopy">바깥 여백은 네 변에 동일하게, 내부 간격은 더 좁게 적용합니다. 맞닿는 칸은 템플릿 규칙에 따라 0px까지 붙을 수 있습니다.</p>
+          <p class="microcopy">0px은 칸을 붙이는 값이 아니라 템플릿에 설계된 좁은 기본 간격입니다. 슬라이더는 그 기준에서 여백을 추가합니다.</p>
         </div>
         <div id="regionList" class="region-list"></div>
         <div id="regionControls" class="editor-card is-disabled">
@@ -182,6 +182,13 @@
               <div id="regionAcceptText" class="segmented-control" role="group" aria-label="영역 용도">
                 <button type="button" data-value="yes">문장 배치</button>
                 <button type="button" data-value="no">장식 전용</button>
+              </div>
+            </div>
+            <div>
+              <span class="field-label">문장 영역 클리핑</span>
+              <div id="regionTextClip" class="segmented-control" role="group" aria-label="문장 영역 클리핑">
+                <button type="button" data-value="off">안 함</button>
+                <button type="button" data-value="on">영역 안</button>
               </div>
             </div>
           </div>

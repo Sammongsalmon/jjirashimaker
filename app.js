@@ -155,7 +155,7 @@
       shape: "rect", radius: 0, rotation: 0, padding: 26, textVAlign: "center",
       fill: "#ffffff", fillRole: null, fillNone: false,
       stroke: "#111111", strokeRole: null, strokeNone: true, strokeWidth: 0,
-      acceptText: true, effect: "none", effects: [], effectColor: "#111111", effectSize: 18,
+      acceptText: true, clipText: false, effect: "none", effects: [], effectColor: "#111111", effectSize: 18,
       ...options
     };
     if (options.strokeNone === undefined && (options.stroke || options.strokeRole) && Number(options.strokeWidth) > 0) {
@@ -166,20 +166,20 @@
 
   const REGION_TEXT_PRESETS = {
     hero: {
-      fontFamily:"dotum", align:"left", bold:true, italic:false,
-      lineHeight:.86, scaleX:.91, letterSpacing:-5,
+      fontFamily:"chosunKg", align:"left", bold:true, italic:false,
+      lineHeight:.82, scaleX:.96, letterSpacing:-5,
       unicodeStyle:"none", effect:"none", outlineWidth:0,
       fontCap:226, fontScale:1.20, gapScale:.48, accentWords:true
     },
     heroShadow: {
-      fontFamily:"dotum", align:"left", bold:true, italic:false,
-      lineHeight:.86, scaleX:.91, letterSpacing:-5,
+      fontFamily:"chosunKg", align:"left", bold:true, italic:false,
+      lineHeight:.82, scaleX:.96, letterSpacing:-5,
       unicodeStyle:"none", effect:"shadow", effectColorRole:"secondary", outlineWidth:3,
       fontCap:220, fontScale:1.16, gapScale:.48, accentWords:false
     },
     heroOutline: {
-      fontFamily:"dotum", align:"left", bold:true, italic:false,
-      lineHeight:.86, scaleX:.91, letterSpacing:-5,
+      fontFamily:"chosunKg", align:"left", bold:true, italic:false,
+      lineHeight:.82, scaleX:.96, letterSpacing:-5,
       unicodeStyle:"none", effect:"outline", effectColorRole:"paper", outlineWidth:2,
       fontCap:220, fontScale:1.17, gapScale:.48, accentWords:true
     },
@@ -190,14 +190,14 @@
       fontCap:112, fontScale:1.10, gapScale:.42, accentWords:false
     },
     badge: {
-      fontFamily:"dotum", align:"center", bold:true, italic:false,
-      lineHeight:.84, scaleX:.94, letterSpacing:-2,
+      fontFamily:"chosunLo", align:"center", bold:true, italic:false,
+      lineHeight:.82, scaleX:.97, letterSpacing:-2,
       unicodeStyle:"none", effect:"none", outlineWidth:0,
       fontCap:132, fontScale:1.10, gapScale:.40, accentWords:false
     },
     badgeOutline: {
-      fontFamily:"dotum", align:"center", bold:true, italic:false,
-      lineHeight:.84, scaleX:.94, letterSpacing:-2,
+      fontFamily:"chosunLo", align:"center", bold:true, italic:false,
+      lineHeight:.82, scaleX:.97, letterSpacing:-2,
       unicodeStyle:"none", effect:"outline", effectColorRole:"paper", outlineWidth:2,
       fontCap:128, fontScale:1.08, gapScale:.40, accentWords:false
     },
@@ -214,8 +214,8 @@
       fontCap:94, fontScale:1.02, gapScale:.44, accentWords:true
     },
     bodyDisplay: {
-      fontFamily:"dotum", align:"left", bold:true, italic:false,
-      lineHeight:.90, scaleX:.92, letterSpacing:-3,
+      fontFamily:"chosunKg", align:"left", bold:true, italic:false,
+      lineHeight:.86, scaleX:.96, letterSpacing:-3,
       unicodeStyle:"none", effect:"none", outlineWidth:0,
       fontCap:130, fontScale:1.10, gapScale:.40, accentWords:true
     },
@@ -232,19 +232,19 @@
       fontCap:48, fontScale:.94, gapScale:.30, accentWords:false
     },
     hotline: {
-      fontFamily:"dotum", align:"center", bold:true, italic:false,
-      lineHeight:.82, scaleX:.88, letterSpacing:-3,
+      fontFamily:"chosunKg", align:"center", bold:true, italic:false,
+      lineHeight:.80, scaleX:.94, letterSpacing:-3,
       unicodeStyle:"none", effect:"none", outlineWidth:0,
       fontCap:176, fontScale:1.20, gapScale:.30, accentWords:true
     },
     hotlineOutline: {
-      fontFamily:"dotum", align:"center", bold:true, italic:false,
-      lineHeight:.82, scaleX:.88, letterSpacing:-3,
+      fontFamily:"chosunKg", align:"center", bold:true, italic:false,
+      lineHeight:.80, scaleX:.94, letterSpacing:-3,
       unicodeStyle:"none", effect:"outline", effectColorRole:"paper", outlineWidth:2,
       fontCap:174, fontScale:1.18, gapScale:.30, accentWords:true
     },
     note: {
-      fontFamily:"batang", align:"center", bold:true, italic:false,
+      fontFamily:"chosunSm", align:"center", bold:true, italic:false,
       lineHeight:.90, scaleX:.94, letterSpacing:-2,
       unicodeStyle:"none", effect:"none", outlineWidth:0,
       fontCap:108, fontScale:1.06, gapScale:.40, accentWords:false
@@ -566,8 +566,8 @@
     artboard: { preset: "flyer", widthMm: 180, heightMm: 100 },
     bleedMm: 0,
     pageMargin: 28,
-    regionGapX: 16,
-    regionGapY: 12,
+    regionGapX: 0,
+    regionGapY: 0,
     regionGapReduction: 32,
     templateId: "dense-left-rail",
     palette: {
@@ -613,8 +613,8 @@
     artboardWidthMm: 180,
     artboardHeightMm: 100,
     pageMargin: 28,
-    regionGapX: 16,
-    regionGapY: 12,
+    regionGapX: 0,
+    regionGapY: 0,
     palettePaperMix: 78,
     regionGapReduction: 32,
     gradientAngle: 0,
@@ -4085,7 +4085,7 @@ function moveTextInList(id, direction) {
     const mime=type==="jpg"?"image/jpeg":"image/png";
     const quality=type==="jpg"?state.jpgQuality:undefined;
     const link=document.createElement("a");
-    link.download=`otter-jjirasi-v20-${state.orientation}-${Date.now()}.${type}`;
+    link.download=`otter-jjirasi-v23-${state.orientation}-${Date.now()}.${type}`;
     link.href=out.toDataURL(mime,quality);link.click();
     toast(`${type.toUpperCase()} 파일을 저장했습니다.`);
   }
@@ -4155,8 +4155,8 @@ function ensureStateCompatibility() {
     state.artboard.heightMm = clamp(Number(state.artboard.heightMm) || 100, 50, 420);
     state.orientation = state.artboard.heightMm > state.artboard.widthMm ? "portrait" : "landscape";
     state.pageMargin = clamp(Number(state.pageMargin) || 28, 0, 120);
-    state.regionGapX = clamp(Number(state.regionGapX) || 16, 0, 100);
-    state.regionGapY = clamp(Number(state.regionGapY) || 12, 0, 100);
+    state.regionGapX = clamp(Number.isFinite(Number(state.regionGapX)) ? Number(state.regionGapX) : 0, 0, 100);
+    state.regionGapY = clamp(Number.isFinite(Number(state.regionGapY)) ? Number(state.regionGapY) : 0, 0, 100);
     state.activeTool ||= "templates";
     state.previewZoom = clamp(Number(state.previewZoom) || 1, .2, 3);
     state.previewFit = state.previewFit !== false;
@@ -4176,6 +4176,7 @@ function ensureStateCompatibility() {
       normalizeEffects(region);
       region.textVAlign = "center";
       if (typeof region.acceptText !== "boolean") region.acceptText = true;
+      if (typeof region.clipText !== "boolean") region.clipText = false;
       if (!Number.isFinite(Number(region.padding))) region.padding = 20;
       if (!Number.isFinite(Number(region.effectSize))) region.effectSize = 18;
       if (!region.layoutNorm && region.layoutBase) {
@@ -4196,7 +4197,7 @@ function ensureStateCompatibility() {
     });
     state.texts.forEach((text) => {
       normalizeEffects(text);
-      if (text.fontFamily === "gulim" || !fontFamilies[text.fontFamily]) text.fontFamily = "pretendard";
+      if (text.fontFamily === "gulim" || !fontFamilies[text.fontFamily]) text.fontFamily = "dotum";
       text.fontWeight = clamp(Number(text.fontWeight) || (text.bold ? 760 : 520), 100, 900);
       text.scaleX = clamp(Number(text.scaleX) || 1, .45, 1.65);
       text.scaleY = clamp(Number(text.scaleY) || 1, .45, 1.65);
@@ -4530,6 +4531,311 @@ function ensureStateCompatibility() {
 
   const V16_TEMPLATES = buildV16Templates();
 
+
+  // v23: portrait layouts keep the same centered inner-grid rules. The template itself
+  // contains a narrow baseline gap; the gap sliders only add extra spacing.
+  function buildV22Portrait(style="stack"){
+    const g=.014,gy=.012,G=(n,x,y,w,h,o={})=>VRegion(n,x,y,w,h,{gridV21:true,...o});
+    const common={
+      stack:[
+        G("속보 표식",0,0,.23,.09,{fillRole:"tertiary",radius:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("기관 안내",.23+g,0,.77-g,.09,{fillRole:"secondary",textPreset:"microCenter",textRoles:["micro"]}),
+        G("큰 제목",0,.102,1,.23,{fillNone:true,padding:1,emphasis:1.58,textPreset:"hero",textRoles:["headline"]}),
+        G("핵심 목록",0,.344,1,.255,{fillRole:"paper",radius:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",0,.611,.60,.145,{fillRole:"tertiary",radius:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("수치",.60+g,.611,.40-g,.145,{fillRole:"secondary",radius:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("연락처",0,.768,1,.13,{fillRole:"primary",textPreset:"hotline",textRoles:["footer"]}),
+        G("주의 문구",0,.910,1,.09,{fillNone:true,padding:1,textPreset:"microCenter",textRoles:["micro"]})
+      ],
+      rail:[
+        G("왼쪽 판",0,0,.25,1,{fillRole:"secondary",radius:16,acceptText:false}),
+        G("속보 표식",.018,.025,.214,.16,{fillRole:"tertiary",radius:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("주의 문구",.018,.72,.214,.245,{fillNone:true,padding:3,textPreset:"microCenter",textRoles:["micro"]}),
+        G("큰 제목",.25+g,0,.75-g,.235,{fillNone:true,padding:1,emphasis:1.58,textPreset:"hero",textRoles:["headline"]}),
+        G("기관 안내",.25+g,.247,.75-g,.085,{fillRole:"secondary",textPreset:"microCenter",textRoles:["micro"]}),
+        G("핵심 목록",.25+g,.344,.45,.30,{fillRole:"paper",radius:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",.70+g*2,.344,.30-g*2,.18,{fillRole:"tertiary",radius:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("수치",.70+g*2,.536,.30-g*2,.108,{fillRole:"primary",radius:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("연락처",.25+g,.656,.75-g,.17,{fillRole:"tertiary",textPreset:"hotline",textRoles:["footer"]}),
+        G("하단 메모",.25+g,.838,.75-g,.162,{fillNone:true,padding:1,textPreset:"microCenter",textRoles:["micro"]})
+      ],
+      columns:[
+        G("속보 표식",0,0,.22,.09,{fillRole:"tertiary",radius:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("기관 안내",.22+g,0,.78-g,.09,{fillRole:"secondary",textPreset:"microCenter",textRoles:["micro"]}),
+        G("큰 제목",0,.102,1,.225,{fillNone:true,padding:1,emphasis:1.58,textPreset:"hero",textRoles:["headline"]}),
+        G("핵심 목록",0,.339,.49,.32,{fillRole:"paper",radius:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",.49+g,.339,.51-g,.19,{fillRole:"tertiary",radius:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("수치",.49+g,.541,.51-g,.118,{fillRole:"secondary",radius:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("연락처",0,.671,1,.145,{fillRole:"primary",textPreset:"hotline",textRoles:["footer"]}),
+        G("주의 문구",0,.828,1,.172,{fillNone:true,padding:1,textPreset:"microCenter",textRoles:["micro"]})
+      ],
+      type:[
+        G("속보 표식",0,0,.19,.09,{fillRole:"tertiary",radius:18,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("기관 안내",.19+g,0,.81-g,.09,{fillNone:true,padding:1,textPreset:"microCenter",textRoles:["micro"]}),
+        G("큰 제목",0,.102,1,.305,{fillNone:true,padding:0,emphasis:1.78,textPreset:"hero",textRoles:["headline"]}),
+        G("핵심 목록",0,.419,.53,.255,{fillNone:true,padding:1,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",.53+g,.419,.47-g,.145,{fillRole:"paper",radius:20,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("수치",.53+g,.576,.47-g,.098,{fillNone:true,padding:1,textPreset:"badge",textRoles:["tag"]}),
+        G("주의 문구",0,.686,.25,.14,{fillNone:true,padding:1,textPreset:"micro",textRoles:["micro"]}),
+        G("연락처",.25+g,.686,.75-g,.14,{fillNone:true,padding:1,textPreset:"hotline",textRoles:["footer"]})
+      ],
+      photo:[
+        G("사진 자리",0,0,1,.27,{fillRole:"secondary",radius:20,acceptText:false}),
+        G("속보 표식",.018,.02,.22,.09,{fillRole:"tertiary",radius:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("큰 제목",0,.282,1,.19,{fillNone:true,padding:1,emphasis:1.50,textPreset:"hero",textRoles:["headline"]}),
+        G("기관 안내",0,.484,1,.075,{fillRole:"secondary",textPreset:"microCenter",textRoles:["micro"]}),
+        G("핵심 목록",0,.571,.56,.225,{fillRole:"paper",radius:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",.56+g,.571,.44-g,.135,{fillRole:"tertiary",radius:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("수치",.56+g,.718,.44-g,.078,{fillRole:"primary",radius:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("연락처",0,.808,1,.105,{fillRole:"tertiary",textPreset:"hotline",textRoles:["footer"]}),
+        G("주의 문구",0,.925,1,.075,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+      ]
+    };
+    return (common[style]||common.stack).map(r=>({...r}));
+  }
+
+  function buildV22Templates(){
+    const G=(name,x,y,w,h,options={})=>VRegion(name,x,y,w,h,{templateV22:true,...options});
+    const slotMap=(regions)=>[
+      "속보 표식","큰 제목","기관 안내","핵심 목록","짧은 강조","수치","연락처","주의 문구"
+    ].map((name)=>Math.max(0,regions.findIndex((region)=>region.name===name)));
+    const portrait=(style)=>buildV22Portrait(style);
+    const make=(id,name,caption,bgRole,regions,portraitStyle="stack",border={enabled:false,width:0,radius:0})=>{
+      const normalizedRegions=normalizeTemplateRegionGroup(regions,.018);
+      const portraitRegions=normalizeTemplateRegionGroup(portrait(portraitStyle),.026);
+      return {
+        id,name,caption,portraitStyle,bg:{role:bgRole},border,
+        regions:normalizedRegions,textSlots:slotMap(normalizedRegions),portraitRegions,textSlotsPortrait:slotMap(portraitRegions)
+      };
+    };
+    const templates=[];
+
+    // 1. 상단 검정 대제목과 하단 적색 정보판. 큰 글자, 타원 속보, 전화번호가 서로 다른 밀도로 충돌한다.
+    templates.push(make(
+      "headline-right-block","상하 반전 광고판","검정 대제목판과 적색 기사판을 맞물리고 속보 타원과 전화번호를 크게 강조한 구성","secondary",[
+        G("상단 배경",.010,.012,.980,.355,{fillRole:"secondary",acceptText:false,radius:0,touchX:true}),
+        G("큰 제목",.028,.028,.944,.300,{fillNone:true,padding:0,emphasis:2.32,overflowAllowance:.035,textPreset:"heroOutline",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.46,lineHeight:.76,scaleX:1.00,letterSpacing:-7,outlineWidth:3,colorRole:"paper"}}),
+        G("기관 안내",.090,.366,.820,.055,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.04,colorRole:"paper"}}),
+        G("하단 배경",.010,.430,.980,.550,{fillRole:"tertiary",acceptText:false,radius:0,touchX:true}),
+        G("속보 표식",.035,.452,.235,.132,{shape:"ellipse",fillRole:"primary",padding:10,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.34,lineHeight:.72,outlineWidth:3}}),
+        G("핵심 목록",.035,.600,.595,.195,{fillRole:"paper",radius:13,padding:12,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.16,lineHeight:.90,scaleX:.98}}),
+        G("짧은 강조",.650,.452,.315,.343,{fillRole:"secondary",radius:13,padding:13,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"chosunKg",fontScale:1.35,lineHeight:.77,scaleX:.98}}),
+        G("수치",.035,.812,.255,.112,{fillNone:true,padding:0,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.28,lineHeight:.75}}),
+        G("연락처",.310,.802,.655,.132,{fillNone:true,padding:0,emphasis:1.55,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.34,lineHeight:.76,scaleX:.98,outlineWidth:3}}),
+        G("주의 문구",.035,.942,.930,.026,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.02}})
+      ],"rail",{enabled:true,color:"#111111",width:5,radius:0}
+    ));
+
+    // 2. 상단 초대형 제목, 오른쪽 세로 간판, 하단 전화번호. 의미 없는 배경 사각형 대신 단어 배경 강조를 사용한다.
+    templates.push(make(
+      "right-vertical-panel","우측 세로 간판","초대형 제목과 오른쪽 세로 문구판, 왼쪽 기사칸을 촘촘히 결합한 구성","primary",[
+        G("큰 제목",.015,.018,.970,.315,{fillNone:true,padding:0,emphasis:2.38,overflowAllowance:.035,textPreset:"heroOutline",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.50,lineHeight:.75,scaleX:1.00,letterSpacing:-7,outlineWidth:3}}),
+        G("기관 안내",.000,.345,1.000,.072,{fillRole:"secondary",radius:0,padding:5,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.06}}),
+        G("핵심 목록",.018,.435,.625,.315,{fillRole:"paper",radius:11,padding:13,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.18,lineHeight:.90,scaleX:.98}}),
+        G("짧은 강조",.660,.435,.322,.435,{fillRole:"tertiary",radius:10,padding:12,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"chosunLo",fontScale:1.48,lineHeight:.72,scaleX:.99,verticalWhenNarrow:true}}),
+        G("속보 표식",.770,.040,.195,.115,{shape:"burst",fillRole:"secondary",strokeRole:"paper",strokeWidth:3,strokeNone:false,padding:16,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.30,lineHeight:.74}}),
+        G("수치",.018,.770,.255,.100,{fillNone:true,padding:0,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.24}}),
+        G("주의 문구",.292,.770,.350,.100,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.02}}),
+        G("연락처",.018,.890,.964,.080,{fillNone:true,padding:0,emphasis:1.42,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.34,lineHeight:.74,outlineWidth:3}})
+      ],"columns"
+    ));
+
+    // 3. 상단 제목판, 가운데 원형 표식과 기사, 하단 초대형 연락처. 인쇄 광고처럼 크기 대비를 극단적으로 둔다.
+    templates.push(make(
+      "bottom-giant-copy","하단 초대형 문구","상단 대제목과 원형 속보, 기사 덩어리, 하단 초대형 연락처를 연결한 구성","primary",[
+        G("상단 제목판",.018,.018,.964,.275,{fillRole:"paperHard",radius:15,acceptText:false}),
+        G("큰 제목",.032,.030,.936,.245,{fillNone:true,padding:0,emphasis:2.28,textPreset:"hero",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.47,lineHeight:.75,scaleX:1.00,letterSpacing:-7}}),
+        G("속보 표식",.030,.320,.315,.315,{shape:"ellipse",fillRole:"tertiary",padding:24,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.42,lineHeight:.70,outlineWidth:3}}),
+        G("기관 안내",.365,.315,.605,.075,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.06}}),
+        G("핵심 목록",.365,.405,.605,.220,{fillRole:"paper",radius:0,padding:12,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.18,lineHeight:.90}}),
+        G("짧은 강조",.365,.638,.605,.090,{fillNone:true,padding:0,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"batang",fontScale:1.25,lineHeight:.80}}),
+        G("수치",.365,.740,.260,.070,{fillNone:true,padding:0,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.20}}),
+        G("주의 문구",.645,.740,.325,.070,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.00}}),
+        G("연락처",.008,.805,.984,.168,{fillNone:true,padding:0,emphasis:2.00,overflowAllowance:.035,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.55,lineHeight:.72,scaleX:1.00,outlineWidth:3}})
+      ],"type"
+    ));
+
+    // 4. 중앙 폭발표식과 좌우 기사. 상단·하단 글자를 크게 두고 작은 설명은 틈을 메운다.
+    templates.push(make(
+      "center-burst-editorial","중앙 폭발 기사판","상단 대문구와 중앙 폭발표식, 좌우 기사, 하단 연락처를 충돌시킨 구성","primary",[
+        G("큰 제목",.025,.012,.950,.215,{fillNone:true,padding:0,emphasis:2.32,textPreset:"heroOutline",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.48,lineHeight:.74,scaleX:.99,letterSpacing:-7,outlineWidth:3}}),
+        G("핵심 목록",.018,.245,.285,.455,{fillNone:true,padding:0,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.12,lineHeight:.88,scaleX:.98}}),
+        G("속보 표식",.345,.245,.310,.420,{shape:"burst",fillRole:"paper",strokeRole:"secondary",strokeWidth:4,strokeNone:false,padding:28,textPreset:"badge",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.60,lineHeight:.68}}),
+        G("짧은 강조",.700,.245,.282,.350,{fillNone:true,padding:0,textPreset:"heroOutline",textRoles:["callout"],textStyle:{fontFamily:"chosunLo",fontScale:1.38,lineHeight:.72,scaleX:.96,outlineWidth:3,verticalWhenNarrow:true}}),
+        G("수치",.710,.615,.260,.110,{fillNone:true,padding:0,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.24}}),
+        G("기관 안내",.018,.720,.285,.085,{fillNone:true,padding:0,textPreset:"micro",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.02}}),
+        G("연락처",.275,.700,.455,.190,{fillNone:true,padding:0,emphasis:1.65,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.38,lineHeight:.74,outlineWidth:3}}),
+        G("주의 문구",.100,.915,.800,.045,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.02}})
+      ],"type"
+    ));
+
+    // 5. 왼쪽 세로 표식, 중앙 기사판, 오른쪽 타원 배지. 짧은 문구는 세로로 크게 쓴다.
+    templates.push(make(
+      "left-vertical-type","세로 표식·타원판","왼쪽 세로 대문구와 중앙 기사판, 오른쪽 입체 타원을 쌓은 구성","primary",[
+        G("속보 표식",.018,.035,.178,.770,{fillNone:true,padding:0,emphasis:2.40,textPreset:"heroOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.90,lineHeight:.66,scaleX:1.00,outlineWidth:3,verticalWhenNarrow:true}}),
+        G("주의 문구",.025,.830,.165,.110,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.02}}),
+        G("큰 제목",.215,.018,.570,.270,{fillRole:"paper",radius:13,padding:8,textPreset:"hero",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.42,lineHeight:.76,scaleX:.99}}),
+        G("기관 안내",.215,.300,.570,.070,{fillRole:"secondary",radius:0,padding:5,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.04}}),
+        G("핵심 목록",.215,.382,.570,.300,{fillRole:"paper",radius:0,padding:12,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.16,lineHeight:.90}}),
+        G("짧은 강조",.215,.694,.570,.090,{fillNone:true,padding:0,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"batang",fontScale:1.24,lineHeight:.80}}),
+        G("연락처",.215,.798,.570,.100,{fillRole:"secondary",radius:0,padding:5,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.28,lineHeight:.75,outlineWidth:3}}),
+        G("타원 장식1",.810,.030,.175,.145,{shape:"ellipse",fillRole:"tertiary",acceptText:false,effect:"extrude",effectColorRole:"secondary",effectSize:10}),
+        G("타원 장식2",.810,.242,.175,.145,{shape:"ellipse",fillRole:"paperHard",acceptText:false,effect:"extrude",effectColorRole:"secondary",effectSize:10}),
+        G("수치",.810,.454,.175,.170,{shape:"ellipse",fillRole:"tertiary",padding:12,textPreset:"badge",textRoles:["tag"],effect:"extrude",effectColorRole:"secondary",effectSize:10,textStyle:{fontFamily:"chosunLo",fontScale:1.30,lineHeight:.72,verticalWhenNarrow:true}}),
+        G("타원 장식3",.810,.690,.175,.145,{shape:"ellipse",fillRole:"primarySoft",acceptText:false,effect:"extrude",effectColorRole:"secondary",effectSize:10})
+      ],"rail"
+    ));
+
+    // 6. 여러 색 띠가 맞물린 쿠폰형.
+    templates.push(make(
+      "banded-coupon","띠형 쿠폰 모듈","전폭 색 띠와 작은 정보칸을 붙여 인쇄 광고처럼 압축한 구성","secondary",[
+        G("상단 띠",.020,.025,.960,.180,{fillRole:"primary",radius:0,acceptText:false}),
+        G("속보 표식",.035,.050,.160,.130,{shape:"ellipse",fillRole:"tertiary",padding:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("큰 제목",.210,.035,.750,.155,{fillNone:true,padding:0,textPreset:"hero",textRoles:["headline"]}),
+        G("기관 안내",.020,.220,.960,.080,{fillRole:"tertiary",radius:0,padding:8,textPreset:"microCenter",textRoles:["micro"]}),
+        G("핵심 목록",.020,.315,.520,.300,{fillRole:"paper",radius:0,padding:14,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",.555,.315,.425,.145,{fillRole:"primary",radius:0,padding:12,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("수치",.555,.475,.425,.140,{fillRole:"tertiary",radius:0,padding:12,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("연락처",.020,.630,.960,.200,{fillRole:"primary",radius:0,padding:12,textPreset:"hotline",textRoles:["footer"]}),
+        G("주의 문구",.020,.845,.960,.110,{fillRole:"paperHard",radius:0,padding:8,textPreset:"microCenter",textRoles:["micro"]})
+      ],"stack",{enabled:true,color:"#111111",width:5,radius:0}
+    ));
+
+    // 7. 검정 반전과 전화번호 하단.
+    templates.push(make(
+      "black-hotline","검정 반전 전화판","검정 바탕과 원색 헤드라인, 하단 전화번호를 크게 강조한 구성","secondary",[
+        G("속보 표식",.030,.035,.175,.170,{fillRole:"tertiary",radius:18,padding:18,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("큰 제목",.225,.025,.745,.250,{fillNone:true,padding:0,emphasis:1.82,textPreset:"heroOutline",textRoles:["headline"]}),
+        G("기관 안내",.030,.290,.940,.080,{fillRole:"primary",radius:0,padding:8,textPreset:"microCenter",textRoles:["micro"]}),
+        G("핵심 목록",.030,.395,.560,.290,{fillRole:"paper",radius:18,padding:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",.610,.395,.360,.180,{fillRole:"tertiary",radius:16,padding:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("수치",.610,.590,.360,.095,{fillNone:true,padding:0,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("연락처",.000,.720,1.000,.190,{fillRole:"primary",radius:0,padding:12,emphasis:1.45,textPreset:"hotline",textRoles:["footer"]}),
+        G("주의 문구",.030,.925,.940,.045,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+      ],"stack"
+    ));
+
+    // 8. 왼쪽 사진, 오른쪽 기사. 사용자가 만든 18.1 레이아웃의 장점을 살리되 배지·제목·기사 덩어리의 위계를 더 강하게 조정.
+    templates.push(make(
+      "photo-left-story","사진 좌측 기사판","왼쪽 세로 사진과 오른쪽 고밀도 기사·연락처를 한 판처럼 맞물린 구성","paper",[
+        G("사진 자리",.020,.030,.345,.925,{fillRole:"secondary",radius:18,acceptText:false}),
+        G("속보 그림자",.395,.040,.185,.190,{shape:"burst",fillRole:"secondary",acceptText:false,effect:"extrude",effectColorRole:"secondary",effectSize:12}),
+        G("속보 표식",.390,.030,.185,.185,{shape:"burst",fillRole:"tertiary",strokeRole:"paper",strokeWidth:3,strokeNone:false,padding:22,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.28,outlineWidth:3}}),
+        G("큰 제목",.540,.025,.440,.245,{fillNone:true,padding:0,emphasis:1.90,overflowAllowance:.025,textPreset:"heroOutline",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.36,lineHeight:.79,scaleX:.98,letterSpacing:-5,outlineWidth:3}}),
+        G("기관 안내",.390,.285,.590,.080,{fillRole:"secondary",radius:0,padding:7,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontScale:1.06}}),
+        G("핵심 목록",.390,.380,.355,.335,{fillRole:"primary",radius:16,padding:16,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontScale:1.12,lineHeight:.92}}),
+        G("짧은 강조",.760,.380,.220,.185,{fillRole:"tertiary",radius:12,padding:12,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"chosunKg",fontScale:1.17,lineHeight:.84}}),
+        G("수치",.760,.575,.220,.140,{fillRole:"secondary",radius:0,padding:10,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.18,outlineWidth:3}}),
+        G("연락처",.390,.730,.590,.130,{fillRole:"tertiary",radius:0,padding:8,emphasis:1.30,textPreset:"hotline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.26,lineHeight:.82,scaleX:.95}}),
+        G("주의 문구",.390,.875,.590,.065,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontScale:1.02}})
+      ],"photo"
+    ));
+
+    // 9. 오른쪽 타원 배지 네 단.
+    templates.push(make(
+      "oval-stack","우측 타원 배지","왼쪽 기사판과 오른쪽 타원 배지를 세로로 반복한 구성","primary",[
+        G("큰 제목",.025,.025,.710,.250,{fillRole:"paper",radius:18,padding:12,textPreset:"hero",textRoles:["headline"]}),
+        G("기관 안내",.025,.290,.710,.075,{fillRole:"secondary",radius:0,padding:8,textPreset:"microCenter",textRoles:["micro"]}),
+        G("핵심 목록",.025,.380,.710,.310,{fillRole:"paper",radius:0,padding:16,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",.025,.705,.710,.105,{fillNone:true,padding:0,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("연락처",.025,.825,.710,.085,{fillNone:true,padding:0,textPreset:"hotlineOutline",textRoles:["footer"]}),
+        G("속보 표식",.765,.040,.210,.150,{shape:"ellipse",fillRole:"tertiary",padding:18,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("타원 장식",.765,.250,.210,.150,{shape:"ellipse",fillRole:"paperHard",acceptText:false,effect:"extrude",effectColorRole:"secondary",effectSize:12}),
+        G("수치",.765,.460,.210,.150,{shape:"ellipse",fillRole:"tertiary",padding:16,textPreset:"badge",textRoles:["tag"]}),
+        G("주의 문구",.765,.670,.210,.190,{shape:"ellipse",fillRole:"primarySoft",padding:18,textPreset:"microCenter",textRoles:["micro"]})
+      ],"columns"
+    ));
+
+    // 10. 세로 표찰과 기사판.
+    templates.push(make(
+      "vertical-ticket-story","세로 표찰 기사","왼쪽 세로 표찰과 오른쪽 기사판을 빈틈 없이 이어 붙인 구성","primary",[
+        G("왼쪽 표찰",.020,.025,.220,.930,{fillRole:"secondary",radius:16,acceptText:false}),
+        G("속보 표식",.045,.050,.170,.160,{fillRole:"tertiary",radius:14,padding:16,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("수치",.045,.245,.170,.230,{fillNone:true,padding:0,textPreset:"heroOutline",textRoles:["tag"]}),
+        G("주의 문구",.045,.700,.170,.210,{fillNone:true,padding:4,textPreset:"microCenter",textRoles:["micro"]}),
+        G("큰 제목",.255,.025,.725,.260,{fillRole:"paper",radius:18,padding:12,textPreset:"hero",textRoles:["headline"]}),
+        G("기관 안내",.255,.300,.725,.075,{fillRole:"tertiary",radius:0,padding:8,textPreset:"microCenter",textRoles:["micro"]}),
+        G("핵심 목록",.255,.390,.440,.330,{fillRole:"paper",radius:0,padding:16,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",.710,.390,.270,.330,{fillRole:"tertiary",radius:16,padding:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("연락처",.255,.740,.725,.150,{fillRole:"secondary",radius:0,padding:10,textPreset:"hotlineOutline",textRoles:["footer"]})
+      ],"rail"
+    ));
+
+    // 11. 카드 없이 글자와 원형 도형만 충돌시키는 무테형.
+    templates.push(make(
+      "bare-collision-type","무테 충돌 타이포","카드 없이 큰 글자와 원형 도형, 작은 주석을 화면에 직접 배치한 구성","primary",[
+        G("원형 장식",.790,.025,.185,.260,{shape:"ellipse",fillRole:"tertiary",acceptText:false}),
+        G("속보 표식",.025,.035,.180,.120,{fillNone:true,padding:0,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("큰 제목",.105,.030,.800,.320,{fillNone:true,padding:0,emphasis:2.10,overflowAllowance:.04,textPreset:"hero",textRoles:["headline"]}),
+        G("기관 안내",.160,.360,.720,.075,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]}),
+        G("핵심 목록",.025,.455,.430,.300,{fillNone:true,padding:0,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",.500,.455,.455,.180,{fillNone:true,padding:0,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("수치",.620,.645,.230,.100,{fillNone:true,padding:0,textPreset:"badge",textRoles:["tag"]}),
+        G("연락처",.350,.760,.625,.145,{fillNone:true,padding:0,emphasis:1.35,textPreset:"hotline",textRoles:["footer"]}),
+        G("주의 문구",.025,.790,.285,.110,{fillNone:true,padding:0,textPreset:"micro",textRoles:["micro"]})
+      ],"type"
+    ));
+
+    // 12. 상단 띠와 같은 높이의 세 기사칸.
+    templates.push(make(
+      "top-band-three","상단 띠·삼단 기사","전폭 상단 띠 아래 같은 높이의 세 기사칸과 하단 전화판을 둔 구성","paper",[
+        G("속보 표식",.020,.025,.170,.155,{fillRole:"tertiary",radius:14,padding:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("큰 제목",.205,.025,.775,.220,{fillNone:true,padding:0,emphasis:1.70,textPreset:"hero",textRoles:["headline"]}),
+        G("기관 안내",.020,.260,.960,.080,{fillRole:"secondary",radius:0,padding:8,textPreset:"microCenter",textRoles:["micro"]}),
+        G("핵심 목록",.020,.355,.380,.350,{fillRole:"primary",radius:16,padding:16,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",.415,.355,.275,.350,{fillRole:"tertiary",radius:16,padding:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("수치",.705,.355,.275,.350,{fillRole:"secondary",radius:16,padding:16,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("연락처",.020,.720,.700,.175,{fillRole:"tertiary",radius:0,padding:10,textPreset:"hotline",textRoles:["footer"]}),
+        G("주의 문구",.735,.720,.245,.175,{fillNone:true,padding:2,textPreset:"microCenter",textRoles:["micro"]})
+      ],"columns"
+    ));
+
+    // 13. 중앙 큰 숫자/짧은 문구판.
+    templates.push(make(
+      "center-symbol-panel","중앙 심볼판","좌우 기사 사이 중앙 큰 표식과 상하 대문구를 배치한 구성","secondary",[
+        G("큰 제목",.020,.025,.960,.210,{fillNone:true,padding:0,emphasis:1.95,textPreset:"heroOutline",textRoles:["headline"]}),
+        G("핵심 목록",.020,.260,.280,.420,{fillNone:true,padding:0,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("속보 표식",.330,.265,.340,.390,{shape:"burst",fillRole:"paper",strokeRole:"tertiary",strokeWidth:4,strokeNone:false,padding:36,textPreset:"badge",textRoles:["tag"]}),
+        G("짧은 강조",.700,.260,.280,.420,{fillNone:true,padding:0,textPreset:"heroOutline",textRoles:["callout"]}),
+        G("기관 안내",.020,.700,.280,.080,{fillNone:true,padding:0,textPreset:"micro",textRoles:["micro"]}),
+        G("수치",.700,.700,.280,.080,{fillNone:true,padding:0,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("연락처",.255,.700,.490,.180,{fillNone:true,padding:0,textPreset:"hotlineOutline",textRoles:["footer"]}),
+        G("주의 문구",.020,.900,.960,.055,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+      ],"type"
+    ));
+
+    // 14. 두 개의 큰 판과 작은 줄을 붙인 대조형.
+    templates.push(make(
+      "split-contrast","좌우 대조판","왼쪽 큰 기사판과 오른쪽 강조·수치판을 같은 높이로 맞춘 구성","primary",[
+        G("속보 표식",.020,.025,.170,.120,{fillRole:"tertiary",radius:16,padding:14,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("기관 안내",.205,.025,.775,.120,{fillRole:"secondary",radius:0,padding:8,textPreset:"microCenter",textRoles:["micro"]}),
+        G("큰 제목",.020,.160,.960,.245,{fillNone:true,padding:0,emphasis:1.80,textPreset:"hero",textRoles:["headline"]}),
+        G("핵심 목록",.020,.420,.575,.355,{fillRole:"paper",radius:18,padding:18,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",.610,.420,.370,.220,{fillRole:"tertiary",radius:18,padding:16,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("수치",.610,.655,.370,.120,{fillRole:"secondary",radius:14,padding:12,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("연락처",.020,.790,.960,.115,{fillRole:"tertiary",radius:0,padding:8,textPreset:"hotline",textRoles:["footer"]}),
+        G("주의 문구",.020,.920,.960,.040,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+      ],"columns"
+    ));
+
+    // 15. 소형 광고 카드처럼 여러 정보가 한 판에 밀집된 형태.
+    templates.push(make(
+      "compact-ad-card","소형 광고 밀집판","두꺼운 외곽선 안에 제목·목록·강조·전화번호를 촘촘히 넣은 구성","primary",[
+        G("속보 표식",.030,.035,.175,.175,{shape:"burst",fillRole:"tertiary",padding:20,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("큰 제목",.220,.030,.750,.210,{fillRole:"paper",radius:12,padding:10,textPreset:"hero",textRoles:["headline"]}),
+        G("기관 안내",.030,.255,.940,.070,{fillRole:"secondary",radius:0,padding:6,textPreset:"microCenter",textRoles:["micro"]}),
+        G("핵심 목록",.030,.340,.940,.245,{fillRole:"paperHard",radius:10,padding:14,textPreset:"bulletDense",textRoles:["bullet"]}),
+        G("짧은 강조",.030,.600,.540,.155,{fillRole:"tertiary",radius:10,padding:12,textPreset:"bodyDisplay",textRoles:["callout"]}),
+        G("수치",.585,.600,.385,.155,{fillRole:"secondary",radius:10,padding:12,textPreset:"badgeOutline",textRoles:["tag"]}),
+        G("연락처",.030,.770,.940,.120,{fillRole:"primaryDeep",radius:0,padding:8,textPreset:"hotlineOutline",textRoles:["footer"]}),
+        G("주의 문구",.030,.900,.940,.060,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
+      ],"stack",{enabled:true,color:"#111111",width:7,radius:10}
+    ));
+
+    return templates;
+  }
+  const V22_TEMPLATES=buildV22Templates();
+
   function getTemplateRegionSpecs(spec) {
     return state.orientation === "portrait" ? (spec.portraitRegions || buildPortraitRegions(spec.portraitStyle)) : spec.regions;
   }
@@ -4561,49 +4867,34 @@ function ensureStateCompatibility() {
 
   function regionBaseTarget(region) {
     const { trimW:W, trimH:H } = dimensions();
-    const norm = region.layoutNorm || {
-      x:(region.layoutBase?.x || region.x) / W,
-      y:(region.layoutBase?.y || region.y) / H,
-      w:(region.layoutBase?.w || region.w) / W,
-      h:(region.layoutBase?.h || region.h) / H
-    };
-    const norms = state.regions.map((item)=>item.layoutNorm).filter(Boolean);
-    const minX = norms.length ? Math.min(...norms.map((item)=>item.x)) : .03;
-    const minY = norms.length ? Math.min(...norms.map((item)=>item.y)) : .03;
-    const maxX = norms.length ? Math.max(...norms.map((item)=>item.x+item.w)) : .97;
-    const maxY = norms.length ? Math.max(...norms.map((item)=>item.y+item.h)) : .97;
-    const spanX = Math.max(.2,maxX-minX);
-    const spanY = Math.max(.2,maxY-minY);
-    const margin = clamp(Number(state.pageMargin) || 0, 0, Math.min(W,H) * .20);
-    const usableW = Math.max(80,W-margin*2);
-    const usableH = Math.max(80,H-margin*2);
-    let x = margin + ((norm.x-minX)/spanX)*usableW;
-    let y = margin + ((norm.y-minY)/spanY)*usableH;
-    let w = (norm.w/spanX)*usableW;
-    let h = (norm.h/spanY)*usableH;
-    const dx = Number(state.regionGapX)-16;
-    const dy = Number(state.regionGapY)-12;
-    if (!region.touchX && region.acceptText !== false) { x += dx*.45; w -= dx*.90; }
-    if (!region.touchY && region.acceptText !== false) { y += dy*.45; h -= dy*.90; }
-    return { x:Math.round(x), y:Math.round(y), w:Math.max(20,Math.round(w)), h:Math.max(20,Math.round(h)) };
+    const norm = region.layoutNorm || {x:(region.layoutBase?.x||region.x)/Math.max(1,W),y:(region.layoutBase?.y||region.y)/Math.max(1,H),w:(region.layoutBase?.w||region.w)/Math.max(1,W),h:(region.layoutBase?.h||region.h)/Math.max(1,H)};
+    const margin=clamp(Number(state.pageMargin)||0,0,Math.min(W,H)*.20);
+    const usableW=Math.max(80,W-margin*2),usableH=Math.max(80,H-margin*2);
+    let x=margin+norm.x*usableW,y=margin+norm.y*usableH,w=norm.w*usableW,h=norm.h*usableH;
+    const extraX=clamp(Number(state.regionGapX)||0,0,100),extraY=clamp(Number(state.regionGapY)||0,0,100);
+    if(!region.touchX){x+=extraX/2;w-=extraX;}
+    if(!region.touchY){y+=extraY/2;h-=extraY;}
+    return {x,y,w:Math.max(20,w),h:Math.max(20,h)};
   }
 
   function reflowRegions({ preserveManual = true, adaptText = true } = {}) {
-    state.regions.forEach((region) => {
-      const base = regionBaseTarget(region);
-      region.layoutBase = { ...base };
-      const delta = preserveManual && region.layoutDetached && region.layoutManualDelta ? region.layoutManualDelta : {x:0,y:0,w:0,h:0};
-      region.x = base.x + (Number(delta.x) || 0);
-      region.y = base.y + (Number(delta.y) || 0);
-      region.w = Math.max(20, base.w + (Number(delta.w) || 0));
-      region.h = Math.max(20, base.h + (Number(delta.h) || 0));
-      const scale = Math.min(dimensions().trimW / 1440, dimensions().trimH / 800);
-      region.radius = Math.round((Number(region.baseRadius ?? region.radius) || 0) * clamp(scale,.65,1.5));
-      region.padding = Math.round((Number(region.basePadding ?? region.padding) || 0) * clamp(scale,.65,1.5));
-      region.textVAlign = "center";
+    const {trimW:W,trimH:H}=dimensions();
+    const computed=state.regions.map(region=>({region,base:regionBaseTarget(region)}));
+    if(computed.length){
+      const minX=Math.min(...computed.map(v=>v.base.x)),minY=Math.min(...computed.map(v=>v.base.y));
+      const maxX=Math.max(...computed.map(v=>v.base.x+v.base.w)),maxY=Math.max(...computed.map(v=>v.base.y+v.base.h));
+      const shiftX=(W-(maxX-minX))/2-minX,shiftY=(H-(maxY-minY))/2-minY;
+      computed.forEach(v=>{v.base.x+=shiftX;v.base.y+=shiftY;});
+    }
+    computed.forEach(({region,base})=>{
+      region.layoutBase={x:Math.round(base.x),y:Math.round(base.y),w:Math.round(base.w),h:Math.round(base.h)};
+      const d=preserveManual&&region.layoutDetached&&region.layoutManualDelta?region.layoutManualDelta:{x:0,y:0,w:0,h:0};
+      region.x=Math.round(base.x+(Number(d.x)||0));region.y=Math.round(base.y+(Number(d.y)||0));
+      region.w=Math.max(20,Math.round(base.w+(Number(d.w)||0)));region.h=Math.max(20,Math.round(base.h+(Number(d.h)||0)));
+      const scale=Math.min(W/1440,H/800);region.radius=Math.round((Number(region.baseRadius??region.radius)||0)*clamp(scale,.65,1.5));region.padding=Math.round((Number(region.basePadding??region.padding)||0)*clamp(scale,.65,1.5));region.textVAlign="center";
     });
-    if (adaptText) adaptRegionsToText();
-    autoStyleAssignedTexts({ force:false, skipAdapt:true });
+    if(adaptText)adaptRegionsToText();
+    autoStyleAssignedTexts({force:false,skipAdapt:true});
   }
 
 function adaptRegionsToText() {
@@ -4680,18 +4971,19 @@ function adaptRegionsToText() {
   }
 
   function makeDefaultOtterTexts() {
-    const sample = (copy, role, extra = {}) => makeText(copy, {
-      ...ROLE_STYLE_DEFAULTS[role], role, roleHint:role, sample:true, unicodeStyle:"none", fontFamily:"pretendard", ...extra
-    });
+    const sample=(copy,role,extra={})=>makeText(copy,{...ROLE_STYLE_DEFAULTS[role],role,roleHint:role,sample:true,unicodeStyle:"none",fontFamily:"dotum",...extra});
     return [
-      sample("속보", "tag"),
-      sample("수달이 돌 하나 주웠다고 지구가 잠깐 귀여워짐", "headline"),
-      sample("★국가수달과몰입대책본부 발표｜심장 단속 실패｜조개 비축 권고★", "micro"),
-      sample(`•배 위 조개 개봉 완료\n•물 위 눕방·먹방 동시 진행\n•앞발 두 개로 전국민 심장 관리\n•반박 시 수달 영상 48개 제출`, "bullet"),
-      sample("무직인데 귀여움으로 매일 야근", "callout"),
-      sample("입덕률 100.4%", "tag"),
-      sample("☎ 수달 제보 02)770-수달수달 ☎", "footer"),
-      sample("※주의: 한 번 보면 친구에게 보내고 다시 보게 됨·조약돌 수집 충동 동반", "micro")
+      sample("속보","tag",{autoNoWrap:true}),
+      sample("수달이 돌 하나 주웠다고 지구가 잠깐 귀여워짐","headline",{autoNoWrap:true}),
+      sample("★국가수달과몰입대책본부 발표｜심장 단속 실패｜조개 비축 권고★","micro",{autoNoWrap:true}),
+      sample(`•배 위 조개 개봉 완료
+•물 위 눕방·먹방 동시 진행
+•앞발 두 개로 전국민 심장 관리
+•반박 시 수달 영상 48개 제출`,"bullet",{autoNoWrap:false}),
+      sample("무직인데 귀여움으로 매일 야근","callout",{autoNoWrap:true}),
+      sample("입덕률 100.4%","tag",{autoNoWrap:true}),
+      sample("☎ 수달 제보 02)770-수달수달 ☎","footer",{autoNoWrap:true}),
+      sample("※주의: 한 번 보면 친구에게 보내고 다시 보게 됨·조약돌 수집 충동 동반","micro",{autoNoWrap:true})
     ];
   }
 
@@ -4720,14 +5012,16 @@ function adaptRegionsToText() {
   }
 
   function prepareV16() {
-    templateSpecs.splice(0,templateSpecs.length,...V16_TEMPLATES);
-    Object.values(ROLE_STYLE_DEFAULTS).forEach((style) => {
-      style.fontFamily = "pretendard";
+    templateSpecs.splice(0,templateSpecs.length,...V22_TEMPLATES);
+    Object.entries(ROLE_STYLE_DEFAULTS).forEach(([role,style]) => {
+      style.fontFamily = role === "headline" ? "chosunKg" : role === "callout" ? "batang" : role === "tag" ? "chosunLo" : role === "footer" ? "chosunKg" : "dotum";
       style.fontWeight = style.bold ? 760 : 520;
       style.effects = style.effect && style.effect !== "none" ? [style.effect] : [];
     });
-    Object.values(REGION_TEXT_PRESETS).forEach((style) => {
-      style.fontFamily = "pretendard";
+    Object.entries(REGION_TEXT_PRESETS).forEach(([name,style]) => {
+      if (!style.fontFamily || style.fontFamily === "pretendard") {
+        style.fontFamily = name.startsWith("hero") ? "chosunKg" : name.startsWith("badge") ? "chosunLo" : name.startsWith("hotline") ? "chosunKg" : "dotum";
+      }
       style.fontWeight = style.bold ? 760 : 520;
     });
     Object.assign(STATIC_NUMERIC_SPECS, {
@@ -4790,8 +5084,13 @@ function adaptRegionsToText() {
     const regionBg = region.fillNone ? state.background.c1 : resolveColor(region,"fill");
     const baseColor = contrastText(regionBg);
     const accent = bestAccentColor(regionBg,baseColor);
-    text.fontFamily = role === "tag" ? "chosunKg" : (role === "callout" && seed % 3 === 0 ? "chosunLo" : "pretendard");
-    text.autoNoWrap = role !== "bullet";
+    const tallNarrow = region.h > region.w * 1.34 && facts.compact <= 18;
+    if (role === "headline") text.fontFamily = seed % 4 === 0 ? "batang" : (seed % 3 === 0 ? "chosunLo" : "chosunKg");
+    else if (role === "callout") text.fontFamily = seed % 2 ? "batang" : "chosunKg";
+    else if (role === "tag") text.fontFamily = "chosunLo";
+    else if (role === "footer") text.fontFamily = "chosunKg";
+    else text.fontFamily = "dotum";
+    text.autoNoWrap = role !== "bullet" && !tallNarrow;
     text.fontWeight = role === "micro" ? 580 : role === "bullet" ? 690 : 790;
     text.bold = role !== "micro";
     text.italic = false;
@@ -4872,53 +5171,129 @@ function adaptRegionsToText() {
       text.fontWeight = 690;
     }
 
+    if (tallNarrow) {
+      text.align = "center";
+      text.lineHeight = .70;
+      text.scaleX = 1;
+      text.scaleY = 1;
+      text.letterSpacing = -2;
+      text.autoNoWrap = false;
+      text.fontFamily = role === "tag" ? "chosunLo" : "chosunKg";
+    }
     const regionStyle = applyRegionAutoTextStyle(text,role,region);
+    if (regionStyle?.verticalWhenNarrow && region.h > region.w * 1.12 && facts.compact <= 24) {
+      text.autoNoWrap = false;
+      text.align = "center";
+      text.lineHeight = Math.min(text.lineHeight,.74);
+      text.scaleX = Math.max(.94,text.scaleX);
+    }
     text.rangeColors = [];
+    text.rangeBackgrounds = [];
     const accentWords = regionStyle ? (regionStyle.accentWords ?? ["hero","heroShadow","heroOutline"].includes(region.textPreset)) : true;
     if (accentWords) setAutomaticAccentRanges(text,role,region,baseColor);
+    setAutomaticAccentBackground(text,role,region);
     normalizeEffects(text);
+  }
+
+  function setAutomaticAccentBackground(text,role,region){
+    if (text.styleMode === "manual" || !["headline","callout","tag"].includes(role)) return;
+    const templateStyles={
+      "headline-right-block":{shape:"ellipse",word:/수달|돌|귀여움/},
+      "right-vertical-panel":{shape:"rect",word:/돌|수달|귀여움/},
+      "bottom-giant-copy":{shape:"ellipse",word:/수달|돌|귀여움/},
+      "center-burst-editorial":{shape:"rect",word:/수달|돌|귀여움/},
+      "left-vertical-type":{shape:"rect",word:/돌|수달|귀여움/},
+      "photo-left-story":{shape:"rect",word:/수달|돌|귀여움/}
+    };
+    const preset=templateStyles[state.templateId];
+    if(!preset||role!=="headline")return;
+    const match=String(text.text||"").match(preset.word);
+    if(!match||match.index==null)return;
+    const fill=paletteColor(state.templateId==="headline-right-block"?"tertiary":"primary",state.palette);
+    const color=contrastText(fill);
+    const start=match.index,end=start+match[0].length;
+    text.rangeBackgrounds.push({start,end,shape:preset.shape,fill,strokeEnabled:false,stroke:paletteColor("ink",state.palette),strokeWidth:0,paddingX:5,paddingY:2,radius:preset.shape==="rect"?4:20,scaleX:1.05,scaleY:1.03,rotation:0});
+    text.rangeColors=text.rangeColors.filter((range)=>range.end<=start||range.start>=end);
+    text.rangeColors.push({start,end,color});
   }
 
   function fitTextToRegion(c,text,box,targetHeight,role,emphasis=1){
     const AUTO_MIN_SCALE=.70;
-    const caps={headline:360,callout:270,tag:240,bullet:180,footer:260,body:200,micro:92};
-    const maxX={headline:1.12,callout:1.10,tag:1.16,bullet:1.04,footer:1.08,body:1.05,micro:1.04}[role]||1.06;
-    const maxY={headline:1.10,callout:1.08,tag:1.12,bullet:1.04,footer:1.08,body:1.06,micro:1.04}[role]||1.06;
-    const lineHeight=clamp(Number(text.lineHeight)||1,.68,1.45);
-    const styleCap=Number(text.autoFontCap)||caps[role]||200;
-    const styleScale=clamp(Number(text.autoFontScale)||1,.55,1.9);
-    const fill={headline:.97,callout:.95,tag:.92,bullet:.96,footer:.94,body:.95,micro:.82}[role]||.94;
+    const caps={headline:430,callout:320,tag:280,bullet:220,footer:300,body:240,micro:112};
+    const maxX={headline:1.10,callout:1.08,tag:1.12,bullet:1.03,footer:1.08,body:1.04,micro:1.03}[role]||1.05;
+    const maxY={headline:1.08,callout:1.06,tag:1.08,bullet:1.03,footer:1.06,body:1.04,micro:1.03}[role]||1.05;
+    const lh=clamp(Number(text.lineHeight)||1,.72,1.40);
+    const fill={headline:.975,callout:.965,tag:.955,bullet:.97,footer:.965,body:.965,micro:.90}[role]||.96;
     const minFont=role==="micro"?12:18;
-    const cap=Math.max(minFont,styleCap*styleScale*clamp(emphasis,.72,1.65));
+    const styleCap=Number(text.autoFontCap)||caps[role]||220;
+    const styleScale=clamp(Number(text.autoFontScale)||1,.60,2.1);
+    const cap=Math.max(minFont,Math.min(520,Math.max(styleCap*styleScale*clamp(emphasis,.72,1.72),box.h*1.28,box.w*.35)));
+    const widthLimit=box.w*fill;
+    const heightLimit=targetHeight*fill;
 
-    const measure=(size)=>{
-      const previousScaleX=text.scaleX;
+    // 우선순위: 1) 정상 폭에서 줄바꿈 2) 줄 수를 줄이기 위한 가로 압축
+    // 3) 그래도 세로가 모자랄 때만 세로 압축. 자동 압축은 어느 축도 70% 미만 금지.
+    const measure=(size,sx)=>{
+      const old=text.scaleX;
       text.scaleX=1;
-      const lines=layoutTextLines(c,text,size,box.w/AUTO_MIN_SCALE);
-      text.scaleX=previousScaleX;
+      const lines=layoutTextLines(c,text,size,Math.max(20,widthLimit/Math.max(AUTO_MIN_SCALE,sx)));
+      text.scaleX=old;
       const widest=Math.max(1,...lines.map((line)=>line.width));
-      const rawHeight=Math.max(size*lineHeight,lines.length*size*lineHeight);
-      const sx=clamp((box.w*fill)/widest,AUTO_MIN_SCALE,maxX);
-      const sy=clamp((targetHeight*fill)/rawHeight,AUTO_MIN_SCALE,maxY);
-      const fits=widest*AUTO_MIN_SCALE<=box.w*fill+1&&rawHeight*AUTO_MIN_SCALE<=targetHeight*fill+1;
-      return {widest,rawHeight,sx,sy,fits};
+      const rawH=Math.max(size*lh,lines.length*size*lh);
+      return {lines,widest,rawH,widthFits:widest*sx<=widthLimit+1};
     };
 
-    let low=minFont,high=cap,best=minFont;
-    for(let i=0;i<22;i++){
-      const mid=(low+high)/2;
-      if(measure(mid).fits){best=mid;low=mid;}else high=mid;
-    }
-    let result=measure(best);
-    const occupancy=Math.max((result.widest*result.sx)/Math.max(1,box.w),(result.rawHeight*result.sy)/Math.max(1,targetHeight));
-    if(occupancy<.72&&best<cap){
-      const boosted=Math.min(cap,best*(.72/Math.max(.25,occupancy)));
-      const candidate=measure(boosted);
-      if(candidate.fits){best=boosted;result=candidate;}
-    }
-    return {fontSize:Math.max(minFont,Math.floor(best)),scaleX:clamp(result.sx,AUTO_MIN_SCALE,maxX),scaleY:clamp(result.sy,AUTO_MIN_SCALE,maxY)};
-  }
+    const evaluate=(size)=>{
+      let sx=1;
+      let m=measure(size,1);
 
+      if(!(m.widthFits&&m.rawH<=heightLimit+1)){
+        const compressed=measure(size,AUTO_MIN_SCALE);
+        const compressedFitsAtFullHeight=compressed.widthFits&&compressed.rawH<=heightLimit+1;
+
+        if(compressedFitsAtFullHeight){
+          // 가장 덜 찌그러지는 값(1에 가장 가까운 값)을 찾는다.
+          let lo=AUTO_MIN_SCALE,hi=1;
+          for(let i=0;i<20;i++){
+            const mid=(lo+hi)/2;
+            const test=measure(size,mid);
+            if(test.widthFits&&test.rawH<=heightLimit+1)lo=mid;
+            else hi=mid;
+          }
+          sx=lo;
+          m=measure(size,sx);
+        }else{
+          sx=AUTO_MIN_SCALE;
+          m=compressed;
+        }
+      }
+
+      let sy=1;
+      if(m.rawH>heightLimit+1)sy=heightLimit/Math.max(1,m.rawH);
+      if(m.lines.length===1&&m.rawH<=heightLimit+1){
+        // 한 줄 문장은 가능한 한 영역을 채우되, 자동 확장은 역할별 상한까지만.
+        sx=clamp(Math.min(maxX,widthLimit/Math.max(1,m.widest)),AUTO_MIN_SCALE,maxX);
+      }
+      sy=clamp(sy,AUTO_MIN_SCALE,maxY);
+      return {
+        fits:m.widest*sx<=widthLimit+1&&m.rawH*sy<=heightLimit+1&&sx>=AUTO_MIN_SCALE&&sy>=AUTO_MIN_SCALE,
+        sx,sy,...m
+      };
+    };
+
+    let lo=minFont,hi=cap,best=minFont,bestResult=evaluate(minFont);
+    for(let i=0;i<26;i++){
+      const mid=(lo+hi)/2;
+      const result=evaluate(mid);
+      if(result.fits){best=mid;bestResult=result;lo=mid;}else hi=mid;
+    }
+    const result=evaluate(best);
+    return {
+      fontSize:Math.max(minFont,Math.floor(best)),
+      scaleX:clamp(result.sx,AUTO_MIN_SCALE,maxX),
+      scaleY:clamp(result.sy,AUTO_MIN_SCALE,maxY)
+    };
+  }
 
 function autoStyleAssignedTexts({ force = false, skipAdapt = false } = {}) {
     if (!skipAdapt) adaptRegionsToText();
@@ -5224,7 +5599,7 @@ function autoArrangeTexts({ reassign = true, forceStyle = false, announce = fals
       }
       if(item.label){
         c.fillStyle=item.labelColor||"#111111";
-        c.font=`${Math.max(600,item.labelWeight||760)} ${item.labelSize||64}px ${fontFamilies.pretendard}`;
+        c.font=`${Math.max(600,item.labelWeight||760)} ${item.labelSize||64}px ${fontFamilies.dotum}`;
         c.textAlign="center";c.textBaseline="middle";
         const maxW=item.w*.82,measured=c.measureText(item.label).width,sx=Math.min(1,maxW/Math.max(1,measured));
         c.save();c.translate(item.x+item.w/2,item.y+item.h/2);c.scale(sx,1);c.fillText(item.label,0,0);c.restore();
@@ -5235,7 +5610,7 @@ function autoArrangeTexts({ reassign = true, forceStyle = false, announce = fals
   }
 
 function setTextFont(c,text,fontSize){
-    const familyKey=fontFamilies[text.fontFamily]?text.fontFamily:"pretendard";
+    const familyKey=fontFamilies[text.fontFamily]?text.fontFamily:"dotum";
     const weight=familyKey==="pretendard" ? clamp(Number(text.fontWeight)||(text.bold?760:520),100,900) : (text.bold?700:400);
     c.font=`${text.italic?"italic ":""}${weight} ${fontSize}px ${fontFamilies[familyKey]}`;
   }
@@ -5272,7 +5647,7 @@ function buildLayout(c){
         const fontSize=Math.max(protectedText?8:12,(Number(text.fontSize)||12)*(Number(text.manualScale)||1));
         const scaleX=clamp(Number(text.scaleX)||1,minScale,1.65);
         const scaleY=clamp(Number(text.scaleY)||1,minScale,1.65);
-        const lines=layoutTextLines(c,text,fontSize,box.w/minScale);
+        const lines=layoutTextLines(c,text,fontSize,box.w/Math.max(minScale,scaleX));
         const lineH=Math.max(7,fontSize*clamp(Number(text.lineHeight)||1,.65,2)*scaleY);
         return {text,protectedText,minScale,fontSize,scaleX,scaleY,lines,lineH,h:Math.max(lineH,lines.length*lineH)};
       });
@@ -5305,20 +5680,20 @@ function buildLayout(c){
           const interval=intervals.find(([a,b])=>preferred>=a&&preferred<=b)||intervals[0]||[box.x,box.x+box.w];
           const placedX=clamp(preferred,interval[0],Math.max(interval[0],interval[1]-20));
           const availableW=Math.max(20,interval[1]-placedX);
-          lines=layoutTextLines(c,text,fontSize,availableW/minScale);
+          lines=layoutTextLines(c,text,fontSize,availableW/Math.max(minScale,estimate.scaleX));
           blockH=Math.max(lineH,lines.length*lineH);
           desiredW=Math.max(1,...lines.map((line)=>line.width*estimate.scaleX));
           place={x:placedX,y:clamp(y,box.y,Math.max(box.y,box.y+box.h-blockH)),w:availableW};
         }else{
           place=findPlacement(box,cursorY,blockH,desiredW,obstacles);
-          lines=layoutTextLines(c,text,fontSize,place.w/minScale);
+          lines=layoutTextLines(c,text,fontSize,place.w/Math.max(minScale,estimate.scaleX));
           blockH=Math.max(lineH,lines.length*lineH);
           desiredW=Math.max(1,...lines.map((line)=>line.width*estimate.scaleX));
           place=findPlacement(box,place.y,blockH,desiredW,obstacles);
           cursorY=place.y+blockH+Math.max(0,Number(text.gap)||0);
         }
         const widthRatio=Math.min(1,place.w/Math.max(1,desiredW));
-        const scaleX=Math.max(minScale,estimate.scaleX*widthRatio);
+        const scaleX=Math.max(minScale,Math.min(estimate.scaleX,Math.max(AUTO_MIN_SCALE,estimate.scaleX*widthRatio)));
         if(place.y+blockH>box.y+box.h+1||Math.max(...lines.map((line)=>line.width*scaleX))>place.w+1)overflow=true;
         fragments.push({text,region,lines,fontSize,lineH,scaleX,scaleY,x:place.x,y:place.y,w:place.w,h:blockH,fit:1,box});
       }
@@ -5451,7 +5826,7 @@ function buildLayout(c){
     fragments.forEach((fragment)=>{
       const bg=sampleSceneColor(fragment.x+fragment.w/2,fragment.y+fragment.h/2);
       const base=fragment.text.colorMode==="auto"?bestTextColorForEffects(bg,fragment.text):fragment.text.color;
-      c.save();clipTextToRegion(c,fragment.region);fragment.lines.forEach((line,index)=>drawTokenLine(c,fragment,line,index,base));c.restore();
+      c.save();if(fragment.region.clipText)clipTextToRegion(c,fragment.region);fragment.lines.forEach((line,index)=>drawTokenLine(c,fragment,line,index,base));c.restore();
     });
   }
 
@@ -5526,8 +5901,11 @@ function buildLayout(c){
       const head=document.createElement("div");head.className="text-card-head";
       const grip=document.createElement("div");grip.className="drag-grip";grip.innerHTML=`<b>${String(index+1).padStart(2,"0")}</b><small>${isTextManualProtected(text)?"LOCK":"AUTO"}</small>`;
       const textarea=document.createElement("textarea");textarea.className="text-input";textarea.value=text.text;textarea.rows=Math.max(2,Math.min(7,text.text.split("\n").length+1));
+      let savedSelection={start:0,end:0};
+      const rememberSelection=()=>{savedSelection={start:textarea.selectionStart??0,end:textarea.selectionEnd??0};activeTextarea=textarea;};
+      const selectedRange=()=>{const current={start:textarea.selectionStart??0,end:textarea.selectionEnd??0};return current.start!==current.end?current:savedSelection;};
       const selectCard=()=>{state.selectedTextId=text.id;activeTextarea=textarea;list.querySelectorAll(".text-card").forEach((node)=>node.classList.toggle("active",node.dataset.textId===text.id));queueRender();};
-      textarea.addEventListener("focus",selectCard);textarea.addEventListener("click",selectCard);textarea.addEventListener("select",()=>{activeTextarea=textarea;});
+      textarea.addEventListener("focus",()=>{selectCard();rememberSelection();});textarea.addEventListener("click",()=>{selectCard();rememberSelection();});textarea.addEventListener("select",rememberSelection);textarea.addEventListener("keyup",rememberSelection);textarea.addEventListener("pointerup",rememberSelection);
       textarea.addEventListener("input",()=>{
         text.text=textarea.value;
         text.roleHint=null;
@@ -5642,7 +6020,7 @@ function buildLayout(c){
       if((text.rangeColors||[]).length)rangeColorSection.open=true;
       const rangeColorBox=document.createElement("div");rangeColorBox.className="range-color-controls";let selectedRangeColor="#f4e900";
       const rangeColorHost=document.createElement("div");rangeColorHost.innerHTML='<span class="field-label">선택 부분 색</span>';makeInlineColorControl(rangeColorHost,()=>selectedRangeColor,(value)=>{selectedRangeColor=value;});
-      const applyColor=document.createElement("button");applyColor.type="button";applyColor.className="button button-accent";applyColor.textContent="선택 글자 색 적용";applyColor.addEventListener("click",()=>{const start=textarea.selectionStart,end=textarea.selectionEnd;if(start===end)return toast("먼저 문장 입력창에서 일부 글자를 선택하세요.");markTextManual(text);text.rangeColors.push({start,end,color:selectedRangeColor});renderTextList();queueRender();});rangeColorBox.append(rangeColorHost,applyColor);rangeColorSection.append(rangeColorBox);
+      const applyColor=document.createElement("button");applyColor.type="button";applyColor.className="button button-accent";applyColor.textContent="선택 글자 색 적용";applyColor.addEventListener("pointerdown",(event)=>event.preventDefault());applyColor.addEventListener("click",()=>{const {start,end}=selectedRange();if(start===end)return toast("먼저 문장 입력창에서 일부 글자를 선택하세요.");markTextManual(text);text.rangeColors.push({start,end,color:selectedRangeColor});renderTextList();queueRender();});rangeColorBox.append(rangeColorHost,applyColor);rangeColorSection.append(rangeColorBox);
       const colorChips=document.createElement("div");colorChips.className="chips";(text.rangeColors||[]).forEach((range,rangeIndex)=>{const chip=document.createElement("span");chip.className="chip";chip.style.borderColor=range.color;chip.innerHTML=`${range.start+1}–${range.end} <button type="button">×</button>`;chip.querySelector("button").addEventListener("click",()=>{markTextManual(text);text.rangeColors.splice(rangeIndex,1);renderTextList();queueRender();});colorChips.append(chip);});rangeColorSection.append(colorChips);controls.append(rangeColorSection);
 
       const bgSection=textSettingsSection("선택 글자 배경","배경 장식은 모든 영역 위, 모든 글자 아래에 그려집니다. 여러 줄은 줄마다 나뉩니다.");
@@ -5665,7 +6043,7 @@ function buildLayout(c){
       );bgSection.append(bgDetails);
       const strokeOptions=document.createElement("div");strokeOptions.className="field-grid two conditional-row text-control-grid is-hidden";
       const strokeHost=document.createElement("div");strokeHost.innerHTML='<span class="field-label">선 색</span>';makeInlineColorControl(strokeHost,()=>bgDraft.stroke,(value)=>{bgDraft.stroke=value;});strokeOptions.append(strokeHost,numericFieldControl("선 두께",bgDraft.strokeWidth,1,24,1,(value)=>`${Math.round(value)}px`,(value)=>{bgDraft.strokeWidth=value;}));bgSection.append(strokeOptions);
-      const applyBg=document.createElement("button");applyBg.type="button";applyBg.className="button button-accent button-wide";applyBg.textContent="선택 글자에 배경 적용";applyBg.addEventListener("click",()=>{const start=textarea.selectionStart,end=textarea.selectionEnd;if(start===end)return toast("먼저 문장 입력창에서 일부 글자를 선택하세요.");markTextManual(text);text.rangeBackgrounds.push({start,end,...deepClone(bgDraft)});renderTextList();queueRender();});bgSection.append(applyBg);
+      const applyBg=document.createElement("button");applyBg.type="button";applyBg.className="button button-accent button-wide";applyBg.textContent="선택 글자에 배경 적용";applyBg.addEventListener("pointerdown",(event)=>event.preventDefault());applyBg.addEventListener("click",()=>{const {start,end}=selectedRange();if(start===end)return toast("먼저 문장 입력창에서 일부 글자를 선택하세요.");markTextManual(text);text.rangeBackgrounds.push({start,end,...deepClone(bgDraft)});renderTextList();queueRender();});bgSection.append(applyBg);
       const bgChips=document.createElement("div");bgChips.className="chips";(text.rangeBackgrounds||[]).forEach((range,rangeIndex)=>{const chip=document.createElement("span");chip.className="chip";chip.style.borderColor=range.fill;chip.innerHTML=`${range.shape} ${range.start+1}–${range.end} <button type="button">×</button>`;chip.querySelector("button").addEventListener("click",()=>{markTextManual(text);text.rangeBackgrounds.splice(rangeIndex,1);renderTextList();queueRender();});bgChips.append(chip);});bgSection.append(bgChips);controls.append(bgSection);
 
       card.append(controls);list.append(card);
@@ -5713,6 +6091,7 @@ function buildLayout(c){
     if($("regionPaddingValue"))$("regionPaddingValue").textContent=round(region.padding);
     if($("regionRotationValue"))$("regionRotationValue").textContent=`${round(region.rotation)}°`;
     syncSegmented("regionAcceptText",region.acceptText?"yes":"no");
+    syncSegmented("regionTextClip",region.clipText?"on":"off");
     syncEffectToggle("regionEffectStack",region);
     setConditionalVisible("regionEffectOptions",activeEffects(region).length>0);
     syncStaticNumericFields(Object.keys(values));
@@ -5982,6 +6361,8 @@ function buildLayout(c){
     $("reflowRegionsBtn")?.addEventListener("click",()=>{reflowRegions({preserveManual:true,adaptText:true});refreshAllUI();queueRender();toast("현재 여백으로 다시 맞췄습니다.");});
     $("restoreAllRegionsBtn")?.addEventListener("click",()=>{state.regions.forEach((region)=>{region.layoutDetached=false;region.layoutManualDelta=null;});reflowRegions({preserveManual:false,adaptText:true});refreshAllUI();queueRender();toast("모든 영역을 템플릿 위치로 돌렸습니다.");});
     $("restoreRegionLayoutBtn")?.addEventListener("click",()=>{const region=selectedRegion();if(!region)return;restoreRegionLayout(region);refreshAllUI();queueRender();toast("선택 영역을 원래 위치로 돌렸습니다.");});
+
+    bindSegmented("regionTextClip",value=>{const region=selectedRegion();if(!region)return;region.clipText=value==="on";updateRegionControls();queueRender();markHistoryDirty(true);});
 
     bindMultiEffect("regionEffectStack",selectedRegion,()=>updateRegionControls());
     bindMultiEffect("elementEffectStack",selectedElement,()=>updateElementControls());
@@ -6350,8 +6731,41 @@ function swapRegionTextBundles(sourceRegionId,targetRegionId){
     return intervals;
   }
 
+  function installCoarsePointerRangeGuard(){
+    let blockedPointerId=null;
+    let blockedRange=null;
+    let clearTimer=null;
+    const isCoarse=()=>window.matchMedia?.("(pointer: coarse)").matches||navigator.maxTouchPoints>0;
+    const clearBlocked=()=>{blockedPointerId=null;blockedRange=null;if(clearTimer){clearTimeout(clearTimer);clearTimer=null;}};
+    document.addEventListener("pointerdown",(event)=>{
+      const range=event.target instanceof Element?event.target.closest('input[type="range"]'):null;
+      if(!range||range.disabled||!isCoarse())return;
+      const rect=range.getBoundingClientRect();
+      const min=Number(range.min)||0,max=Number(range.max)||100,value=Number(range.value)||0;
+      const ratio=max===min?0:(value-min)/(max-min);
+      const thumbSize=Math.max(22,Math.min(34,rect.height*1.9));
+      const usable=Math.max(1,rect.width-thumbSize);
+      const center=rect.left+thumbSize/2+clamp(ratio,0,1)*usable;
+      const tolerance=Math.max(24,thumbSize*.82);
+      if(Math.abs(event.clientX-center)>tolerance){
+        blockedPointerId=event.pointerId;
+        blockedRange=range;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        clearTimer=setTimeout(clearBlocked,450);
+      }
+    },true);
+    document.addEventListener("click",(event)=>{
+      const range=event.target instanceof Element?event.target.closest('input[type="range"]'):null;
+      if(!range||!isCoarse()||range!==blockedRange)return;
+      event.preventDefault();event.stopImmediatePropagation();clearBlocked();
+    },true);
+    document.addEventListener("pointercancel",(event)=>{if(event.pointerId===blockedPointerId)clearBlocked();},true);
+  }
+
   async function initializeV17(){
     prepareV16();
+    installCoarsePointerRangeGuard();
     enhanceStaticNumericFields();
     bindControls();
     setupColorFields();

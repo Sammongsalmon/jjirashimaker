@@ -1731,3 +1731,27 @@ body[data-theme="light"] .canvas-stage { background-color: #1b1f25; }
   .text-mode-tools { grid-template-columns: 1fr; }
   .text-manual-reset { width: 100%; }
 }
+
+
+/* v21: Notion-like readability and white light-mode controls */
+body{font-family:"PretendardVariable","KoPubDotum",sans-serif;font-size:14px;line-height:1.5;letter-spacing:-.01em}
+.panel{box-shadow:0 1px 2px rgba(0,0,0,.08),0 10px 30px rgba(0,0,0,.08)}
+.panel-note,.section-heading p,.microcopy,.canvas-help,.dialog-hint{font-size:12px;line-height:1.6}
+label,.field-label{font-size:12px;line-height:1.35}
+.button,.small-button,.tool-tab,.segmented-control button,.multi-toggle button{font-weight:650}
+body[data-theme="light"]{--bg:#f7f7f5;--panel:#fff;--panel-2:#fbfbfa;--panel-3:#fff;--surface-input:#fff;--surface-soft:#f7f7f5;--surface-raised:#fbfbfa;--line:#e3e3df;--line-strong:#c7c7c2;--text:#2f3437;--muted:#6f767d;--shadow:0 1px 2px rgba(15,15,15,.05),0 8px 24px rgba(15,15,15,.06)}
+body[data-theme="light"] .topbar{background:rgba(255,255,255,.95)}
+body[data-theme="light"] .workspace-bar,body[data-theme="light"] .tool-tabs,body[data-theme="light"] .text-card,body[data-theme="light"] .inline-text-controls,body[data-theme="light"] .editor-card,body[data-theme="light"] .advanced-details,body[data-theme="light"] .region-layout-toolbar,body[data-theme="light"] .effect-rule-note,body[data-theme="light"] .range-color-box,body[data-theme="light"] .palette-primary-card,body[data-theme="light"] .optional-palette-card,body[data-theme="light"] .artboard-card,body[data-theme="light"] .effect-editor,body[data-theme="light"] .clip-editor{background:#fff}
+body[data-theme="light"] .button,body[data-theme="light"] .small-button,body[data-theme="light"] .icon-button,body[data-theme="light"] .icon-text-button,body[data-theme="light"] .zoom-readout,body[data-theme="light"] .step-button,body[data-theme="light"] .numeric-reset-button,body[data-theme="light"] .tool-tab,body[data-theme="light"] .segmented-control button,body[data-theme="light"] .multi-toggle button,body[data-theme="light"] .element-buttons .button,body[data-theme="light"] .region-layout-actions .button,body[data-theme="light"] .selected-head-actions button,body[data-theme="light"] .text-card-actions button{background:#fff!important;color:#2f3437!important;border-color:#deded9!important;box-shadow:none!important}
+body[data-theme="light"] .button:hover,body[data-theme="light"] .small-button:hover,body[data-theme="light"] .tool-tab:hover,body[data-theme="light"] .segmented-control button:hover,body[data-theme="light"] .multi-toggle button:hover{background:#f4f4f2!important;border-color:#c9c9c4!important}
+body[data-theme="light"] .button-accent,body[data-theme="light"] .segmented-control button.active,body[data-theme="light"] .multi-toggle button.active,body[data-theme="light"] .tool-tab.active{background:#f1f1ef!important;color:#1f2326!important;border-color:#bdbdb7!important}
+body[data-theme="light"] .button-danger{color:#b4233c!important;border-color:#e5b6bf!important}
+body[data-theme="light"] .drag-grip{background:#fff;color:#8b8f94}
+body[data-theme="light"] .template-card{border-color:#e2e2de}
+body[data-theme="light"] .template-card.active{border-color:#8f8f89;box-shadow:0 0 0 2px rgba(47,52,55,.08)}
+body[data-theme="light"] .panel-kicker,body[data-theme="light"] .eyebrow{color:#8a7600}
+@media(max-width:700px){.button,.small-button,.tool-tab,.segmented-control button,.multi-toggle button{min-height:40px}.text-card-actions{gap:7px}.text-card-actions .small-button{min-width:38px;min-height:36px}}
+
+
+/* v24: 터치 장치에서 슬라이더 손잡이 드래그를 안정적으로 유지 */
+input[type="range"] { touch-action: none; }
