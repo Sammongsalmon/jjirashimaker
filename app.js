@@ -1660,7 +1660,7 @@
     if (sceneCanvas.width !== fullW) sceneCanvas.width = fullW;
     if (sceneCanvas.height !== fullH) sceneCanvas.height = fullH;
     $("canvasSizeLabel").textContent = bleed ? `${trimW} × ${trimH} + 재단 ${state.bleedMm}mm` : `${trimW} × ${trimH}`;
-    $("currentTemplateName").textContent = templateSpecs.find((x) => x.id === state.templateId)?.name || "사용자 템플릿";
+    $("currentTemplateName").textContent = state.templateId === CUSTOM_TEMPLATE_ID ? "직접 만들기" : (templateSpecs.find((x) => x.id === state.templateId)?.name || "사용자 템플릿");
   }
 
   function refreshAllUI() {
@@ -4742,6 +4742,7 @@ function ensureStateCompatibility() {
     return templates;
   }
   const V22_TEMPLATES=buildV22Templates();
+  const CUSTOM_TEMPLATE_ID="custom-blank";
 
   function getTemplateRegionSpecs(spec) {
     return state.orientation === "portrait" ? (spec.portraitRegions || buildPortraitRegions(spec.portraitStyle)) : spec.regions;
@@ -4894,8 +4895,32 @@ function adaptRegionsToText() {
     ];
   }
 
+  function applyCustomBlank({ clearContent = true } = {}) {
+    ensureStateCompatibility();
+    state.templateId = CUSTOM_TEMPLATE_ID;
+    const base = paletteColor("primary", state.palette);
+    state.background = { mode:"solid", c1:base, c2:base, pattern:"none", patternColor:paletteColor("tertiary",state.palette), angle:0, scale:48 };
+    state.posterBorder = { enabled:false, color:paletteColor("ink",state.palette), width:0, radius:0 };
+    if (clearContent) {
+      state.regions = [];
+      state.elements = [];
+      state.texts = [];
+    }
+    state.selectedTextId = null;
+    state.selectedRegionId = null;
+    state.selectedElementId = null;
+    transformTarget = null;
+    refreshAllUI();
+    updatePreviewZoom();
+    queueRender();
+  }
+
   function applyTemplate(templateId, { preserveTexts = true } = {}) {
     ensureStateCompatibility();
+    if (templateId === CUSTOM_TEMPLATE_ID) {
+      applyCustomBlank({ clearContent: !preserveTexts });
+      return;
+    }
     const spec = templateSpecs.find((template) => template.id === templateId) || templateSpecs[0];
     const { trimW:W, trimH:H } = dimensions();
     state.templateId = spec.id;
@@ -6127,7 +6152,7 @@ function buildLayout(c){
     if(sceneCanvas.width!==fullW)sceneCanvas.width=fullW;
     if(sceneCanvas.height!==fullH)sceneCanvas.height=fullH;
     if($("canvasSizeLabel"))$("canvasSizeLabel").textContent=`${widthMm} × ${heightMm}mm · ${trimW} × ${trimH}px${bleed?` · 재단 ${state.bleedMm}mm`:""}`;
-    if($("currentTemplateName"))$("currentTemplateName").textContent=templateSpecs.find((template)=>template.id===state.templateId)?.name||"사용자 템플릿";
+    if($("currentTemplateName"))$("currentTemplateName").textContent=state.templateId===CUSTOM_TEMPLATE_ID?"직접 만들기":(templateSpecs.find((template)=>template.id===state.templateId)?.name||"사용자 템플릿");
     requestAnimationFrame(updatePreviewZoom);
   }
 
@@ -6160,9 +6185,43 @@ function buildLayout(c){
     });
   }
 
+  function drawCustomTemplateThumbnail(target){
+    const context=target.getContext("2d");
+    const portrait=state.orientation==="portrait";
+    const W=target.width=portrait?180:300,H=target.height=portrait?300:180;
+    const fill=paletteColor("primary",state.palette);
+    context.clearRect(0,0,W,H);
+    context.fillStyle=fill;
+    context.fillRect(0,0,W,H);
+    context.save();
+    context.strokeStyle=bestTextColorForEffects(fill,{effects:[]})==="#FFFFFF"?"rgba(255,255,255,.76)":"rgba(0,0,0,.58)";
+    context.lineWidth=Math.max(2,Math.min(W,H)*.018);
+    context.setLineDash([Math.max(7,W*.035),Math.max(5,W*.022)]);
+    context.strokeRect(W*.12,H*.15,W*.76,H*.70);
+    context.setLineDash([]);
+    context.fillStyle=bestTextColorForEffects(fill,{effects:[]});
+    context.font=`900 ${Math.round(Math.min(W,H)*.24)}px sans-serif`;
+    context.textAlign="center";
+    context.textBaseline="middle";
+    context.fillText("+",W/2,H/2);
+    context.restore();
+  }
+
   function renderTemplateGrid(){
     const grid=$("templateGrid");if(!grid)return;
     grid.replaceChildren();
+
+    const customButton=document.createElement("button");
+    customButton.type="button";
+    customButton.className=`template-card template-card-custom${state.templateId===CUSTOM_TEMPLATE_ID?" active":""}`;
+    const customThumb=document.createElement("canvas");customThumb.className="template-thumb";
+    const customMeta=document.createElement("span");customMeta.className="template-meta";
+    const customName=document.createElement("strong");customName.textContent="직접 만들기";
+    const customCaption=document.createElement("small");customCaption.textContent="배경색만 남긴 빈 대지에서 영역·문장·요소를 직접 추가";
+    customMeta.append(customName,customCaption);customButton.append(customThumb,customMeta);drawCustomTemplateThumbnail(customThumb);
+    customButton.addEventListener("click",()=>applyCustomBlank({clearContent:true}));
+    grid.append(customButton);
+
     templateSpecs.forEach((template)=>{
       const button=document.createElement("button");button.type="button";button.className=`template-card${state.templateId===template.id?" active":""}`;
       const thumb=document.createElement("canvas");thumb.className="template-thumb";

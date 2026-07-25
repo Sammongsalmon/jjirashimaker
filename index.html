@@ -77,32 +77,47 @@
       </div>
 
       <div class="tool-pane active" data-tool-pane="templates">
-        <div class="section-heading">
+        <section class="palette-editor compact-palette-editor" aria-label="템플릿 색상">
+          <div class="compact-palette-strip">
+            <div class="compact-palette-color" id="primaryPaletteCard">
+              <span class="compact-palette-label">주색</span>
+              <div id="palettePrimaryField" class="color-field-host compact-color-chip"></div>
+            </div>
+            <div class="compact-palette-color" id="secondaryPaletteCard">
+              <span class="compact-palette-label">보조색 1</span>
+              <div id="paletteSecondaryField" class="color-field-host compact-color-chip"></div>
+            </div>
+            <div class="compact-palette-color" id="tertiaryPaletteCard">
+              <span class="compact-palette-label">보조색 2</span>
+              <div id="paletteTertiaryField" class="color-field-host compact-color-chip"></div>
+            </div>
+          </div>
+          <div class="compact-palette-options">
+            <label class="palette-paper-inline" for="palettePaperMix">연한 배경 <b id="palettePaperMixValue">78%</b>
+              <input id="palettePaperMix" type="range" min="0" max="96" step="1" value="78" />
+            </label>
+            <div class="palette-neutral-inline" aria-label="중립색 사용">
+              <label><input id="paletteUseWhite" type="checkbox" checked /> 흰색</label>
+              <label><input id="paletteUseBlack" type="checkbox" checked /> 검은색</label>
+            </div>
+            <div class="palette-enable-inline">
+              <span>보조 1</span>
+              <div id="paletteSecondaryEnabled" class="segmented-control compact" role="group"><button type="button" data-value="on">사용</button><button type="button" data-value="off">안 함</button></div>
+            </div>
+            <div class="palette-enable-inline">
+              <span>보조 2</span>
+              <div id="paletteTertiaryEnabled" class="segmented-control compact" role="group"><button type="button" data-value="on">사용</button><button type="button" data-value="off">안 함</button></div>
+            </div>
+          </div>
+          <p class="compact-palette-note">보조색을 끄면 주색과 선택한 흰색·검은색만으로 템플릿을 구성합니다.</p>
+        </section>
+        <div class="section-heading template-section-heading">
           <div>
             <h2>찌라시 템플릿</h2>
-            <p>색은 현재 주색·보조색을 따릅니다. 촘촘한 전화번호 전단, 2단 기사, 폭발형, 무테 타이포 등 15개 레이아웃을 넣었습니다.</p>
+            <p>첫 카드는 빈 대지에서 직접 만드는 모드입니다. 기본 미리보기에는 첫 번째 레이아웃 템플릿이 적용됩니다.</p>
           </div>
         </div>
         <div id="templateGrid" class="template-grid"></div>
-        <div class="palette-editor">
-          <div class="palette-primary-card">
-            <div><span class="field-label">주색</span><div id="palettePrimaryField" class="color-field-host"></div></div>
-            <div class="neutral-options" aria-label="중립색 사용">
-              <label><input id="paletteUseWhite" type="checkbox" checked /> 흰색 사용</label>
-              <label><input id="paletteUseBlack" type="checkbox" checked /> 검은색 사용</label>
-            </div>
-            <label>연한 배경의 흰색 혼합률 <b id="palettePaperMixValue">78%</b><input id="palettePaperMix" type="range" min="0" max="96" step="1" value="78" /></label>
-          </div>
-          <div class="optional-palette-card" id="secondaryPaletteCard">
-            <div class="option-card-head"><span class="field-label">보조색 1</span><div id="paletteSecondaryEnabled" class="segmented-control compact" role="group"><button type="button" data-value="on">사용</button><button type="button" data-value="off">안 함</button></div></div>
-            <div id="paletteSecondaryField" class="color-field-host"></div>
-          </div>
-          <div class="optional-palette-card" id="tertiaryPaletteCard">
-            <div class="option-card-head"><span class="field-label">보조색 2</span><div id="paletteTertiaryEnabled" class="segmented-control compact" role="group"><button type="button" data-value="on">사용</button><button type="button" data-value="off">안 함</button></div></div>
-            <div id="paletteTertiaryField" class="color-field-host"></div>
-          </div>
-        </div>
-        <p class="panel-note">색이 하나뿐이어도 주색·흰색·검은색을 자동 배분합니다. 보조색을 하나만 켜면 두 색이 세 역할에 반복 배치됩니다.</p>
       </div>
 
       <div class="tool-pane" data-tool-pane="regions">
