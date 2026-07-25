@@ -3128,3 +3128,19 @@ body[data-theme="light"] .uniform-scale-field .static-numeric-field {
   0%, 100% { box-shadow: none; }
   35% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent); }
 }
+
+
+/* v27.3.4 sentence-wide and selection-range unicode actions */
+.range-dual-apply-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+.range-dual-apply-row .range-apply-button {
+  width: 100%;
+  min-width: 0;
+  padding-inline: 8px;
+  white-space: normal;
+  line-height: 1.25;
+}
