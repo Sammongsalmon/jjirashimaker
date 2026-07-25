@@ -4516,84 +4516,7 @@ function ensureStateCompatibility() {
     };
     const templates=[];
 
-    // 1. 상단과 하단의 명암을 강하게 반전하고, 속보 표식과 전화번호가 제목을 보조하도록 밀도를 높인다.
-    templates.push(make(
-      "headline-right-block","상하 반전 광고판","검정 대제목판과 적색 정보판을 붙이고 속보 도장·기사·전화번호의 크기 대비를 강하게 만든 구성","secondary",[
-        G("상단 배경",.010,.012,.980,.360,{fillRole:"secondary",acceptText:false,radius:0,touchX:true}),
-        G("속보 표식",.028,.038,.185,.190,{shape:"ellipse",fillRole:"tertiary",strokeRole:"paper",strokeWidth:3,strokeNone:false,padding:16,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.62,lineHeight:.66,scaleX:1.00,outlineWidth:3,colorRole:"paper"}}),
-        G("큰 제목",.225,.030,.745,.270,{fillNone:true,padding:0,emphasis:2.45,overflowAllowance:.035,textPreset:"heroOutline",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.56,lineHeight:.72,scaleX:1.00,letterSpacing:-8,outlineWidth:3,colorRole:"paper"}}),
-        G("기관 안내",.000,.360,1.000,.065,{fillRole:"primary",radius:0,padding:5,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.10,colorRole:"secondary"}}),
-        G("하단 배경",.010,.438,.980,.542,{fillRole:"tertiary",acceptText:false,radius:0,touchX:true}),
-        G("핵심 목록",.030,.470,.600,.265,{fillRole:"paper",radius:8,padding:12,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.24,lineHeight:.88,scaleX:.99}}),
-        G("짧은 강조",.650,.470,.320,.265,{fillRole:"secondary",radius:8,padding:13,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"chosunKg",fontScale:1.48,lineHeight:.72,scaleX:1.00,colorRole:"paper"}}),
-        G("수치",.030,.755,.255,.105,{fillRole:"primary",radius:0,padding:7,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.45,lineHeight:.70,outlineWidth:3,colorRole:"secondary"}}),
-        G("연락처",.300,.742,.670,.135,{fillNone:true,padding:0,emphasis:1.72,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.48,lineHeight:.72,scaleX:1.00,outlineWidth:3}}),
-        G("주의 문구",.030,.895,.940,.060,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.08}})
-      ],"rail",{enabled:true,color:"#111111",width:5,radius:0}
-    ));
-
-    // 2. 제목을 넓게 쓰고 오른쪽 세로 간판에는 짧은 강조 문구를 크게 쌓는다. 의미 없는 장식 면은 두지 않는다.
-    templates.push(make(
-      "right-vertical-panel","우측 세로 간판","넓은 대제목과 검정 정보 띠, 왼쪽 기사칸, 오른쪽 세로 강조판을 한 덩어리로 결합한 구성","primary",[
-        G("큰 제목",.020,.020,.735,.285,{fillNone:true,padding:0,emphasis:2.48,overflowAllowance:.035,textPreset:"heroOutline",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.58,lineHeight:.71,scaleX:1.00,letterSpacing:-8,outlineWidth:3}}),
-        G("속보 표식",.785,.025,.185,.170,{shape:"burst",fillRole:"secondary",strokeRole:"paper",strokeWidth:3,strokeNone:false,padding:18,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.48,lineHeight:.68,outlineWidth:3,colorRole:"paper"}}),
-        G("기관 안내",.000,.320,.755,.075,{fillRole:"secondary",radius:0,padding:6,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.10,colorRole:"paper"}}),
-        G("핵심 목록",.020,.415,.565,.340,{fillRole:"paper",radius:8,padding:13,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.25,lineHeight:.87,scaleX:.99}}),
-        G("짧은 강조",.605,.220,.365,.535,{fillRole:"tertiary",radius:8,padding:12,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"chosunLo",fontScale:1.70,lineHeight:.66,scaleX:1.00,verticalWhenNarrow:true}}),
-        G("수치",.020,.775,.250,.090,{fillRole:"secondary",radius:0,padding:6,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.38,lineHeight:.70,colorRole:"paper"}}),
-        G("주의 문구",.290,.775,.295,.090,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.04}}),
-        G("연락처",.020,.885,.950,.090,{fillRole:"paperHard",radius:0,padding:4,emphasis:1.60,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.44,lineHeight:.72,outlineWidth:3}})
-      ],"columns"
-    ));
-
-    // 3. 상단 제목판과 원형 도장을 이어 붙이고, 하단 전화번호는 대지를 가로지르는 가장 큰 활자로 둔다.
-    templates.push(make(
-      "bottom-giant-copy","하단 초대형 문구","상단 대제목, 왼쪽 원형 속보, 촘촘한 기사판, 하단 초대형 연락처가 연속되는 구성","primary",[
-        G("상단 제목판",.018,.018,.964,.260,{fillRole:"paperHard",radius:13,acceptText:false}),
-        G("큰 제목",.035,.032,.930,.225,{fillNone:true,padding:0,emphasis:2.40,textPreset:"hero",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.56,lineHeight:.72,scaleX:1.00,letterSpacing:-8}}),
-        G("속보 표식",.030,.305,.285,.300,{shape:"ellipse",fillRole:"tertiary",strokeRole:"secondary",strokeWidth:3,strokeNone:false,padding:22,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.68,lineHeight:.65,outlineWidth:3}}),
-        G("기관 안내",.335,.300,.635,.070,{fillRole:"secondary",radius:0,padding:5,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.08,colorRole:"paper"}}),
-        G("핵심 목록",.335,.385,.635,.245,{fillRole:"paper",radius:0,padding:12,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.24,lineHeight:.88}}),
-        G("짧은 강조",.335,.645,.635,.085,{fillNone:true,padding:0,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"batang",fontScale:1.42,lineHeight:.76}}),
-        G("수치",.335,.742,.255,.075,{fillRole:"tertiary",radius:0,padding:5,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.30}}),
-        G("주의 문구",.610,.742,.360,.075,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.03}}),
-        G("연락처",.008,.825,.984,.150,{fillRole:"secondary",radius:0,padding:5,emphasis:2.10,overflowAllowance:.035,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.62,lineHeight:.68,scaleX:1.00,outlineWidth:3,colorRole:"paper"}})
-      ],"type"
-    ));
-
-    // 4. 중앙 폭발표식을 기준으로 좌우 기사 밀도를 맞추고, 아래 연락처가 전체 구도를 단단히 받친다.
-    templates.push(make(
-      "center-burst-editorial","중앙 폭발 기사판","상단 대제목, 중앙 폭발표식, 좌우 기사, 하단 대형 연락처가 서로 맞물리는 구성","primary",[
-        G("큰 제목",.025,.015,.950,.205,{fillNone:true,padding:0,emphasis:2.42,textPreset:"heroOutline",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.55,lineHeight:.71,scaleX:1.00,letterSpacing:-8,outlineWidth:3}}),
-        G("기관 안내",.130,.225,.740,.065,{fillRole:"secondary",radius:0,padding:5,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.08,colorRole:"paper"}}),
-        G("핵심 목록",.020,.310,.300,.410,{fillRole:"paper",radius:0,padding:12,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.22,lineHeight:.87,scaleX:.99}}),
-        G("속보 표식",.340,.300,.320,.420,{shape:"burst",fillRole:"paperHard",strokeRole:"secondary",strokeWidth:4,strokeNone:false,padding:30,textPreset:"badge",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.80,lineHeight:.62}}),
-        G("짧은 강조",.680,.310,.300,.285,{fillRole:"tertiary",radius:0,padding:12,textPreset:"heroOutline",textRoles:["callout"],textStyle:{fontFamily:"chosunLo",fontScale:1.55,lineHeight:.67,scaleX:.98,outlineWidth:3,verticalWhenNarrow:true}}),
-        G("수치",.680,.610,.300,.110,{fillRole:"secondary",radius:0,padding:8,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.38,colorRole:"paper"}}),
-        G("연락처",.220,.742,.560,.150,{fillNone:true,padding:0,emphasis:1.82,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.50,lineHeight:.70,outlineWidth:3}}),
-        G("주의 문구",.100,.915,.800,.045,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.04}})
-      ],"type"
-    ));
-
-    // 5. 검정 세로 표찰과 중앙 기사판, 오른쪽 입체 타원을 한 판처럼 이어 짧은 문구도 크게 보이게 한다.
-    templates.push(make(
-      "left-vertical-type","세로 표식·타원판","왼쪽 검정 세로 표찰, 중앙 기사판, 오른쪽 입체 타원을 촘촘하게 쌓은 구성","primary",[
-        G("왼쪽 표찰 배경",.015,.020,.180,.920,{fillRole:"secondary",radius:0,acceptText:false}),
-        G("속보 표식",.030,.040,.150,.670,{fillNone:true,padding:0,emphasis:2.55,textPreset:"heroOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:2.05,lineHeight:.61,scaleX:1.00,outlineWidth:3,colorRole:"paper",verticalWhenNarrow:true}}),
-        G("주의 문구",.035,.735,.140,.170,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.08,colorRole:"paper"}}),
-        G("큰 제목",.215,.020,.565,.245,{fillRole:"paperHard",radius:9,padding:8,textPreset:"hero",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.54,lineHeight:.72,scaleX:1.00}}),
-        G("기관 안내",.215,.278,.565,.070,{fillRole:"secondary",radius:0,padding:5,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.08,colorRole:"paper"}}),
-        G("핵심 목록",.215,.360,.565,.300,{fillRole:"paper",radius:0,padding:12,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.22,lineHeight:.88}}),
-        G("짧은 강조",.215,.672,.565,.090,{fillNone:true,padding:0,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"batang",fontScale:1.40,lineHeight:.76}}),
-        G("연락처",.215,.775,.565,.110,{fillRole:"secondary",radius:0,padding:5,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.42,lineHeight:.72,outlineWidth:3,colorRole:"paper"}}),
-        G("타원 장식1",.805,.025,.180,.155,{shape:"ellipse",fillRole:"tertiary",acceptText:false,effect:"extrude",effectColorRole:"secondary",effectSize:10}),
-        G("타원 장식2",.805,.235,.180,.155,{shape:"ellipse",fillRole:"paperHard",acceptText:false,effect:"extrude",effectColorRole:"secondary",effectSize:10}),
-        G("수치",.805,.445,.180,.190,{shape:"ellipse",fillRole:"tertiary",padding:12,textPreset:"badge",textRoles:["tag"],effect:"extrude",effectColorRole:"secondary",effectSize:10,textStyle:{fontFamily:"chosunLo",fontScale:1.52,lineHeight:.66,verticalWhenNarrow:true}}),
-        G("타원 장식3",.805,.690,.180,.155,{shape:"ellipse",fillRole:"primarySoft",acceptText:false,effect:"extrude",effectColorRole:"secondary",effectSize:10})
-      ],"rail"
-    ));
-
-    // 6. 여러 색 띠가 맞물린 쿠폰형.
+    // 1. 여러 색 띠가 맞물린 쿠폰형.
     templates.push(make(
       "banded-coupon","띠형 쿠폰 모듈","전폭 색 띠와 작은 정보칸을 붙여 인쇄 광고처럼 압축한 구성","secondary",[
         G("상단 띠",.020,.025,.960,.180,{fillRole:"primary",radius:0,acceptText:false}),
@@ -4608,7 +4531,7 @@ function ensureStateCompatibility() {
       ],"stack",{enabled:true,color:"#111111",width:5,radius:0}
     ));
 
-    // 7. 검정 반전과 전화번호 하단.
+    // 2. 검정 반전과 전화번호 하단.
     templates.push(make(
       "black-hotline","검정 반전 전화판","검정 바탕과 원색 헤드라인, 하단 전화번호를 크게 강조한 구성","secondary",[
         G("속보 표식",.030,.035,.175,.170,{fillRole:"tertiary",radius:18,padding:18,textPreset:"badgeOutline",textRoles:["tag"]}),
@@ -4622,7 +4545,7 @@ function ensureStateCompatibility() {
       ],"stack"
     ));
 
-    // 8. 왼쪽 사진, 오른쪽 기사. 사용자가 만든 18.1 레이아웃의 장점을 살리되 배지·제목·기사 덩어리의 위계를 더 강하게 조정.
+    // 3. 왼쪽 사진, 오른쪽 기사. 사용자가 만든 18.1 레이아웃의 장점을 살리되 배지·제목·기사 덩어리의 위계를 더 강하게 조정.
     templates.push(make(
       "photo-left-story","사진 좌측 기사판","왼쪽 세로 사진과 오른쪽 고밀도 기사·연락처를 한 판처럼 맞물린 구성","paper",[
         G("사진 자리",.020,.030,.345,.925,{fillRole:"secondary",radius:18,acceptText:false}),
@@ -4638,7 +4561,7 @@ function ensureStateCompatibility() {
       ],"photo"
     ));
 
-    // 9. 오른쪽 타원 배지 네 단.
+    // 4. 오른쪽 타원 배지 네 단.
     templates.push(make(
       "oval-stack","우측 타원 배지","왼쪽 기사판과 오른쪽 타원 배지를 세로로 반복한 구성","primary",[
         G("큰 제목",.025,.025,.710,.250,{fillRole:"paper",radius:18,padding:12,textPreset:"hero",textRoles:["headline"]}),
@@ -4653,7 +4576,7 @@ function ensureStateCompatibility() {
       ],"columns"
     ));
 
-    // 10. 세로 표찰과 기사판.
+    // 5. 세로 표찰과 기사판.
     templates.push(make(
       "vertical-ticket-story","세로 표찰 기사","왼쪽 세로 표찰과 오른쪽 기사판을 빈틈 없이 이어 붙인 구성","primary",[
         G("왼쪽 표찰",.020,.025,.220,.930,{fillRole:"secondary",radius:16,acceptText:false}),
@@ -4668,7 +4591,7 @@ function ensureStateCompatibility() {
       ],"rail"
     ));
 
-    // 11. 카드 없이 글자와 원형 도형만 충돌시키는 무테형.
+    // 6. 카드 없이 글자와 원형 도형만 충돌시키는 무테형.
     templates.push(make(
       "bare-collision-type","무테 충돌 타이포","카드 없이 큰 글자와 원형 도형, 작은 주석을 화면에 직접 배치한 구성","primary",[
         G("원형 장식",.790,.025,.185,.260,{shape:"ellipse",fillRole:"tertiary",acceptText:false}),
@@ -4683,7 +4606,7 @@ function ensureStateCompatibility() {
       ],"type"
     ));
 
-    // 12. 상단 띠와 같은 높이의 세 기사칸.
+    // 7. 상단 띠와 같은 높이의 세 기사칸.
     templates.push(make(
       "top-band-three","상단 띠·삼단 기사","전폭 상단 띠 아래 같은 높이의 세 기사칸과 하단 전화판을 둔 구성","paper",[
         G("속보 표식",.020,.025,.170,.155,{fillRole:"tertiary",radius:14,padding:14,textPreset:"badgeOutline",textRoles:["tag"]}),
@@ -4697,7 +4620,7 @@ function ensureStateCompatibility() {
       ],"columns"
     ));
 
-    // 13. 중앙 큰 숫자/짧은 문구판.
+    // 8. 중앙 큰 숫자/짧은 문구판.
     templates.push(make(
       "center-symbol-panel","중앙 심볼판","좌우 기사 사이 중앙 큰 표식과 상하 대문구를 배치한 구성","secondary",[
         G("큰 제목",.020,.025,.960,.210,{fillNone:true,padding:0,emphasis:1.95,textPreset:"heroOutline",textRoles:["headline"]}),
@@ -4711,7 +4634,7 @@ function ensureStateCompatibility() {
       ],"type"
     ));
 
-    // 14. 두 개의 큰 판과 작은 줄을 붙인 대조형.
+    // 9. 두 개의 큰 판과 작은 줄을 붙인 대조형.
     templates.push(make(
       "split-contrast","좌우 대조판","왼쪽 큰 기사판과 오른쪽 강조·수치판을 같은 높이로 맞춘 구성","primary",[
         G("속보 표식",.020,.025,.170,.120,{fillRole:"tertiary",radius:16,padding:14,textPreset:"badgeOutline",textRoles:["tag"]}),
@@ -4725,7 +4648,7 @@ function ensureStateCompatibility() {
       ],"columns"
     ));
 
-    // 15. 소형 광고 카드처럼 여러 정보가 한 판에 밀집된 형태.
+    // 10. 소형 광고 카드처럼 여러 정보가 한 판에 밀집된 형태.
     templates.push(make(
       "compact-ad-card","소형 광고 밀집판","두꺼운 외곽선 안에 제목·목록·강조·전화번호를 촘촘히 넣은 구성","primary",[
         G("속보 표식",.030,.035,.175,.175,{shape:"burst",fillRole:"tertiary",padding:20,textPreset:"badgeOutline",textRoles:["tag"]}),
@@ -4737,6 +4660,83 @@ function ensureStateCompatibility() {
         G("연락처",.030,.770,.940,.120,{fillRole:"primaryDeep",radius:0,padding:8,textPreset:"hotlineOutline",textRoles:["footer"]}),
         G("주의 문구",.030,.900,.940,.060,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"]})
       ],"stack",{enabled:true,color:"#111111",width:7,radius:10}
+    ));
+
+    // 11. 상단과 하단의 명암을 강하게 반전하고, 속보 표식과 전화번호가 제목을 보조하도록 밀도를 높인다.
+    templates.push(make(
+      "headline-right-block","상하 반전 광고판","검정 대제목판과 적색 정보판을 붙이고 속보 도장·기사·전화번호의 크기 대비를 강하게 만든 구성","secondary",[
+        G("상단 배경",.010,.012,.980,.360,{fillRole:"secondary",acceptText:false,radius:0,touchX:true}),
+        G("속보 표식",.028,.038,.185,.190,{shape:"ellipse",fillRole:"tertiary",strokeRole:"paper",strokeWidth:3,strokeNone:false,padding:16,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.62,lineHeight:.66,scaleX:1.00,outlineWidth:3,colorRole:"paper"}}),
+        G("큰 제목",.225,.030,.745,.270,{fillNone:true,padding:0,emphasis:2.45,overflowAllowance:.035,textPreset:"heroOutline",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.56,lineHeight:.72,scaleX:1.00,letterSpacing:-8,outlineWidth:3,colorRole:"paper"}}),
+        G("기관 안내",.000,.360,1.000,.065,{fillRole:"primary",radius:0,padding:5,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.10,colorRole:"secondary"}}),
+        G("하단 배경",.010,.438,.980,.542,{fillRole:"tertiary",acceptText:false,radius:0,touchX:true}),
+        G("핵심 목록",.030,.470,.600,.265,{fillRole:"paper",radius:8,padding:12,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.24,lineHeight:.88,scaleX:.99}}),
+        G("짧은 강조",.650,.470,.320,.265,{fillRole:"secondary",radius:8,padding:13,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"chosunKg",fontScale:1.48,lineHeight:.72,scaleX:1.00,colorRole:"paper"}}),
+        G("수치",.030,.755,.255,.105,{fillRole:"primary",radius:0,padding:7,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.45,lineHeight:.70,outlineWidth:3,colorRole:"secondary"}}),
+        G("연락처",.300,.742,.670,.135,{fillNone:true,padding:0,emphasis:1.72,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.48,lineHeight:.72,scaleX:1.00,outlineWidth:3}}),
+        G("주의 문구",.030,.895,.940,.060,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.08}})
+      ],"rail",{enabled:true,color:"#111111",width:5,radius:0}
+    ));
+
+    // 12. 제목을 넓게 쓰고 오른쪽 세로 간판에는 짧은 강조 문구를 크게 쌓는다. 의미 없는 장식 면은 두지 않는다.
+    templates.push(make(
+      "right-vertical-panel","우측 세로 간판","넓은 대제목과 검정 정보 띠, 왼쪽 기사칸, 오른쪽 세로 강조판을 한 덩어리로 결합한 구성","primary",[
+        G("큰 제목",.020,.020,.735,.285,{fillNone:true,padding:0,emphasis:2.48,overflowAllowance:.035,textPreset:"heroOutline",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.58,lineHeight:.71,scaleX:1.00,letterSpacing:-8,outlineWidth:3}}),
+        G("속보 표식",.785,.025,.185,.170,{shape:"burst",fillRole:"secondary",strokeRole:"paper",strokeWidth:3,strokeNone:false,padding:18,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.48,lineHeight:.68,outlineWidth:3,colorRole:"paper"}}),
+        G("기관 안내",.000,.320,.755,.075,{fillRole:"secondary",radius:0,padding:6,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.10,colorRole:"paper"}}),
+        G("핵심 목록",.020,.415,.565,.340,{fillRole:"paper",radius:8,padding:13,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.25,lineHeight:.87,scaleX:.99}}),
+        G("짧은 강조",.605,.220,.365,.535,{fillRole:"tertiary",radius:8,padding:12,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"chosunLo",fontScale:1.70,lineHeight:.66,scaleX:1.00,verticalWhenNarrow:true}}),
+        G("수치",.020,.775,.250,.090,{fillRole:"secondary",radius:0,padding:6,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.38,lineHeight:.70,colorRole:"paper"}}),
+        G("주의 문구",.290,.775,.295,.090,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.04}}),
+        G("연락처",.020,.885,.950,.090,{fillRole:"paperHard",radius:0,padding:4,emphasis:1.60,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.44,lineHeight:.72,outlineWidth:3}})
+      ],"columns"
+    ));
+
+    // 13. 상단 제목판과 원형 도장을 이어 붙이고, 하단 전화번호는 대지를 가로지르는 가장 큰 활자로 둔다.
+    templates.push(make(
+      "bottom-giant-copy","하단 초대형 문구","상단 대제목, 왼쪽 원형 속보, 촘촘한 기사판, 하단 초대형 연락처가 연속되는 구성","primary",[
+        G("상단 제목판",.018,.018,.964,.260,{fillRole:"paperHard",radius:13,acceptText:false}),
+        G("큰 제목",.035,.032,.930,.225,{fillNone:true,padding:0,emphasis:2.40,textPreset:"hero",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.56,lineHeight:.72,scaleX:1.00,letterSpacing:-8}}),
+        G("속보 표식",.030,.305,.285,.300,{shape:"ellipse",fillRole:"tertiary",strokeRole:"secondary",strokeWidth:3,strokeNone:false,padding:22,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.68,lineHeight:.65,outlineWidth:3}}),
+        G("기관 안내",.335,.300,.635,.070,{fillRole:"secondary",radius:0,padding:5,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.08,colorRole:"paper"}}),
+        G("핵심 목록",.335,.385,.635,.245,{fillRole:"paper",radius:0,padding:12,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.24,lineHeight:.88}}),
+        G("짧은 강조",.335,.645,.635,.085,{fillNone:true,padding:0,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"batang",fontScale:1.42,lineHeight:.76}}),
+        G("수치",.335,.742,.255,.075,{fillRole:"tertiary",radius:0,padding:5,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.30}}),
+        G("주의 문구",.610,.742,.360,.075,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.03}}),
+        G("연락처",.008,.825,.984,.150,{fillRole:"secondary",radius:0,padding:5,emphasis:2.10,overflowAllowance:.035,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.62,lineHeight:.68,scaleX:1.00,outlineWidth:3,colorRole:"paper"}})
+      ],"type"
+    ));
+
+    // 14. 중앙 폭발표식을 기준으로 좌우 기사 밀도를 맞추고, 아래 연락처가 전체 구도를 단단히 받친다.
+    templates.push(make(
+      "center-burst-editorial","중앙 폭발 기사판","상단 대제목, 중앙 폭발표식, 좌우 기사, 하단 대형 연락처가 서로 맞물리는 구성","primary",[
+        G("큰 제목",.025,.015,.950,.205,{fillNone:true,padding:0,emphasis:2.42,textPreset:"heroOutline",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.55,lineHeight:.71,scaleX:1.00,letterSpacing:-8,outlineWidth:3}}),
+        G("기관 안내",.130,.225,.740,.065,{fillRole:"secondary",radius:0,padding:5,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.08,colorRole:"paper"}}),
+        G("핵심 목록",.020,.310,.300,.410,{fillRole:"paper",radius:0,padding:12,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.22,lineHeight:.87,scaleX:.99}}),
+        G("속보 표식",.340,.300,.320,.420,{shape:"burst",fillRole:"paperHard",strokeRole:"secondary",strokeWidth:4,strokeNone:false,padding:30,textPreset:"badge",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.80,lineHeight:.62}}),
+        G("짧은 강조",.680,.310,.300,.285,{fillRole:"tertiary",radius:0,padding:12,textPreset:"heroOutline",textRoles:["callout"],textStyle:{fontFamily:"chosunLo",fontScale:1.55,lineHeight:.67,scaleX:.98,outlineWidth:3,verticalWhenNarrow:true}}),
+        G("수치",.680,.610,.300,.110,{fillRole:"secondary",radius:0,padding:8,textPreset:"badgeOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:1.38,colorRole:"paper"}}),
+        G("연락처",.220,.742,.560,.150,{fillNone:true,padding:0,emphasis:1.82,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.50,lineHeight:.70,outlineWidth:3}}),
+        G("주의 문구",.100,.915,.800,.045,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.04}})
+      ],"type"
+    ));
+
+    // 15. 검정 세로 표찰과 중앙 기사판, 오른쪽 입체 타원을 한 판처럼 이어 짧은 문구도 크게 보이게 한다.
+    templates.push(make(
+      "left-vertical-type","세로 표식·타원판","왼쪽 검정 세로 표찰, 중앙 기사판, 오른쪽 입체 타원을 촘촘하게 쌓은 구성","primary",[
+        G("왼쪽 표찰 배경",.015,.020,.180,.920,{fillRole:"secondary",radius:0,acceptText:false}),
+        G("속보 표식",.030,.040,.150,.670,{fillNone:true,padding:0,emphasis:2.55,textPreset:"heroOutline",textRoles:["tag"],textStyle:{fontFamily:"chosunLo",fontScale:2.05,lineHeight:.61,scaleX:1.00,outlineWidth:3,colorRole:"paper",verticalWhenNarrow:true}}),
+        G("주의 문구",.035,.735,.140,.170,{fillNone:true,padding:0,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.08,colorRole:"paper"}}),
+        G("큰 제목",.215,.020,.565,.245,{fillRole:"paperHard",radius:9,padding:8,textPreset:"hero",textRoles:["headline"],textStyle:{fontFamily:"chosunKg",fontScale:1.54,lineHeight:.72,scaleX:1.00}}),
+        G("기관 안내",.215,.278,.565,.070,{fillRole:"secondary",radius:0,padding:5,textPreset:"microCenter",textRoles:["micro"],textStyle:{fontFamily:"dotum",fontScale:1.08,colorRole:"paper"}}),
+        G("핵심 목록",.215,.360,.565,.300,{fillRole:"paper",radius:0,padding:12,textPreset:"bulletDense",textRoles:["bullet"],textStyle:{fontFamily:"dotum",fontScale:1.22,lineHeight:.88}}),
+        G("짧은 강조",.215,.672,.565,.090,{fillNone:true,padding:0,textPreset:"bodyDisplay",textRoles:["callout"],textStyle:{fontFamily:"batang",fontScale:1.40,lineHeight:.76}}),
+        G("연락처",.215,.775,.565,.110,{fillRole:"secondary",radius:0,padding:5,textPreset:"hotlineOutline",textRoles:["footer"],textStyle:{fontFamily:"chosunKg",fontScale:1.42,lineHeight:.72,outlineWidth:3,colorRole:"paper"}}),
+        G("타원 장식1",.805,.025,.180,.155,{shape:"ellipse",fillRole:"tertiary",acceptText:false,effect:"extrude",effectColorRole:"secondary",effectSize:10}),
+        G("타원 장식2",.805,.235,.180,.155,{shape:"ellipse",fillRole:"paperHard",acceptText:false,effect:"extrude",effectColorRole:"secondary",effectSize:10}),
+        G("수치",.805,.445,.180,.190,{shape:"ellipse",fillRole:"tertiary",padding:12,textPreset:"badge",textRoles:["tag"],effect:"extrude",effectColorRole:"secondary",effectSize:10,textStyle:{fontFamily:"chosunLo",fontScale:1.52,lineHeight:.66,verticalWhenNarrow:true}}),
+        G("타원 장식3",.805,.690,.180,.155,{shape:"ellipse",fillRole:"primarySoft",acceptText:false,effect:"extrude",effectColorRole:"secondary",effectSize:10})
+      ],"rail"
     ));
 
     return templates;
