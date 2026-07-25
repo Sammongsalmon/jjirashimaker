@@ -1755,3 +1755,41 @@ body[data-theme="light"] .panel-kicker,body[data-theme="light"] .eyebrow{color:#
 
 /* v24: 터치 장치에서 슬라이더 손잡이 드래그를 안정적으로 유지 */
 input[type="range"] { touch-action: none; }
+
+
+/* v25: compact two-column editors and thumb-only touch sliders */
+.numeric-legacy-readout{display:none!important}
+.numeric-enhanced-label{display:block!important;min-width:0}
+.numeric-field,.static-numeric-field{display:grid;gap:3px;min-width:0;width:100%}
+.numeric-inline-row{display:grid;grid-template-columns:minmax(72px,1fr) 32px minmax(54px,72px) 32px 32px;align-items:center;gap:5px;min-width:0}
+.numeric-inline-label{min-width:0;overflow:hidden;color:var(--muted);font-size:10px;font-weight:700;line-height:1.2;text-overflow:ellipsis;white-space:nowrap}
+.numeric-inline-row .step-button,.numeric-inline-row .numeric-reset-button{width:32px;min-width:32px;min-height:30px;height:30px;padding:0;border-radius:7px;font-size:15px}
+.numeric-inline-row .numeric-direct-input{height:30px;min-height:30px;padding:4px 5px;font-size:11px;line-height:1;text-align:center}
+.numeric-range-input{width:min(100%,320px);min-height:20px;height:20px;margin:0;justify-self:stretch}
+.numeric-range-input::-webkit-slider-runnable-track{height:4px}
+.numeric-range-input::-webkit-slider-thumb{width:18px;height:18px;margin-top:-7px}
+.numeric-range-input::-moz-range-track,.numeric-range-input::-moz-range-progress{height:4px}
+.numeric-range-input::-moz-range-thumb{width:16px;height:16px}
+.editor-card>.field-grid.two,.editor-card>.field-grid.three,.effect-editor .field-grid.two,.clip-editor,.text-settings-body .field-grid.two,.text-settings-body .field-grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}
+.editor-card{padding:10px}
+.field-grid{gap:8px;margin-top:8px}
+.tool-pane{padding:12px}
+label,.field-label{font-size:10.5px;line-height:1.3}
+.panel-note,.section-heading p,.microcopy,.canvas-help,.dialog-hint{font-size:10.5px;line-height:1.5}
+.button,.small-button,.tool-tab,.segmented-control button,.multi-toggle button{min-height:34px;padding:6px 9px;font-size:10.5px;line-height:1.2}
+input,select,textarea{padding:7px 8px;font-size:11px}
+h2{font-size:16px}.control-title{font-size:11px}.selected-element-head strong{font-size:13px}
+.effect-editor,.clip-editor,.advanced-details,.range-color-box{padding:9px}
+@media(max-width:760px){
+  .editor-card>.field-grid.two,.editor-card>.field-grid.three,.effect-editor .field-grid.two,.clip-editor,.text-settings-body .field-grid.two,.text-settings-body .field-grid.three{grid-template-columns:1fr}
+  .numeric-inline-row{grid-template-columns:minmax(66px,1fr) 34px minmax(52px,68px) 34px 34px;gap:4px}
+  .numeric-inline-row .step-button,.numeric-inline-row .numeric-reset-button{width:34px;min-width:34px;min-height:34px;height:34px}
+  .numeric-inline-row .numeric-direct-input{height:34px;min-height:34px}
+  .numeric-range-input{width:100%;max-width:280px}
+  .button,.small-button,.tool-tab,.segmented-control button,.multi-toggle button{min-height:38px;font-size:10px}
+}
+@media(max-width:390px){
+  .tool-pane,.editor-card{padding:8px}
+  .numeric-inline-row{grid-template-columns:minmax(58px,1fr) 32px 50px 32px 32px}
+  .numeric-inline-label{font-size:9.5px}
+}

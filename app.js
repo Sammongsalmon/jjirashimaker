@@ -554,7 +554,7 @@
       flowMargin: 0, affectFlow: true,
       effect: "none", effects: [], effectColor: "#111111", effectSize: 20,
       clipRegionId: null, alphaBounds: null, alphaMask: null,
-      label: "", labelSize: 72, labelColor: "#111111", imageFit: "cover", imageSrc: null,
+      label: "", labelSize: 72, labelColor: "#111111", imageFit: "contain", imageSrc: null,
       ...options
     };
   }
@@ -1723,165 +1723,40 @@
   }
 
   function numericFieldControl(labelText, value, min, max, step, formatter, onInput, options = {}) {
-    const wrap = document.createElement("div");
-    wrap.className = "numeric-field numeric-stepper";
-    const head = document.createElement("div");
-    head.className = "numeric-field-head numeric-stepper-head";
-    const title = document.createElement("span");
-    title.textContent = labelText;
-    const headRight = document.createElement("span");
-    headRight.className = "numeric-field-head-right";
-    const readout = document.createElement("b");
-    const reset = document.createElement("button");
-    reset.type = "button";
-    reset.className = "numeric-reset-button";
-    reset.textContent = "↺";
-    reset.title = `${labelText} 원래값으로 복귀`;
-    reset.setAttribute("aria-label", `${labelText} 원래값으로 복귀`);
-    headRight.append(readout, reset);
-    head.append(title, headRight);
+    const wrap=document.createElement("div");wrap.className="numeric-field numeric-stepper";
+    const row=document.createElement("div");row.className="numeric-inline-row";
+    const title=document.createElement("span");title.className="numeric-inline-label";title.textContent=labelText;
+    const minus=document.createElement("button");minus.type="button";minus.className="step-button";minus.textContent="−";minus.title=`${labelText} 줄이기`;
+    const number=document.createElement("input");number.type="text";number.inputMode="decimal";number.autocomplete="off";number.spellcheck=false;number.className="numeric-direct-input";number.setAttribute("aria-label",`${labelText} 직접 입력`);
+    const plus=document.createElement("button");plus.type="button";plus.className="step-button";plus.textContent="+";plus.title=`${labelText} 키우기`;
+    const reset=document.createElement("button");reset.type="button";reset.className="numeric-reset-button";reset.textContent="↺";reset.title=`${labelText} 원래값으로 복귀`;reset.setAttribute("aria-label",`${labelText} 원래값으로 복귀`);
+    row.append(title,minus,number,plus,reset);
+    const range=document.createElement("input");range.type="range";range.min=String(min);range.max=String(max);range.step=String(step);range.className="numeric-range-input";range.setAttribute("aria-label",`${labelText} 슬라이더`);
+    wrap.append(row,range);
 
-    const body = document.createElement("div");
-    body.className = "numeric-control-row numeric-stepper-body";
-    const minus = document.createElement("button");
-    minus.type = "button";
-    minus.className = "step-button";
-    minus.textContent = "−";
-    minus.title = `${labelText} 줄이기`;
-    const number = document.createElement("input");
-    number.type = "text";
-    number.inputMode = "decimal";
-    number.autocomplete = "off";
-    number.spellcheck = false;
-    number.className = "numeric-direct-input";
-    number.setAttribute("aria-label", `${labelText} 직접 입력`);
-    const plus = document.createElement("button");
-    plus.type = "button";
-    plus.className = "step-button";
-    plus.textContent = "+";
-    plus.title = `${labelText} 키우기`;
-    body.append(minus, number, plus);
-
-    const range = document.createElement("input");
-    range.type = "range";
-    range.min = String(min);
-    range.max = String(max);
-    range.step = String(step);
-    range.className = "numeric-range-input";
-    range.setAttribute("aria-label", `${labelText} 슬라이더`);
-
-    const defaultResolver = typeof options.defaultValue === "function"
-      ? options.defaultValue
-      : () => options.defaultValue ?? value;
-    let committed = normalizeNumericValue(value, min, max, step, value);
-    let editingStart = committed;
-    let numberEditing = false;
-    let numberCancelled = false;
-    let rangeInteraction = false;
-    let keyboardInteraction = false;
-
-    const currentDefault = () => normalizeNumericValue(defaultResolver(), min, max, step, value);
-    const updateReset = () => {
-      const defaultValue = currentDefault();
-      reset.disabled = Math.abs(committed - defaultValue) < Math.max(1e-8, step / 1000);
-      reset.title = `${labelText} 원래값 ${formatter(defaultValue)}로 복귀`;
-    };
-    const syncDisplay = (next, { preserveDraft = false } = {}) => {
-      committed = normalizeNumericValue(next, min, max, step, committed);
-      if (!preserveDraft) number.value = String(committed);
-      range.value = String(committed);
-      updateRangeVisual(range);
-      readout.textContent = formatter(committed);
-      updateReset();
-      return committed;
-    };
-    const preview = (next, { preserveDraft = false } = {}) => {
-      const fixed = syncDisplay(next, { preserveDraft });
-      onInput(fixed);
-      queueRender();
-      return fixed;
-    };
-    const commitAtomic = (next) => {
-      preview(next);
-      markHistoryDirty(true);
-    };
+    const defaultResolver=typeof options.defaultValue==="function"?options.defaultValue:()=>options.defaultValue??value;
+    let committed=normalizeNumericValue(value,min,max,step,value),editingStart=committed,numberEditing=false,numberCancelled=false,rangeInteraction=false,keyboardInteraction=false;
+    const currentDefault=()=>normalizeNumericValue(defaultResolver(),min,max,step,value);
+    const updateReset=()=>{const defaultValue=currentDefault();reset.disabled=Math.abs(committed-defaultValue)<Math.max(1e-8,step/1000);reset.title=`${labelText} 원래값 ${formatter(defaultValue)}로 복귀`;};
+    const syncDisplay=(next,{preserveDraft=false}={})=>{committed=normalizeNumericValue(next,min,max,step,committed);if(!preserveDraft)number.value=String(committed);range.value=String(committed);updateRangeVisual(range);number.title=formatter(committed);updateReset();return committed;};
+    const preview=(next,{preserveDraft=false}={})=>{const fixed=syncDisplay(next,{preserveDraft});onInput(fixed);queueRender();return fixed;};
+    const commitAtomic=(next)=>{preview(next);markHistoryDirty(true);};
     syncDisplay(committed);
-
-    minus.addEventListener("click", () => commitAtomic(committed - step));
-    plus.addEventListener("click", () => commitAtomic(committed + step));
-    reset.addEventListener("click", () => commitAtomic(currentDefault()));
-
-    number.addEventListener("focus", () => {
-      numberEditing = true;
-      numberCancelled = false;
-      editingStart = committed;
-      beginHistoryInteraction();
-      number.select();
-    });
-    number.addEventListener("input", () => {
-      const parsed = parseNumericDraft(number.value);
-      if (parsed === null) return;
-      preview(parsed, { preserveDraft: true });
-    });
-    number.addEventListener("blur", () => {
-      if (!numberEditing) return;
-      const parsed = parseNumericDraft(number.value);
-      if (numberCancelled) {
-        syncDisplay(editingStart);
-        endHistoryInteraction({ commit: false });
-      } else {
-        preview(parsed === null ? committed : parsed);
-        endHistoryInteraction({ commit: true });
-      }
-      numberEditing = false;
-      numberCancelled = false;
-    });
-    number.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        number.blur();
-      } else if (event.key === "Escape") {
-        event.preventDefault();
-        numberCancelled = true;
-        preview(editingStart);
-        number.blur();
-      }
-    });
-
-    range.addEventListener("pointerdown", () => {
-      if (rangeInteraction) return;
-      rangeInteraction = true;
-      beginHistoryInteraction();
-    });
-    range.addEventListener("input", () => preview(Number(range.value)));
-    const finishRange = () => {
-      if (!rangeInteraction) return;
-      rangeInteraction = false;
-      endHistoryInteraction({ commit: true });
-    };
-    range.addEventListener("pointerup", finishRange);
-    range.addEventListener("pointercancel", finishRange);
-    range.addEventListener("keydown", (event) => {
-      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(event.key)) return;
-      if (!keyboardInteraction) {
-        keyboardInteraction = true;
-        beginHistoryInteraction();
-      }
-    });
-    range.addEventListener("keyup", () => {
-      if (!keyboardInteraction) return;
-      keyboardInteraction = false;
-      endHistoryInteraction({ commit: true });
-    });
-    range.addEventListener("blur", () => {
-      if (!keyboardInteraction) return;
-      keyboardInteraction = false;
-      endHistoryInteraction({ commit: true });
-    });
-
-    wrap.append(head, body, range);
+    minus.addEventListener("click",()=>commitAtomic(committed-step));plus.addEventListener("click",()=>commitAtomic(committed+step));reset.addEventListener("click",()=>commitAtomic(currentDefault()));
+    number.addEventListener("focus",()=>{numberEditing=true;numberCancelled=false;editingStart=committed;beginHistoryInteraction();number.select();});
+    number.addEventListener("input",()=>{const parsed=parseNumericDraft(number.value);if(parsed!==null)preview(parsed,{preserveDraft:true});});
+    number.addEventListener("blur",()=>{if(!numberEditing)return;const parsed=parseNumericDraft(number.value);if(numberCancelled){syncDisplay(editingStart);endHistoryInteraction({commit:false});}else{preview(parsed===null?committed:parsed);endHistoryInteraction({commit:true});}numberEditing=false;numberCancelled=false;});
+    number.addEventListener("keydown",(event)=>{if(event.key==="Enter"){event.preventDefault();number.blur();}else if(event.key==="Escape"){event.preventDefault();numberCancelled=true;preview(editingStart);number.blur();}});
+    range.addEventListener("pointerdown",()=>{if(rangeInteraction)return;rangeInteraction=true;beginHistoryInteraction();});
+    range.addEventListener("input",()=>preview(Number(range.value)));
+    const finishRange=()=>{if(!rangeInteraction)return;rangeInteraction=false;endHistoryInteraction({commit:true});};
+    range.addEventListener("pointerup",finishRange);range.addEventListener("pointercancel",finishRange);
+    range.addEventListener("keydown",(event)=>{if(!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","PageUp","PageDown","Home","End"].includes(event.key))return;if(!keyboardInteraction){keyboardInteraction=true;beginHistoryInteraction();}});
+    range.addEventListener("keyup",()=>{if(!keyboardInteraction)return;keyboardInteraction=false;endHistoryInteraction({commit:true});});
+    range.addEventListener("blur",()=>{if(!keyboardInteraction)return;keyboardInteraction=false;endHistoryInteraction({commit:true});});
     return wrap;
   }
+
 
   function rangeControl(labelText, value, min, max, step, formatter, onInput, options = {}) {
     return numericFieldControl(labelText, value, min, max, step, formatter, onInput, options);
@@ -2007,10 +1882,22 @@
     bridge.tabIndex = -1;
     bridge.setAttribute("aria-hidden", "true");
 
+    const ownerLabel = bridge.closest("label");
+    let captionText = bridge.getAttribute("aria-label") || bridge.id || "수치";
+    if (ownerLabel) {
+      const directText = [...ownerLabel.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE).map((node) => node.textContent.trim()).filter(Boolean);
+      if (directText.length) captionText = directText.join(" ");
+      [...ownerLabel.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE).forEach((node) => { node.textContent = ""; });
+      ownerLabel.querySelectorAll(":scope > b").forEach((node) => node.classList.add("numeric-legacy-readout"));
+      ownerLabel.classList.add("numeric-enhanced-label");
+    }
     const shell = document.createElement("div");
     shell.className = "static-numeric-field";
     const row = document.createElement("div");
-    row.className = "numeric-control-row static-numeric-row";
+    row.className = "numeric-inline-row static-numeric-row";
+    const caption = document.createElement("span");
+    caption.className = "numeric-inline-label";
+    caption.textContent = captionText;
     const minus = document.createElement("button");
     minus.type = "button";
     minus.className = "step-button";
@@ -2033,7 +1920,7 @@
     reset.className = "numeric-reset-button numeric-reset-compact";
     reset.textContent = "↺";
     reset.setAttribute("aria-label", "원래값으로 복귀");
-    row.append(minus, number, plus, reset);
+    row.append(caption, minus, number, plus, reset);
 
     const range = document.createElement("input");
     range.type = "range";
@@ -2640,7 +2527,7 @@ function moveTextInList(id, direction) {
     syncSegmented("affectFlow", element.affectFlow ? "avoid" : "overlap");
     $("elementEffect").value = element.effect; $("elementEffectSize").value = element.effectSize;
     $("elementLabel").value = element.label || ""; $("elementLabelSize").value = element.labelSize;
-    syncSegmented("imageFit", element.imageFit || "cover");
+    syncSegmented("imageFit", element.imageFit || "contain");
 
     $("bandControls").classList.toggle("hidden", !isBand);
     if (isBand) {
@@ -3321,7 +3208,7 @@ function moveTextInList(id, direction) {
         if (img?.complete && img.naturalWidth) {
           const ir = img.naturalWidth / img.naturalHeight, er = item.w / item.h;
           let dw, dh, dx, dy;
-          if ((item.imageFit || "cover") === "contain") {
+          if ((item.imageFit || "contain") === "contain") {
             if (ir > er) { dw = item.w; dh = dw / ir; dx = item.x; dy = item.y + (item.h - dh) / 2; }
             else { dh = item.h; dw = dh * ir; dy = item.y; dx = item.x + (item.w - dw) / 2; }
           } else {
@@ -3519,12 +3406,13 @@ function moveTextInList(id, direction) {
     return lines;
   }
 
-  function layoutTextLines(c,text,fontSize,maxWidth){
+  function layoutTextLines(c,text,fontSize,maxWidth,options={}){
     setTextFont(c,text,fontSize);
     let charStart=0;
     const lines=[];
+    const forceNoWrap = options.forceNoWrap ?? Boolean(text.autoNoWrap || text.autoLayoutNoWrap);
     text.text.split("\n").forEach((raw)=>{
-      if (text.autoNoWrap) {
+      if (forceNoWrap) {
         const tokens = decoratedLine(text,raw,charStart);
         lines.push({ raw, tokens, width:tokenWidth(c,flattenTokens(tokens),text.letterSpacing) });
       } else {
@@ -3876,6 +3764,21 @@ function moveTextInList(id, direction) {
     if(!source)return;
     const {trimW:W,trimH:H}=dimensions();
     const dx=point.x-drag.start.x,dy=point.y-drag.start.y;
+    if(drag.kind==="element"&&source.type==="image"){
+      const original=drag.geometry;
+      const opposite={nw:{x:original.x+original.w,y:original.y+original.h},ne:{x:original.x,y:original.y+original.h},se:{x:original.x,y:original.y},sw:{x:original.x+original.w,y:original.y}}[drag.handle];
+      if(!opposite)return;
+      const targetW=Math.abs(point.x-opposite.x),targetH=Math.abs(point.y-opposite.y);
+      const diagonal=Math.hypot(original.w,original.h)||1;
+      const scale=clamp(Math.hypot(targetW,targetH)/diagonal,Math.max(24/original.w,24/original.h),6);
+      const w=original.w*scale,h=original.h*scale;
+      const x=drag.handle.includes("w")?opposite.x-w:opposite.x;
+      const y=drag.handle.includes("n")?opposite.y-h:opposite.y;
+      source.x=clamp(x,-w*.05,W-w*.05);
+      source.y=clamp(y,-h*.05,H-h*.05);
+      source.w=w;source.h=h;source.imageFit="contain";
+      return;
+    }
     if(drag.kind==="element"&&source.type==="band"){
       const north=drag.handle==="nw"||drag.handle==="ne";
       if(source.bandScope==="region"){
@@ -4193,6 +4096,7 @@ function ensureStateCompatibility() {
       normalizeEffects(element);
       element.clipRegionId ||= null;
       element.alphaBounds ||= null;
+      if (element.type === "image") element.imageFit = "contain";
       if (typeof element.affectFlow !== "boolean") element.affectFlow = true;
     });
     state.texts.forEach((text) => {
@@ -4202,6 +4106,8 @@ function ensureStateCompatibility() {
       text.scaleX = clamp(Number(text.scaleX) || 1, .45, 1.65);
       text.scaleY = clamp(Number(text.scaleY) || 1, .45, 1.65);
       if (typeof text.autoNoWrap !== "boolean") text.autoNoWrap = false;
+      const savedRole = text.roleHint || text.role || text.autoRole || "body";
+      if (text.sample && !["tag","footer"].includes(savedRole)) text.autoNoWrap = false;
       text.rangeColors ||= [];
       text.rangeBackgrounds ||= [];
       text.manualScale = clamp(Number(text.manualScale) || 1, .35, 3);
@@ -4973,17 +4879,17 @@ function adaptRegionsToText() {
   function makeDefaultOtterTexts() {
     const sample=(copy,role,extra={})=>makeText(copy,{...ROLE_STYLE_DEFAULTS[role],role,roleHint:role,sample:true,unicodeStyle:"none",fontFamily:"dotum",...extra});
     return [
-      sample("속보","tag",{autoNoWrap:true}),
-      sample("수달이 돌 하나 주웠다고 지구가 잠깐 귀여워짐","headline",{autoNoWrap:true}),
-      sample("★국가수달과몰입대책본부 발표｜심장 단속 실패｜조개 비축 권고★","micro",{autoNoWrap:true}),
+      sample("속보","tag",{autoNoWrap:false}),
+      sample("수달이 돌 하나 주웠다고 지구가 잠깐 귀여워짐","headline",{autoNoWrap:false}),
+      sample("★국가수달과몰입대책본부 발표｜심장 단속 실패｜조개 비축 권고★","micro",{autoNoWrap:false}),
       sample(`•배 위 조개 개봉 완료
 •물 위 눕방·먹방 동시 진행
 •앞발 두 개로 전국민 심장 관리
 •반박 시 수달 영상 48개 제출`,"bullet",{autoNoWrap:false}),
-      sample("무직인데 귀여움으로 매일 야근","callout",{autoNoWrap:true}),
-      sample("입덕률 100.4%","tag",{autoNoWrap:true}),
-      sample("☎ 수달 제보 02)770-수달수달 ☎","footer",{autoNoWrap:true}),
-      sample("※주의: 한 번 보면 친구에게 보내고 다시 보게 됨·조약돌 수집 충동 동반","micro",{autoNoWrap:true})
+      sample("무직인데 귀여움으로 매일 야근","callout",{autoNoWrap:false}),
+      sample("입덕률 100.4%","tag",{autoNoWrap:false}),
+      sample("☎ 수달 제보 02)770-수달수달 ☎","footer",{autoNoWrap:false}),
+      sample("※주의: 한 번 보면 친구에게 보내고 다시 보게 됨·조약돌 수집 충동 동반","micro",{autoNoWrap:false})
     ];
   }
 
@@ -5090,7 +4996,8 @@ function adaptRegionsToText() {
     else if (role === "tag") text.fontFamily = "chosunLo";
     else if (role === "footer") text.fontFamily = "chosunKg";
     else text.fontFamily = "dotum";
-    text.autoNoWrap = role !== "bullet" && !tallNarrow;
+    // 모든 문장은 줄바꿈할 수 있다. 실제 자동 조판에서는 영역 비율과 글자 길이를 보고 한 줄 우선 여부만 계산한다.
+    text.autoNoWrap = false;
     text.fontWeight = role === "micro" ? 580 : role === "bullet" ? 690 : 790;
     text.bold = role !== "micro";
     text.italic = false;
@@ -5230,69 +5137,58 @@ function adaptRegionsToText() {
     const cap=Math.max(minFont,Math.min(520,Math.max(styleCap*styleScale*clamp(emphasis,.72,1.72),box.h*1.28,box.w*.35)));
     const widthLimit=box.w*fill;
     const heightLimit=targetHeight*fill;
+    const explicitLineCount=String(text.text||"").split("\n").length;
+    const compactLength=String(text.text||"").replace(/\s+/g,"").length;
+    const aspect=box.w/Math.max(1,box.h);
 
-    // 우선순위: 1) 정상 폭에서 줄바꿈 2) 줄 수를 줄이기 위한 가로 압축
-    // 3) 그래도 세로가 모자랄 때만 세로 압축. 자동 압축은 어느 축도 70% 미만 금지.
-    const measure=(size,sx)=>{
-      const old=text.scaleX;
-      text.scaleX=1;
-      const lines=layoutTextLines(c,text,size,Math.max(20,widthLimit/Math.max(AUTO_MIN_SCALE,sx)));
-      text.scaleX=old;
-      const widest=Math.max(1,...lines.map((line)=>line.width));
-      const rawH=Math.max(size*lh,lines.length*size*lh);
-      return {lines,widest,rawH,widthFits:widest*sx<=widthLimit+1};
-    };
-
-    const evaluate=(size)=>{
-      let sx=1;
-      let m=measure(size,1);
-
-      if(!(m.widthFits&&m.rawH<=heightLimit+1)){
-        const compressed=measure(size,AUTO_MIN_SCALE);
-        const compressedFitsAtFullHeight=compressed.widthFits&&compressed.rawH<=heightLimit+1;
-
-        if(compressedFitsAtFullHeight){
-          // 가장 덜 찌그러지는 값(1에 가장 가까운 값)을 찾는다.
-          let lo=AUTO_MIN_SCALE,hi=1;
-          for(let i=0;i<20;i++){
-            const mid=(lo+hi)/2;
-            const test=measure(size,mid);
-            if(test.widthFits&&test.rawH<=heightLimit+1)lo=mid;
-            else hi=mid;
-          }
-          sx=lo;
-          m=measure(size,sx);
-        }else{
-          sx=AUTO_MIN_SCALE;
-          m=compressed;
-        }
-      }
-
-      let sy=1;
-      if(m.rawH>heightLimit+1)sy=heightLimit/Math.max(1,m.rawH);
-      if(m.lines.length===1&&m.rawH<=heightLimit+1){
-        // 한 줄 문장은 가능한 한 영역을 채우되, 자동 확장은 역할별 상한까지만.
-        sx=clamp(Math.min(maxX,widthLimit/Math.max(1,m.widest)),AUTO_MIN_SCALE,maxX);
-      }
-      sy=clamp(sy,AUTO_MIN_SCALE,maxY);
-      return {
-        fits:m.widest*sx<=widthLimit+1&&m.rawH*sy<=heightLimit+1&&sx>=AUTO_MIN_SCALE&&sy>=AUTO_MIN_SCALE,
-        sx,sy,...m
+    const solve=(forceNoWrap)=>{
+      const measure=(size,sx)=>{
+        const lines=layoutTextLines(c,text,size,Math.max(20,widthLimit/Math.max(AUTO_MIN_SCALE,sx)),{forceNoWrap});
+        const widest=Math.max(1,...lines.map((line)=>line.width));
+        const rawH=Math.max(size*lh,lines.length*size*lh);
+        return {lines,widest,rawH,widthFits:widest*sx<=widthLimit+1};
       };
+      const evaluate=(size)=>{
+        let sx=1;
+        let m=measure(size,1);
+        if(!(m.widthFits&&m.rawH<=heightLimit+1)){
+          const compressed=measure(size,AUTO_MIN_SCALE);
+          if(compressed.widthFits&&compressed.rawH<=heightLimit+1){
+            let lo=AUTO_MIN_SCALE,hi=1;
+            for(let i=0;i<20;i++){
+              const mid=(lo+hi)/2;
+              const test=measure(size,mid);
+              if(test.widthFits&&test.rawH<=heightLimit+1)lo=mid;else hi=mid;
+            }
+            sx=lo;m=measure(size,sx);
+          }else{sx=AUTO_MIN_SCALE;m=compressed;}
+        }
+        let sy=1;
+        if(m.rawH>heightLimit+1)sy=heightLimit/Math.max(1,m.rawH);
+        if(m.lines.length===1&&m.rawH<=heightLimit+1){
+          sx=clamp(Math.min(maxX,widthLimit/Math.max(1,m.widest)),AUTO_MIN_SCALE,maxX);
+        }
+        sy=clamp(sy,AUTO_MIN_SCALE,maxY);
+        return {fits:m.widest*sx<=widthLimit+1&&m.rawH*sy<=heightLimit+1,sx,sy,...m};
+      };
+      let lo=minFont,hi=cap,best=minFont,bestResult=evaluate(minFont);
+      for(let i=0;i<26;i++){
+        const mid=(lo+hi)/2,result=evaluate(mid);
+        if(result.fits){best=mid;bestResult=result;lo=mid;}else hi=mid;
+      }
+      const result=evaluate(best);
+      return {fontSize:Math.max(minFont,Math.floor(best)),scaleX:clamp(result.sx,AUTO_MIN_SCALE,maxX),scaleY:clamp(result.sy,AUTO_MIN_SCALE,maxY),lineCount:result.lines.length,noWrap:forceNoWrap};
     };
 
-    let lo=minFont,hi=cap,best=minFont,bestResult=evaluate(minFont);
-    for(let i=0;i<26;i++){
-      const mid=(lo+hi)/2;
-      const result=evaluate(mid);
-      if(result.fits){best=mid;bestResult=result;lo=mid;}else hi=mid;
-    }
-    const result=evaluate(best);
-    return {
-      fontSize:Math.max(minFont,Math.floor(best)),
-      scaleX:clamp(result.sx,AUTO_MIN_SCALE,maxX),
-      scaleY:clamp(result.sy,AUTO_MIN_SCALE,maxY)
-    };
+    const wrapped=solve(false);
+    if(explicitLineCount>1||role==="bullet")return wrapped;
+    const single=solve(true);
+    const sizeGain=wrapped.fontSize/Math.max(1,single.fontSize);
+    const narrowShort=aspect<1.55&&compactLength<=24;
+    const singleLooksSmall=single.fontSize<Math.max(24,heightLimit*.34);
+    const wrapMakesMeaningfulGain=sizeGain>=(narrowShort?1.08:1.28);
+    const chooseWrapped=(narrowShort&&wrapped.lineCount<=4&&wrapMakesMeaningfulGain)||(singleLooksSmall&&sizeGain>=1.12)||(compactLength>34&&sizeGain>=1.38);
+    return chooseWrapped?wrapped:single;
   }
 
 function autoStyleAssignedTexts({ force = false, skipAdapt = false } = {}) {
@@ -5328,6 +5224,7 @@ function autoStyleAssignedTexts({ force = false, skipAdapt = false } = {}) {
         text.fontSize=fitted.fontSize;
         text.scaleX=fitted.scaleX;
         text.scaleY=fitted.scaleY;
+        text.autoLayoutNoWrap=Boolean(fitted.noWrap);
         text.gap=Math.round(clamp(text.fontSize*.025*(Number(text.autoGapScale)||1),0,5));
       });
     });
@@ -5502,7 +5399,7 @@ function autoArrangeTexts({ reassign = true, forceStyle = false, announce = fals
   function imageDrawRect(img,item){
     const ir=img.naturalWidth/img.naturalHeight,er=item.w/item.h;
     let dw,dh,dx,dy;
-    if((item.imageFit||"cover")==="contain"){
+    if((item.imageFit||"contain")==="contain"){
       if(ir>er){dw=item.w;dh=dw/ir;dx=0;dy=(item.h-dh)/2;}
       else{dh=item.h;dw=dh*ir;dy=0;dx=(item.w-dw)/2;}
     }else{
@@ -5516,7 +5413,7 @@ function autoArrangeTexts({ reassign = true, forceStyle = false, announce = fals
     const img=getImage(item.imageSrc);
     if(!img?.complete||!img.naturalWidth)return null;
     const w=Math.max(1,Math.round(item.w)),h=Math.max(1,Math.round(item.h));
-    const key=`${item.imageSrc}|${w}|${h}|${item.imageFit||"cover"}`;
+    const key=`${item.imageSrc}|${w}|${h}|${item.imageFit||"contain"}`;
     if(imageLayerCache.has(key))return imageLayerCache.get(key);
     const layer=document.createElement("canvas");layer.width=w;layer.height=h;
     const lc=layer.getContext("2d");
@@ -5647,7 +5544,7 @@ function buildLayout(c){
         const fontSize=Math.max(protectedText?8:12,(Number(text.fontSize)||12)*(Number(text.manualScale)||1));
         const scaleX=clamp(Number(text.scaleX)||1,minScale,1.65);
         const scaleY=clamp(Number(text.scaleY)||1,minScale,1.65);
-        const lines=layoutTextLines(c,text,fontSize,box.w/Math.max(minScale,scaleX));
+        const lines=layoutTextLines(c,text,fontSize,box.w);
         const lineH=Math.max(7,fontSize*clamp(Number(text.lineHeight)||1,.65,2)*scaleY);
         return {text,protectedText,minScale,fontSize,scaleX,scaleY,lines,lineH,h:Math.max(lineH,lines.length*lineH)};
       });
@@ -5680,13 +5577,13 @@ function buildLayout(c){
           const interval=intervals.find(([a,b])=>preferred>=a&&preferred<=b)||intervals[0]||[box.x,box.x+box.w];
           const placedX=clamp(preferred,interval[0],Math.max(interval[0],interval[1]-20));
           const availableW=Math.max(20,interval[1]-placedX);
-          lines=layoutTextLines(c,text,fontSize,availableW/Math.max(minScale,estimate.scaleX));
+          lines=layoutTextLines(c,text,fontSize,availableW);
           blockH=Math.max(lineH,lines.length*lineH);
           desiredW=Math.max(1,...lines.map((line)=>line.width*estimate.scaleX));
           place={x:placedX,y:clamp(y,box.y,Math.max(box.y,box.y+box.h-blockH)),w:availableW};
         }else{
           place=findPlacement(box,cursorY,blockH,desiredW,obstacles);
-          lines=layoutTextLines(c,text,fontSize,place.w/Math.max(minScale,estimate.scaleX));
+          lines=layoutTextLines(c,text,fontSize,place.w);
           blockH=Math.max(lineH,lines.length*lineH);
           desiredW=Math.max(1,...lines.map((line)=>line.width*estimate.scaleX));
           place=findPlacement(box,place.y,blockH,desiredW,obstacles);
@@ -6134,7 +6031,7 @@ function buildLayout(c){
     if($("rotationValue"))$("rotationValue").textContent=`${round(element.rotation)}°`;
     if($("flowMarginValue"))$("flowMarginValue").textContent=round(element.flowMargin);
     syncSegmented("affectFlow",element.affectFlow?"avoid":"overlap");
-    syncSegmented("imageFit",element.imageFit||"cover");
+    syncSegmented("imageFit",element.imageFit||"contain");
     syncEffectToggle("elementEffectStack",element);
     setConditionalVisible("elementEffectOptions",activeEffects(element).length>0);
     if($("elementLabel"))$("elementLabel").value=element.label||"";
@@ -6518,6 +6415,21 @@ function buildLayout(c){
       source.styleMode="manual";source.regionLocked=true;source.manualProtected=true;return;
     }
     const dx=point.x-drag.start.x,dy=point.y-drag.start.y;
+    if(drag.kind==="element"&&source.type==="image"){
+      const original=drag.geometry;
+      const opposite={nw:{x:original.x+original.w,y:original.y+original.h},ne:{x:original.x,y:original.y+original.h},se:{x:original.x,y:original.y},sw:{x:original.x+original.w,y:original.y}}[drag.handle];
+      if(!opposite)return;
+      const targetW=Math.abs(point.x-opposite.x),targetH=Math.abs(point.y-opposite.y);
+      const diagonal=Math.hypot(original.w,original.h)||1;
+      const scale=clamp(Math.hypot(targetW,targetH)/diagonal,Math.max(24/original.w,24/original.h),6);
+      const w=original.w*scale,h=original.h*scale;
+      const x=drag.handle.includes("w")?opposite.x-w:opposite.x;
+      const y=drag.handle.includes("n")?opposite.y-h:opposite.y;
+      source.x=clamp(x,-w*.05,W-w*.05);
+      source.y=clamp(y,-h*.05,H-h*.05);
+      source.w=w;source.h=h;source.imageFit="contain";
+      return;
+    }
     if(drag.kind==="element"&&source.type==="band"){
       const north=drag.handle==="nw"||drag.handle==="ne";
       if(source.bandScope==="region")source.h=clamp(drag.orig.h+(north?-dy*2:dy*2),18,H);
@@ -6732,36 +6644,96 @@ function swapRegionTextBundles(sourceRegionId,targetRegionId){
   }
 
   function installCoarsePointerRangeGuard(){
-    let blockedPointerId=null;
-    let blockedRange=null;
-    let clearTimer=null;
-    const isCoarse=()=>window.matchMedia?.("(pointer: coarse)").matches||navigator.maxTouchPoints>0;
-    const clearBlocked=()=>{blockedPointerId=null;blockedRange=null;if(clearTimer){clearTimeout(clearTimer);clearTimer=null;}};
-    document.addEventListener("pointerdown",(event)=>{
-      const range=event.target instanceof Element?event.target.closest('input[type="range"]'):null;
-      if(!range||range.disabled||!isCoarse())return;
+    let active=null;
+    let suppressPointerUntil=0;
+    const isTouchDevice=(event)=>event?.pointerType==="touch"||navigator.maxTouchPoints>0||window.matchMedia?.("(any-pointer: coarse)").matches;
+    const metrics=(range)=>{
       const rect=range.getBoundingClientRect();
       const min=Number(range.min)||0,max=Number(range.max)||100,value=Number(range.value)||0;
-      const ratio=max===min?0:(value-min)/(max-min);
-      const thumbSize=Math.max(22,Math.min(34,rect.height*1.9));
-      const usable=Math.max(1,rect.width-thumbSize);
-      const center=rect.left+thumbSize/2+clamp(ratio,0,1)*usable;
-      const tolerance=Math.max(24,thumbSize*.82);
-      if(Math.abs(event.clientX-center)>tolerance){
-        blockedPointerId=event.pointerId;
-        blockedRange=range;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        clearTimer=setTimeout(clearBlocked,450);
+      const thumb=Math.max(22,Math.min(30,Math.max(rect.height*1.65,22)));
+      const usable=Math.max(1,rect.width-thumb);
+      const ratio=max===min?0:clamp((value-min)/(max-min),0,1);
+      return {rect,min,max,value,thumb,usable,center:rect.left+thumb/2+ratio*usable};
+    };
+    const begin=(range,clientX,id,mode)=>{
+      const m=metrics(range),tolerance=Math.max(18,m.thumb*.78);
+      if(Math.abs(clientX-m.center)>tolerance)return false;
+      active={range,id,mode,startX:clientX,startValue:m.value,min:m.min,max:m.max,step:Number(range.step)||1,usable:m.usable,moved:false};
+      beginHistoryInteraction();
+      range.focus({preventScroll:true});
+      return true;
+    };
+    const move=(clientX)=>{
+      if(!active)return;
+      const dx=clientX-active.startX;
+      if(!active.moved&&Math.abs(dx)<4)return;
+      active.moved=true;
+      const span=active.max-active.min;
+      const raw=active.startValue+dx/Math.max(1,active.usable)*span;
+      const stepped=active.min+Math.round((clamp(raw,active.min,active.max)-active.min)/active.step)*active.step;
+      active.range.value=String(Number(stepped.toFixed(8)));
+      updateRangeVisual(active.range);
+      active.range.dispatchEvent(new Event("input",{bubbles:true}));
+    };
+    const finish=(cancel=false)=>{
+      if(!active)return;
+      if(active.moved&&!cancel)active.range.dispatchEvent(new Event("change",{bubbles:true}));
+      endHistoryInteraction({commit:active.moved&&!cancel});
+      active=null;
+    };
+
+    document.addEventListener("touchstart",(event)=>{
+      const range=event.target instanceof Element?event.target.closest('input[type="range"]'):null;
+      if(!range||range.disabled)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      suppressPointerUntil=Date.now()+900;
+      const touch=event.changedTouches?.[0];
+      if(touch)begin(range,touch.clientX,touch.identifier,"touch");
+    },{capture:true,passive:false});
+    document.addEventListener("touchmove",(event)=>{
+      if(!active||active.mode!=="touch")return;
+      const touch=[...(event.changedTouches||[])].find((item)=>item.identifier===active.id)||event.changedTouches?.[0];
+      if(!touch)return;
+      event.preventDefault();event.stopImmediatePropagation();move(touch.clientX);
+    },{capture:true,passive:false});
+    document.addEventListener("touchend",(event)=>{
+      if(!active||active.mode!=="touch")return;
+      event.preventDefault();event.stopImmediatePropagation();finish(false);
+    },{capture:true,passive:false});
+    document.addEventListener("touchcancel",(event)=>{
+      if(!active||active.mode!=="touch")return;
+      event.preventDefault();event.stopImmediatePropagation();finish(true);
+    },{capture:true,passive:false});
+
+    document.addEventListener("pointerdown",(event)=>{
+      const range=event.target instanceof Element?event.target.closest('input[type="range"]'):null;
+      if(!range||range.disabled||!isTouchDevice(event))return;
+      event.preventDefault();event.stopImmediatePropagation();
+      if(Date.now()<suppressPointerUntil)return;
+      if(begin(range,event.clientX,event.pointerId,"pointer")){
+        try{range.setPointerCapture(event.pointerId);}catch{}
       }
+    },true);
+    document.addEventListener("pointermove",(event)=>{
+      if(!active||active.mode!=="pointer"||event.pointerId!==active.id)return;
+      event.preventDefault();event.stopImmediatePropagation();move(event.clientX);
+    },true);
+    document.addEventListener("pointerup",(event)=>{
+      if(!active||active.mode!=="pointer"||event.pointerId!==active.id)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      try{active.range.releasePointerCapture(event.pointerId);}catch{}
+      finish(false);
+    },true);
+    document.addEventListener("pointercancel",(event)=>{
+      if(!active||active.mode!=="pointer"||event.pointerId!==active.id)return;
+      event.preventDefault();event.stopImmediatePropagation();finish(true);
     },true);
     document.addEventListener("click",(event)=>{
       const range=event.target instanceof Element?event.target.closest('input[type="range"]'):null;
-      if(!range||!isCoarse()||range!==blockedRange)return;
-      event.preventDefault();event.stopImmediatePropagation();clearBlocked();
+      if(range&&isTouchDevice(event)){event.preventDefault();event.stopImmediatePropagation();}
     },true);
-    document.addEventListener("pointercancel",(event)=>{if(event.pointerId===blockedPointerId)clearBlocked();},true);
   }
+
 
   async function initializeV17(){
     prepareV16();
